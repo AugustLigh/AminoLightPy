@@ -70,12 +70,12 @@ def upload_media(self, file: BinaryIO, fileType: str) -> str:
     if file_hash in cache:
         return cache[file_hash]
 
-    print(file_hash)
-
     if fileType == "audio":
         t = "audio/aac"
     elif fileType == "image":
         t = "image/jpg"
+    elif fileType == "gif":
+        t = "image/gif"
     else: raise SpecifyType(fileType)
 
     

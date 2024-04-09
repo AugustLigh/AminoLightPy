@@ -1,10 +1,9 @@
 from uuid import uuid4
-from base64 import b64encode
 from typing import BinaryIO, Union
 
 from .constants import *
-from .lib.util import exceptions, objects, helpers
 from .socket import Callbacks, SocketHandler, SocketRequests
+from .lib.util import exceptions, objects, helpers, self_deviceId
 
 
 #@dorthegra/IDörthe#8835 thanks for support!
@@ -14,6 +13,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         self.api = api
         self.authenticated = False
         self.session = AminoSession()
+        self.device_id = self.session.headers["NDCDEVICEID"]
 
         self.socket_enabled = socket_enabled
         if socket_enabled:
@@ -48,7 +48,6 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         self.sid = SID
 
         self.profile: objects.UserProfile = objects.UserProfile({"uid": userId}).UserProfile
-        # self.profile: objects.UserProfile = self.get_user_info(userId)
     
         self.session.headers.update({
             "NDCAUTH": f"sid={self.sid}",
@@ -60,7 +59,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         if self.socket_enabled:
             self.run_amino_socket()
 
-    def login(self, email: str, password: str):
+    def login(self, email: str, password: str, self_device: bool = True):
         """
         Login into an account.
 
@@ -73,12 +72,15 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
         """
+        if self_device:
+            self.session.headers["NDCDEVICEID"] = self_deviceId(email)
 
         data = {
             "email": email,
             "secret": f"0 {password}",
             "clientType": 100,
-            "deviceID": device_id
+            "deviceID": self.session.headers["NDCDEVICEID"],
+            "v": 2
         }
 
         response = self.session.post(f"{api}/g/s/auth/login", json=data)
@@ -99,7 +101,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
         return json
 
-    def login_phone(self, phoneNumber: str, password: str):
+    def login_phone(self, phoneNumber: str, password: str, self_device: bool = True):
         """
         Login into an account.
 
@@ -112,11 +114,14 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
         """
+        if self_device:
+            self.session.headers["NDCDEVICEID"] = self_deviceId(phoneNumber)
+
         data = {
             "phoneNumber": phoneNumber,
             "v": 2,
             "secret": f"0 {password}",
-            "deviceID": device_id,
+            "deviceID": self.session.headers["NDCDEVICEID"],
             "clientType": 100,
             "action": "normal",
         }
@@ -140,7 +145,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
         return json
 
-    def login_secret(self, secret: str):
+    def login_secret(self, secret: str, self_device: bool = True):
         """
         Login into an account.
 
@@ -152,10 +157,13 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
         """
+        if self_device:
+            self.session.headers["NDCDEVICEID"] = self_deviceId(secret)
+
         data = {
             "v": 2,
             "secret": secret,
-            "deviceID": device_id,
+            "deviceID": self.session.headers["NDCDEVICEID"],
             "clientType": 100,
             "action": "normal",
         }
@@ -196,7 +204,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
         """
 
-        if deviceId == None: deviceId = device_id
+        if not deviceId: deviceId = self.device_id
 
         data = {
             "secret": f"0 {password}",
@@ -237,7 +245,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         """
         data = {
             "secret": f"0 {password}",
-            "deviceID": device_id,
+            "deviceID": self.device_id,
             "email": email
         }
 
@@ -257,7 +265,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
         """
         data = {
-            "deviceID": device_id,
+            "deviceID": self.device_id,
             "clientType": 100
         }
 
@@ -324,7 +332,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
                 "type": 1,
                 "identity": email,
                 "data": {"code": code}},
-            "deviceID": device_id,
+            "deviceID": self.device_id,
         }
 
         response = self.session.post(f"{api}/g/s/auth/check-security-validation", json=data)
@@ -346,7 +354,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         data = {
             "identity": email,
             "type": 1,
-            "deviceID": device_id
+            "deviceID": self.device_id
         }
 
         if resetPassword is True:
@@ -374,7 +382,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "type": 1,
             "identity": email,
             "data": {"code": code},
-            "deviceID": device_id
+            "deviceID": self.device_id
         }
 
         response = self.session.post(f"{api}/g/s/auth/activate-email", json=data)
@@ -395,7 +403,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         """
 
         data = {
-            "deviceID": device_id,
+            "deviceID": self.device_id,
             "secret": f"0 {password}"
         }
 
@@ -426,10 +434,10 @@ class Client(Callbacks, SocketHandler, SocketRequests):
                 "type": 1,
                 "identity": email,
                 "level": 2,
-                "deviceID": device_id
+                "deviceID": self.device_id
             },
             "phoneNumberValidationContext": None,
-            "deviceID": device_id
+            "deviceID": self.device_id
         }
 
         response = self.session.post(f"{api}/g/s/auth/reset-password", json=data)
@@ -930,23 +938,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
         if file:
             data["content"] = None
-            if fileType == "audio":
-                data["type"] = 2
-                data["mediaType"] = 110
+            url = upload_media(self, file, fileType)
 
-            elif fileType == "image":
-                data["mediaType"] = 100
-                data["mediaUploadValueContentType"] = "image/jpg"
-                data["mediaUhqEnabled"] = True
-
-            elif fileType == "gif":
-                data["mediaType"] = 100
-                data["mediaUploadValueContentType"] = "image/gif"
-                data["mediaUhqEnabled"] = True
-
-            else: raise exceptions.SpecifyType(fileType)
-
-            data["mediaUploadValue"] = b64encode(file.read()).decode()
+            data["mediaValue"] = url
 
         response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/message", json=data)
         return response.status_code
@@ -1872,3 +1866,16 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
         response = self.session.get(f"{api}/g/s/topic/0/feed/community?language={language}&type=web-explore&categoryKey=recommendation&size={size}&pagingType=t")
         return objects.CommunityList(response.json()["communityList"]).CommunityList
+
+
+    def get_blockers(self) -> list[str]:
+        """
+        Get ids of user ho block you.
+
+        **Returns**
+            - **Success** : :meth:`List <str>`
+
+            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+        """
+        response = self.session.get(f"{api}/g/s/block/full-list")
+        return response.json()["blockerUidList"]

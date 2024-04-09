@@ -1,7 +1,6 @@
 from uuid import uuid4
 from time import timezone
 from requests import Session
-from base64 import b64encode
 from typing import BinaryIO, Union
 
 from .constants import api, upload_media
@@ -33,7 +32,7 @@ class SubClient():
         response = self.session.delete(f"{api}/g/s-x{self.comId}/community/invitation/{inviteId}")
         return response.status_code
 
-    def post_blog(self, title: str, content: str, imageList: list = None, captionList: list = None, categoriesList: list = None, backgroundColor: str = None, fansOnly: bool = False, extensions: dict = None, crash: bool = False):
+    def post_blog(self, title: str, content: str, imageList: list = None, captionList: list = None, categoriesList: list = None, backgroundColor: str = None, fansOnly: bool = False, extensions: dict = None):
         mediaList = list()
 
         if captionList is not None:
@@ -639,23 +638,9 @@ class SubClient():
 
         if file:
             data["content"] = None
-            if fileType == "audio":
-                data["type"] = 2
-                data["mediaType"] = 110
+            url = upload_media(self, file, fileType)
 
-            elif fileType == "image":
-                data["mediaType"] = 100
-                data["mediaUploadValueContentType"] = "image/jpg"
-                data["mediaUhqEnabled"] = True
-
-            elif fileType == "gif":
-                data["mediaType"] = 100
-                data["mediaUploadValueContentType"] = "image/gif"
-                data["mediaUhqEnabled"] = True
-
-            else: raise exceptions.SpecifyType(fileType)
-
-            data["mediaUploadValue"] = b64encode(file.read()).decode()
+            data["mediaValue"] = url
 
 
         response = self.session.post(
@@ -666,15 +651,14 @@ class SubClient():
         return response.status_code
 
     def full_embed(self, link: str, image: BinaryIO, message: str, chatId: str):
+        url = upload_media(self, image, "image/png")
         data = {
             "type": 0,
             "content": message,
             "extensions": {
                 "linkSnippetList": [{
                     "link": link,
-                    "mediaType": 100,
-                    "mediaUploadValue": b64encode(image.read()).decode(),
-                    "mediaUploadValueContentType": "image/png"
+                    "mediaValue": url
                 }]
             },
             "attachedObject": None

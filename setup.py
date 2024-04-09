@@ -22,12 +22,14 @@ keywords = [
     'python3.x',
     'minori',
     'august',
-    'augustlight'
+    'augustlight',
+    'aminolightpy'
 ]
 
 setup(
     name="amino.light.py",
-    version="0.0.9",
+    version="0.1.1",
+    url="https://github.com/AugustLigh/AminoLightPy",
     license="MIT",
     description="Best Amino.py alternative",
     author="AugustLight",

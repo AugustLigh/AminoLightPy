@@ -22,6 +22,10 @@ def signature(data: Union[str, bytes]) -> str:
 def update_deviceId(device: str) -> str:
     return gen_deviceId(bytes.fromhex(device[2:42]))
 
+def self_deviceId(email: str) -> str:
+    hash = sha1(email.encode()).digest()
+    return gen_deviceId(hash)
+
 def decode_sid(sid: str) -> dict:
     sid = sid.replace("-", "+").replace("_", "/")
     sid += "=" * (-len(sid) % 4)
