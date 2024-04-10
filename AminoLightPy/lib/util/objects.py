@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name
 # You don't even know how long this shit took...
 # F*ck you Sand for making me do this.
 
@@ -28,7 +29,7 @@ class UserProfile:
         if data is None:
             for attr in self.__slots__:
                 setattr(self, attr, None)
-        
+
             return
 
         self.json: Optional[Dict] = data
@@ -116,8 +117,6 @@ class UserProfile:
         self.strikeCount: Optional[int] = self.staffInfo.get("strikeCount")
         self.warningCount: Optional[int] = self.staffInfo.get("warningCount")
 
-
-        
         self.session = None
 
     @property
@@ -458,7 +457,7 @@ class Community:
         if data is None:
             for attr in self.__slots__:
                 setattr(self, attr, None)
-        
+
             return
 
         self.json = data
@@ -545,7 +544,6 @@ class CommunityList:
 
     @property
     def CommunityList(self):
-    
         return self
 
 class CommentList:
@@ -626,9 +624,9 @@ class UserProfileCountList:
         if data is None:
             for attr in self.__slots__:
                 setattr(self, attr, None)
-        
+
             return
-            
+
         self.json = data
 
         self.profile: UserProfileList = UserProfileList(data.get("userProfileList")).UserProfileList
@@ -871,7 +869,7 @@ class Thread:
         if data is None:
             for attr in self.__slots__:
                 setattr(self, attr, None)
-        
+
             return
 
         self.json = data
@@ -1053,9 +1051,9 @@ class Sticker:
         if data is None:
             for attr in self.__slots__:
                 setattr(self, attr, None)
-        
+
             return
-            
+
         self.json = data
 
         self.collection: StickerCollection = StickerCollection(data.get("stickerCollectionSummary")).StickerCollection
@@ -1107,7 +1105,7 @@ class StickerCollection:
         self.icon = data.get("icon")
         self.title = data.get("name")
         self.collectionId = data.get("collectionId")
-        
+
         self.isActivated = data.get("isActivated")
         self.ownershipStatus = data.get("ownershipStatus")
         self.isNew = data.get("isNew")
@@ -1443,7 +1441,7 @@ class AdminLogList:
 class LotteryLog:
     def __init__(self, data):
         self.json = data
-        
+
         self.awardValue = data.get("awardValue")
         self.parentId = data.get("parentId")
         self.parentType = data.get("parentType")

@@ -1,3 +1,5 @@
+# pylint: disable=invalid-name
+
 from json import loads, dumps
 from time import time, sleep
 from threading import Thread
@@ -92,9 +94,8 @@ class SocketHandler:
 
 
 class SocketRequests:
-    def __init__(self, socket: SocketHandler) -> None:
+    def __init__(self) -> None:
         self.active_live_chats = set()
-        self.socket = socket
 
     def join_voice_chat(self, comId: int, chatId: str, joinType: int = 1):
         """
@@ -115,7 +116,7 @@ class SocketRequests:
             "t": 112
         }
         data = dumps(data)
-        self.soket.send(data)
+        self.send(data)
 
     def join_video_chat(self, comId: int, chatId: str, joinType: int = 1):
         """
@@ -137,7 +138,7 @@ class SocketRequests:
             "t": 108
         }
         data = dumps(data)
-        self.socket.send(data)
+        self.send(data)
 
     def join_video_chat_as_viewer(self, comId: int, chatId: str):
         data = {
@@ -150,7 +151,7 @@ class SocketRequests:
             "t": 112
         }
         data = dumps(data)
-        self.socket.send(data)
+        self.send(data)
 
 
     # Fixed by vedansh#4039
@@ -187,7 +188,7 @@ class SocketRequests:
             "t": 112
         }
         data = dumps(data)
-        self.socket.send(data)
+        self.send(data)
         data = {
             "o": {
                 "ndcId": int(comId),
@@ -197,7 +198,7 @@ class SocketRequests:
             "t": 108
         }
         data = dumps(data)
-        self.socket.send(data)
+        self.send(data)
         self.active_live_chats.add(chatId)
         Thread(target=self.run_vc, args=(comId, chatId, joinType)).start()
 
@@ -212,7 +213,7 @@ class SocketRequests:
             "t": 112
         }
         data = dumps(data)
-        self.socket.send(data)
+        self.send(data)
         self.active_live_chats.remove(chatId)
 
     def Browsing(self, comId: int, blogId: str = None, blogType: int = 0):
@@ -241,7 +242,7 @@ class SocketRequests:
             "t": 306
         }
         data = dumps(data)
-        self.socket.send(data)
+        self.send(data)
 
     def Chatting(self, comId: int, chatId: str, threadType: int = 2):
         """
@@ -267,7 +268,7 @@ class SocketRequests:
             "t": 306
         }
         data = dumps(data)
-        self.socket.send(data)
+        self.send(data)
 
     def PublicChats(self, comId: int,):
         """
@@ -286,7 +287,7 @@ class SocketRequests:
             "t": 306
         }
         data = dumps(data)
-        self.socket.send(data)
+        self.send(data)
 
     def LeaderBoards(self, comId: int,):
         """
@@ -305,7 +306,7 @@ class SocketRequests:
             "t": 306
         }
         data = dumps(data)
-        self.socket.send(data)
+        self.send(data)
 
     def start_video_chat(self, comId: str, chatId: str, joinType: int = 1):
         data = {
@@ -317,7 +318,7 @@ class SocketRequests:
             "t": 112
         }
         data = dumps(data)
-        self.socket.send(data)
+        self.send(data)
 
         data = {
             "o": {
@@ -329,7 +330,7 @@ class SocketRequests:
             "t": 108
         }
         data = dumps(data)
-        self.socket.send(data)
+        self.send(data)
 
 
 class Callbacks:

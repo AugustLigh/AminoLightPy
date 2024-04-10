@@ -1,7 +1,9 @@
+# pylint: disable=invalid-name
+
 from uuid import uuid4
 from typing import BinaryIO, Union
 
-from .constants import *
+from .constants import api, upload_media, AminoSession
 from .socket import Callbacks, SocketHandler, SocketRequests
 from .lib.util import exceptions, objects, helpers, self_deviceId
 
@@ -17,18 +19,22 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
         self.socket_enabled = socket_enabled
         if socket_enabled:
-            handler = SocketHandler.__init__(self, self, socketDebugging)
-            SocketRequests.__init__(self, handler)
+            SocketHandler.__init__(self, self, socketDebugging)
+            SocketRequests.__init__(self)
             Callbacks.__init__(self)
 
         self.session.proxies = proxies
 
         self.sid = None
-        self.profile: objects.UserProfile = objects.UserProfile(None).UserProfile
+        self.profile = objects.UserProfile(None).UserProfile
         self.profile.session = self.session
 
 
     def parse_headers(self, data: str = None) -> dict:
+        """
+        **Returns**
+            - Headers. For support old custom requests
+        """
         base_headers: dict = self.session.headers
         if data:
             base_headers["NDC-MSG-SIG"] = helpers.signature(data)
@@ -47,8 +53,8 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         self.authenticated = True
         self.sid = SID
 
-        self.profile: objects.UserProfile = objects.UserProfile({"uid": userId}).UserProfile
-    
+        self.profile = objects.UserProfile({"uid": userId}).UserProfile
+
         self.session.headers.update({
             "NDCAUTH": f"sid={self.sid}",
             "AUID": self.profile.userId
@@ -70,7 +76,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         if self_device:
             self.session.headers["NDCDEVICEID"] = self_deviceId(email)
@@ -87,7 +93,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         self.authenticated = True
         json = response.json()
         self.sid = json["sid"]
-        self.profile: objects.UserProfile = objects.UserProfile(json["userProfile"]).UserProfile
+        self.profile = objects.UserProfile(json["userProfile"]).UserProfile
 
         self.session.headers.update({
             "NDCAUTH": f"sid={self.sid}",
@@ -112,7 +118,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         if self_device:
             self.session.headers["NDCDEVICEID"] = self_deviceId(phoneNumber)
@@ -131,7 +137,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         json = response.json()
         self.sid = json["sid"]
 
-        self.profile: objects.UserProfile = objects.UserProfile(json["userProfile"]).UserProfile
+        self.profile = objects.UserProfile(json["userProfile"]).UserProfile
 
         self.session.headers.update({
             "NDCAUTH": f"sid={self.sid}",
@@ -155,7 +161,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         if self_device:
             self.session.headers["NDCDEVICEID"] = self_deviceId(secret)
@@ -173,7 +179,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         json = response.json()
         self.sid = json["sid"]
 
-        self.profile: objects.UserProfile = objects.UserProfile(json["userProfile"]).UserProfile
+        self.profile = objects.UserProfile(json["userProfile"]).UserProfile
 
         self.session.headers.update({
             "NDCAUTH": f"sid={self.sid}",
@@ -187,7 +193,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
         return json
 
-    def register(self, nickname: str, email: str, password: str, verificationCode: str, deviceId: str = None):
+    def register(self, nickname: str, email: str, password: str, verificationCode: str):
         """
         Register an account.
 
@@ -201,14 +207,12 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-
-        if not deviceId: deviceId = self.device_id
 
         data = {
             "secret": f"0 {password}",
-            "deviceID": deviceId,
+            "deviceID": self.device_id,
             "email": email,
             "clientType": 100,
             "nickname": nickname,
@@ -224,8 +228,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
                 "identity": email
             },
             "type": 1,
-            "identity": email,
-        }     
+            "identity": email}     
 
         response = self.session.post(f"{api}/g/s/auth/register", json=data)
         return response.json()
@@ -241,7 +244,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {
             "secret": f"0 {password}",
@@ -262,7 +265,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {
             "deviceID": self.device_id,
@@ -297,18 +300,19 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if gender.lower() == "male": gender = 1
-        elif gender.lower() == "female": gender = 2
-        elif gender.lower() == "non-binary": gender = 255
-        else: raise exceptions.SpecifyType
+        gender_mapping = {"male": 1, "female": 2, "non-binary": 255}
 
-        if age <= 12: raise exceptions.AgeTooLow
+        gender = gender.lower()
+        if gender not in gender_mapping:
+            raise exceptions.SpecifyType
+
+        age = max(13, age)
 
         data = {
             "age": age,
-            "gender": gender,
+            "gender": gender_mapping[gender],
         }
 
         response = self.session.post(f"{api}/g/s/persona/profile/basic", json=data)
@@ -325,7 +329,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {
             "validationContext": {
@@ -349,7 +353,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {
             "identity": email,
@@ -375,7 +379,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
 
         data = {
@@ -399,7 +403,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
 
         data = {
@@ -422,7 +426,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
 
         data = {
@@ -445,14 +449,32 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
 
     def get_account_info(self):
+        """
+        Information of an this account.
+
+        **Returns**
+            - **Success** : :meth:`User Object <AminoLightPy.lib.util.objects.UserProfile>`
+
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
+        """
         response = self.session.get(f"{api}/g/s/account")
         return objects.UserProfile(response.json()["account"]).UserProfile
 
     def handle_socket_message(self, data):
+        "Adapter between receiving messages and processing them"
         return self.resolve(data)
 
     def get_eventlog(self):
-        response = self.session.get(f"{api}/g/s/eventlog/profile?language=en")
+        """
+        Information of an events.
+
+        **Returns**
+            - **Success** : :meth:`dict`
+
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
+        """
+        params = {"language": "en"}
+        response = self.session.get(f"{api}/g/s/eventlog/profile", params=params)
         return response.json()
 
     def sub_clients(self, start: int = 0, size: int = 25):
@@ -464,16 +486,30 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - *size* : Size of the list.
 
         **Returns**
-            - **Success** : :meth:`Community List <amino.lib.util.objects.CommunityList>`
+            - **Success** : :meth:`Community List <AminoLightPy.lib.util.objects.CommunityList>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if not self.authenticated: raise exceptions.NotLoggedIn
+        if not self.authenticated:
+            raise exceptions.NotLoggedIn
         response = self.session.get(f"{api}/g/s/community/joined?v=1&start={start}&size={size}")
         return objects.CommunityList(response.json()["communityList"]).CommunityList
 
     def sub_clients_profile(self, start: int = 0, size: int = 25):
-        if not self.authenticated: raise exceptions.NotLoggedIn
+        """
+        List of profiles in communities.
+
+        **Parameters**
+            - *start* : Where to start the list.
+            - *size* : Size of the list.
+
+        **Returns**
+            - **Success** : :meth:`list<dict>`
+
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
+        """
+        if not self.authenticated:
+            raise exceptions.NotLoggedIn
         response = self.session.get(f"{api}/g/s/community/joined?v=1&start={start}&size={size}")
         return response.json()["userInfoInCommunities"]
 
@@ -485,9 +521,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **userId** : ID of the User.
 
         **Returns**
-            - **Success** : :meth:`User Object <amino.lib.util.objects.UserProfile>`
+            - **Success** : :meth:`User Object <AminoLightPy.lib.util.objects.UserProfile>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/user-profile/{userId}")
         return objects.UserProfile(response.json()["userProfile"]).UserProfile
@@ -501,11 +537,16 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - *size* : Size of the list.
 
         **Returns**
-            - **Success** : :meth:`Chat List <amino.lib.util.objects.ThreadList>`
+            - **Success** : :meth:`Chat List <AminoLightPy.lib.util.objects.ThreadList>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/chat/thread?type=joined-me&start={start}&size={size}")
+        params = {
+            "start": start,
+            "size": size,
+            "type": "joined-me"
+        }
+        response = self.session.get(f"{api}/g/s/chat/thread", params=params)
         return objects.ThreadList(response.json()["threadList"]).ThreadList
 
     def get_chat_thread(self, chatId: str):
@@ -516,15 +557,34 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **chatId** : ID of the Chat.
 
         **Returns**
-            - **Success** : :meth:`Chat Object <amino.lib.util.objects.Thread>`
+            - **Success** : :meth:`Chat Object <AminoLightPy.lib.util.objects.Thread>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/chat/thread/{chatId}")
         return objects.Thread(response.json()["thread"]).Thread
 
     def get_chat_users(self, chatId: str, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/g/s/chat/thread/{chatId}/member?start={start}&size={size}&type=default&cv=1.2")
+        """
+        List of users in a chat.
+
+        **Parameters**
+            - **chatId** (str): ID of the chat.
+            - *start* (int, optional): The index from which to start the list. Defaults to 0.
+            - *size* (int, optional): The size of the list. Defaults to 25.
+
+        **Returns**
+            - **Success** : :meth:`User List <AminoLightPy.lib.util.objects.UserProfileList>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
+        """
+        params = {
+            "start": start,
+            "size": size,
+            "type": "default",
+            "cv": "1.2"
+        }
+
+        response = self.session.get(f"{api}/g/s/chat/thread/{chatId}/member", params=params)
         return objects.UserProfileList(response.json()["memberList"]).UserProfileList
 
     def join_chat(self, chatId: str):
@@ -537,7 +597,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
 
         response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/member/{self.profile.userId}")
@@ -553,12 +613,15 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.delete(f"{api}/g/s/chat/thread/{chatId}/member/{self.profile.userId}")
+        userId = self.profile.userId
+        response = self.session.delete(f"{api}/g/s/chat/thread/{chatId}/member/{userId}")
         return response.status_code
 
-    def start_chat(self, userId: Union[str, list], message: str, title: str = None, content: str = None, isGlobal: bool = False, publishToGlobal: bool = False):
+    def start_chat(self, userId: Union[str, list], message: str,
+            title: str = None, content: str = None,
+            isGlobal: bool = False, publishToGlobal: bool = False):
         """
         Start an Chat with an User or List of Users.
 
@@ -573,31 +636,28 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if isinstance(userId, str): userIds = [userId]
-        elif isinstance(userId, list): userIds = userId
-        elif isinstance(userId, tuple): userIds = userId
-        else: raise exceptions.WrongType
+        if isinstance(userId, (str, list, tuple)):
+            userIds = list(userId)
+        else:
+            raise exceptions.WrongType
 
         data = {
             "title": title,
             "inviteeUids": userIds,
             "initialMessageContent": message,
             "content": content,
+            "type": 2 if isGlobal else 0,
+            "publishToGlobal": 1 if publishToGlobal else 0
         }
 
-        if isGlobal is True:
-            data["type"] = 2
+        if isGlobal:
             data["eventSource"] = "GlobalComposeMenu"
-        else: data["type"] = 0
-
-        if publishToGlobal is True: data["publishToGlobal"] = 1
-        else: data["publishToGlobal"] = 0
-
 
         response = self.session.post(f"{api}/g/s/chat/thread", json=data)
         return objects.Thread(response.json()["thread"]).Thread
+
 
     def invite_to_chat(self, userId: Union[str, list], chatId: str):
         """
@@ -610,12 +670,12 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if isinstance(userId, str): userIds = [userId]
-        elif isinstance(userId, list): userIds = userId
-        elif isinstance(userId, tuple): userIds = userId
-        else: raise exceptions.WrongType
+        if not isinstance(userId, (str, list)):
+            raise exceptions.WrongType
+
+        userIds = list(userId) if isinstance(userId, str) else userId
 
         data = {
             "uids": userIds
@@ -624,11 +684,27 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/member/invite", json=data)
         return response.status_code
 
-    def kick(self, userId: str, chatId: str, allowRejoin: bool = True):
-        if allowRejoin: allowRejoin = 1
-        if not allowRejoin: allowRejoin = 0
 
-        response = self.session.delete(f"{api}/g/s/chat/thread/{chatId}/member/{userId}?allowRejoin={allowRejoin}")
+    def kick(self, userId: str, chatId: str, allowRejoin: bool = True):
+        """
+        Kicks a user from a chat.
+
+        **Parameters**
+            - **userId** (str): ID of the user to be kicked.
+            - **chatId** (str): ID of the chat from which the user is to be kicked.
+            - *allowRejoin* (bool, optional): Whether the user is allowed to rejoin the chat. Defaults to True.
+
+        **Returns**
+            - **Success** : 200 (int)
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
+        """
+
+        params = {"allowRejoin": int(allowRejoin)}
+
+        response = self.session.delete(
+            url=f"{api}/g/s/chat/thread/{chatId}/member/{userId}",
+            params=params
+        )
         return response.status_code
 
     def get_chat_messages(self, chatId: str, size: int = 25, pageToken: str = None):
@@ -642,14 +718,18 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - *pageToken* : Next Page Token.
 
         **Returns**
-            - **Success** : :meth:`Message List <amino.lib.util.objects.MessageList>`
+            - **Success** : :meth:`Message List <AminoLightPy.lib.util.objects.MessageList>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if not pageToken: url = f"{api}/g/s/chat/thread/{chatId}/message?v=2&pagingType=t&pageToken={pageToken}&size={size}"
-        else: url = f"{api}/g/s/chat/thread/{chatId}/message?v=2&pagingType=t&size={size}"
+        params = {
+            "pagingType": "t",
+            "size": size,
+        }
+        if pageToken:
+            params["pageToken"] = pageToken
 
-        response = self.session.get(url)
+        response = self.session.get(f"{api}/g/s/chat/thread/{chatId}/message", params=params)
         return objects.GetMessages(response.json()).GetMessages
 
     def get_message_info(self, chatId: str, messageId: str):
@@ -661,9 +741,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **messageId** : ID of the Message.
 
         **Returns**
-            - **Success** : :meth:`Message Object <amino.lib.util.objects.Message>`
+            - **Success** : :meth:`Message Object <AminoLightPy.lib.util.objects.Message>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/chat/thread/{chatId}/message/{messageId}")
         return objects.Message(response.json()["message"]).Message
@@ -676,9 +756,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **comId** : ID of the Community.
 
         **Returns**
-            - **Success** : :meth:`Community Object <amino.lib.util.objects.Community>`
+            - **Success** : :meth:`Community Object <AminoLightPy.lib.util.objects.Community>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s-x{comId}/community/info?withInfluencerList=1&withTopicList=true&influencerListOrderStrategy=fansCount")
         return objects.Community(response.json()["community"]).Community
@@ -691,14 +771,15 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **aminoId** : Amino ID of the Community.
 
         **Returns**
-            - **Success** : :meth:`Community List <amino.lib.util.objects.CommunityList>`
+            - **Success** : :meth:`Community List <AminoLightPy.lib.util.objects.CommunityList>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/search/amino-id-and-link?q={aminoId}")
         result = response.json()["resultList"]
-        if len(result) == 0: raise exceptions.CommunityNotFound(aminoId)
-        else: return objects.CommunityList([com["refObject"] for com in result]).CommunityList
+        if not result:
+            raise exceptions.CommunityNotFound(aminoId)
+        return objects.CommunityList([com["refObject"] for com in result]).CommunityList
 
     def get_user_following(self, userId: str, start: int = 0, size: int = 25):
         """
@@ -710,9 +791,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - *size* : Size of the list.
 
         **Returns**
-            - **Success** : :meth:`User List <amino.lib.util.objects.UserProfileList>`
+            - **Success** : :meth:`User List <AminoLightPy.lib.util.objects.UserProfileList>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/user-profile/{userId}/joined?start={start}&size={size}")
         return objects.UserProfileList(response.json()["userProfileList"]).UserProfileList
@@ -727,9 +808,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - *size* : Size of the list.
 
         **Returns**
-            - **Success** : :meth:`User List <amino.lib.util.objects.UserProfileList>`
+            - **Success** : :meth:`User List <AminoLightPy.lib.util.objects.UserProfileList>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/user-profile/{userId}/member?start={start}&size={size}")
         return objects.UserProfileList(response.json()["userProfileList"]).UserProfileList
@@ -743,44 +824,76 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - *size* : Size of the list.
 
         **Returns**
-            - **Success** : :meth:`Users List <amino.lib.util.objects.UserProfileList>`
+            - **Success** : :meth:`Users List <AminoLightPy.lib.util.objects.UserProfileList>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/block?start={start}&size={size}")
         return objects.UserProfileList(response.json()["userProfileList"]).UserProfileList
 
     def get_blog_info(self, blogId: str = None, wikiId: str = None, quizId: str = None, fileId: str = None):
+        """
+        Get information about a blog, wiki, quiz, or file.
+
+        Parameters:
+            blogId (str): ID of the blog.
+            wikiId (str): ID of the wiki.
+            quizId (str): ID of the quiz.
+            fileId (str): ID of the file.
+
+        Returns:
+            object: Information about the blog, wiki, quiz, or file.
+        """
         if blogId or quizId:
-            if quizId is not None: blogId = quizId
+            blogId = quizId if quizId is not None else blogId
             response = self.session.get(f"{api}/g/s/blog/{blogId}")
             return objects.GetBlogInfo(response.json()).GetBlogInfo
 
-        elif wikiId:
+        if wikiId:
             response = self.session.get(f"{api}/g/s/item/{wikiId}")
-            return objects.GetBlogInfo(response.json()).GetWikiInfo
+            return objects.GetWikiInfo(response.json()).GetWikiInfo
 
-        elif fileId:
+        if fileId:
             response = self.session.get(f"{api}/g/s/shared-folder/files/{fileId}")
             return objects.SharedFolderFile(response.json()["file"]).SharedFolderFile
 
-        else: raise exceptions.SpecifyType()
+        raise exceptions.SpecifyType()
 
-    def get_blog_comments(self, blogId: str = None, wikiId: str = None, quizId: str = None, fileId: str = None, sorting: str = "newest", start: int = 0, size: int = 25):
-        if sorting == "newest": sorting = "newest"
-        elif sorting == "oldest": sorting = "oldest"
-        elif sorting == "top": sorting = "vote"
-        else: raise exceptions.WrongType(sorting)
+
+    def get_blog_comments(self, blogId: str = None, wikiId: str = None, quizId: str = None,
+            fileId: str = None, sorting: str = "newest", start: int = 0, size: int = 25):
+        """
+        Get comments from a blog, wiki, quiz, or file.
+
+        Parameters:
+            blogId (str): ID of the blog.
+            wikiId (str): ID of the wiki.
+            quizId (str): ID of the quiz.
+            fileId (str): ID of the file.
+            sorting (str): Sorting order of comments. Can be "newest", "oldest", or "top".
+            start (int): Starting index of comments.
+            size (int): Number of comments to fetch.
+
+        Returns:
+            CommentList: List of comments.
+        """
+        sorting_dict = {"newest": "newest", "oldest": "oldest", "top": "vote"}
+        sorting = sorting_dict.get(sorting)
+        if sorting is None:
+            raise exceptions.WrongType(sorting)
 
         if blogId or quizId:
-            if not quizId: 
-                blogId = quizId
-            url = f"{api}/g/s/blog/{blogId}/comment?sort={sorting}&start={start}&size={size}"
-        elif wikiId: url = f"{api}/g/s/item/{wikiId}/comment?sort={sorting}&start={start}&size={size}"
-        elif fileId: url = f"{api}/g/s/shared-folder/files/{fileId}/comment?sort={sorting}&start={start}&size={size}",
-        else: raise exceptions.SpecifyType
+            blogId = quizId if not blogId else blogId
+            url = f"{api}/g/s/blog/{blogId}/comment"
+        elif wikiId:
+            url = f"{api}/g/s/item/{wikiId}/comment"
+        elif fileId:
+            url = f"{api}/g/s/shared-folder/files/{fileId}/comment"
+        else:
+            raise exceptions.SpecifyType
 
-        response = self.session.get(url)
+        params = {"sort": sorting, "start": start, "size": size}
+        response = self.session.get(url, params=params)
         return objects.CommentList(response.json()["commentList"]).CommentList
 
     def get_blocker_users(self, start: int = 0, size: int = 25):
@@ -794,7 +907,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : :meth:`List of User IDs <None>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/block/full-list?start={start}&size={size}")
         return response.json()["blockerUidList"]
@@ -811,14 +924,18 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - *size* : Size of the list.
 
         **Returns**
-            - **Success** : :meth:`Comments List <amino.lib.util.objects.CommentList>`
+            - **Success** : :meth:`Comments List <AminoLightPy.lib.util.objects.CommentList>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if sorting.lower() == "newest": sorting = "newest"
-        elif sorting.lower() == "oldest": sorting = "oldest"
-        elif sorting.lower() == "top": sorting = "vote"
-        else: raise exceptions.WrongType(sorting)
+        if sorting.lower() == "newest":
+            sorting = "newest"
+        elif sorting.lower() == "oldest":
+            sorting = "oldest"
+        elif sorting.lower() == "top":
+            sorting = "vote"
+        else:
+            raise exceptions.WrongType(sorting)
 
         response = self.session.get(f"{api}/g/s/user-profile/{userId}/g-comment?sort={sorting}&start={start}&size={size}")
         return objects.CommentList(response.json()["commentList"]).CommentList
@@ -838,10 +955,12 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if reason is None: raise exceptions.ReasonNeeded
-        if flagType is None: raise exceptions.FlagTypeNeeded
+        if reason is None:
+            raise exceptions.ReasonNeeded
+        if flagType is None:
+            raise exceptions.FlagTypeNeeded
 
         data = {
             "flagType": flagType,
@@ -860,15 +979,19 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             data["objectId"] = wikiId
             data["objectType"] = 2
 
-        else: raise exceptions.SpecifyType
+        else:
+            raise exceptions.SpecifyType
 
-        if asGuest: flg = "g-flag"
-        else: flg = "flag"
+        if asGuest:
+            flg = "g-flag"
+        else:
+            flg = "flag"
 
         response = self.session.post(f"{api}/g/s/{flg}", json=data)
         return response.status_code
 
     def check_values(self, *args):
+        "Check params in send_message metod."
         return any(arg is None for arg in args)
 
     def send_message(self, chatId: str, message: str = None, messageType: int = 0, file: BinaryIO = None, fileType: str = None, replyTo: str = None, mentionUserIds: list = None, stickerId: str = None, embedId: str = None, embedType: int = None, embedLink: str = None, embedTitle: str = None, embedContent: str = None, embedImage: BinaryIO = None):
@@ -894,16 +1017,15 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
 
         data = {
             "type": messageType,
             "content": message
         }
-        
         if self.check_values(embedId, embedType, embedLink, embedTitle, embedContent, embedImage):
-            attachedObject = dict()
+            attachedObject = {}
 
             if embedId:
                 attachedObject["objectId"] = embedId
@@ -922,14 +1044,13 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             if embedImage:
                 attachedObject["mediaList"] = [[100, upload_media(self, embedImage, "image"), None]]
-
             data["attachedObject"] = attachedObject
-        
         if mentionUserIds:
             mentions = [{"uid": mention_uid} for mention_uid in mentionUserIds]
             data["extensions"] = {"mentionedArray": mentions}
 
-        if replyTo: data["replyMessageId"] = replyTo
+        if replyTo:
+            data["replyMessageId"] = replyTo
 
         if stickerId:
             data["content"] = None
@@ -958,7 +1079,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {
             "adminOpName": 102,
@@ -966,9 +1087,10 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
         if asStaff and reason:
             data["adminOpNote"] = {"content": reason}
-        
-        if not asStaff: response = self.session.delete(f"{api}/g/s/chat/thread/{chatId}/message/{messageId}")
-        else: response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/message/{messageId}/admin", json=data)
+        if not asStaff:
+            response = self.session.delete(f"{api}/g/s/chat/thread/{chatId}/message/{messageId}")
+        else:
+            response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/message/{messageId}/admin", json=data)
         return response.status_code
 
     def mark_as_read(self, chatId: str, messageId: str):
@@ -982,12 +1104,11 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {
             "messageId": messageId,
         }
-        
         response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/mark-as-read", json=data)
         return response.status_code
 
@@ -1016,112 +1137,118 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        data = dict()
+        data = {}
 
-        if title: data["title"] = title
-        if content: data["content"] = content
-        if icon: data["icon"] = icon
-        if keywords: data["keywords"] = keywords
-        if announcement: data["extensions"] = {"announcement": announcement}
-        if pinAnnouncement: data["extensions"] = {"pinAnnouncement": pinAnnouncement}
-        if fansOnly: data["extensions"] = {"fansOnly": fansOnly}
-
-        if publishToGlobal: data["publishToGlobal"] = 0
-        if not publishToGlobal: data["publishToGlobal"] = 1
+        if title:
+            data["title"] = title
+        if content:
+            data["content"] = content
+        if icon:
+            data["icon"] = icon
+        if keywords:
+            data["keywords"] = keywords
+        if announcement:
+            data["extensions"] = {"announcement": announcement}
+        if pinAnnouncement:
+            data["extensions"] = {"pinAnnouncement": pinAnnouncement}
+        if fansOnly:
+            data["extensions"] = {"fansOnly": fansOnly}
+        if publishToGlobal:
+            data["publishToGlobal"] = 0
+        if not publishToGlobal:
+            data["publishToGlobal"] = 1
 
         res = []
 
-        if doNotDisturb != None:
+        if doNotDisturb is not None:
             if doNotDisturb:
                 data = {"alertOption": 2}
-                
                 response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/member/{self.profile.userId}/alert", json=data)
                 res.append(response.status_code)
-
             if not doNotDisturb:
                 data = {"alertOption": 1}
-                
                 response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/member/{self.profile.userId}/alert", json=data)
                 res.append(response.status_code)
-
-        if pinChat != None:
+        if pinChat is not None:
             if pinChat:
                 response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/pin", json=data)
                 res.append(response.status_code)
-
             if not pinChat:
                 response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/unpin", json=data)
                 res.append(response.status_code)
-
-        if backgroundImage != None:
+        if backgroundImage is not None:
             data = {"media": [100, backgroundImage, None]}
-            
             response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/member/{self.profile.userId}/background", json=data)
             res.append(response.status_code)
-
-        if coHosts != None:
+        if coHosts is not None:
             data = {"uidList": coHosts}
-            
             response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/co-host", data=data)
             res.append(response.status_code)
-        
-        if viewOnly != None:
+        if viewOnly is not None:
             if viewOnly:
-                
                 response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/view-only/enable")
                 res.append(response.status_code)
 
             if not viewOnly:
-                
                 response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/view-only/disable")
                 res.append(response.status_code)
-
-        if canInvite != None:
+        if canInvite is not None:
             if canInvite:
-                
                 response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/members-can-invite/enable", json=data)
                 res.append(response.status_code)
-
             if not canInvite:
-                
                 response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/members-can-invite/disable", json=data)
                 res.append(response.status_code)
-
-        if canTip != None:
+        if canTip is not None:
             if canTip:
-                
                 response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/tipping-perm-status/enable", json=data)
                 res.append(response.status_code)
-
             if not canTip:
-                
                 response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/tipping-perm-status/disable", json=data)
                 res.append(response.status_code)
-        
         response = self.session.post(f"{api}/g/s/chat/thread/{chatId}", json=data)
         res.append(response.status_code)
 
         return res
 
     def send_coins(self, coins: int, blogId: str = None, chatId: str = None, objectId: str = None, transactionId: str = None):
+        """
+        Sends coins to a specified blog, chat, or object in the community.
+
+        **Parameters**
+            - *coins* : The number of coins to be sent.
+            - *blogId* : The ID of the blog to which the coins are to be sent. If not provided, the coins will not be sent to a blog.
+            - *chatId* : The ID of the chat to which the coins are to be sent. If not provided, the coins will not be sent to a chat.
+            - *objectId* : The ID of the object to which the coins are to be sent. If not provided, the coins will not be sent to an object.
+            - *transactionId* : The ID of the transaction. If not provided, a new transaction ID will be generated.
+
+        **Returns**
+            - **Success** : 200 (int)
+
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
+        """
         url = None
-        if transactionId is None: transactionId = str(uuid4())
+        if transactionId is None:
+            transactionId = str(uuid4())
 
         data = {
             "coins": coins,
             "tippingContext": {"transactionId": transactionId},
         }
 
-        if blogId != None: url = f"{api}/g/s/blog/{blogId}/tipping"
-        if chatId != None: url = f"{api}/g/s/chat/thread/{chatId}/tipping"
-        if objectId != None:
+        if blogId is not None:
+            url = f"{api}/g/s/blog/{blogId}/tipping"
+        if chatId is not None:
+            url = f"{api}/g/s/chat/thread/{chatId}/tipping"
+        if objectId is not None:
             data["objectId"] = objectId
             data["objectType"] = 2
             url = f"{api}/g/s/tipping"
 
-        if url is None: raise exceptions.SpecifyType
+        if url is None:
+            raise exceptions.SpecifyType
 
         response = self.session.post(url, json=data)
         return response.status_code
@@ -1136,14 +1263,13 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         if isinstance(userId, str):
             response = self.session.post(f"{api}/g/s/user-profile/{userId}/member")
 
         elif isinstance(userId, list):
             data = {"targetUidList": userId}
-            
             response = self.session.post(f"{api}/g/s/user-profile/{self.profile.userId}/joined", json=data)
 
         else: raise exceptions.WrongType
@@ -1160,7 +1286,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.delete(f"{api}/g/s/user-profile/{userId}/member/{self.profile.userId}")
         return response.status_code
@@ -1175,7 +1301,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.post(f"{api}/g/s/block/{userId}")
         return response.status_code
@@ -1190,7 +1316,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.delete(f"{api}/g/s/block/{userId}")
         return response.status_code
@@ -1206,10 +1332,11 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        data = dict()
-        if invitationId: data["invitationId"] = invitationId
+        data = {}
+        if invitationId:
+            data["invitationId"] = invitationId
 
         response = self.session.post(f"{api}/x{comId}/s/community/join", json=data)
         return response.status_code
@@ -1225,7 +1352,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {"message": message}
 
@@ -1242,7 +1369,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.post(f"{api}/x{comId}/s/community/leave")
         return response.status_code
@@ -1259,10 +1386,12 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if reason is None: raise exceptions.ReasonNeeded
-        if flagType is None: raise exceptions.FlagTypeNeeded
+        if reason is None:
+            raise exceptions.ReasonNeeded
+        if flagType is None:
+            raise exceptions.FlagTypeNeeded
 
         data = {
             "objectId": comId,
@@ -1271,9 +1400,10 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "message": reason,
         }
 
-        if isGuest: flg = "g-flag"
-        else: flg = "flag"
-        
+        if isGuest:
+            flg = "g-flag"
+        else:
+            flg = "flag"
         response = self.session.post(f"{api}/x{comId}/s/{flg}", json=data)
         return response.status_code
 
@@ -1292,7 +1422,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {
             "address": None,
@@ -1302,12 +1432,18 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "eventSource": "UserProfileView",
         }
 
-        if nickname: data["nickname"] = nickname
-        if icon: data["icon"] = upload_media(self, icon, "image")
-        if content: data["content"] = content
-        if backgroundColor: data["extensions"] = {"style": {"backgroundColor": backgroundColor}}
-        if backgroundImage: data["extensions"] = {"style": {"backgroundMediaList": [[100, backgroundImage, None, None, None]]}}
-        if defaultBubbleId: data["extensions"] = {"defaultBubbleId": defaultBubbleId}
+        if nickname:
+            data["nickname"] = nickname
+        if icon:
+            data["icon"] = upload_media(self, icon, "image")
+        if content:
+            data["content"] = content
+        if backgroundColor:
+            data["extensions"] = {"style": {"backgroundColor": backgroundColor}}
+        if backgroundImage:
+            data["extensions"] = {"style": {"backgroundMediaList": [[100, backgroundImage, None, None, None]]}}
+        if defaultBubbleId:
+            data["extensions"] = {"defaultBubbleId": defaultBubbleId}
 
         response = self.session.post(f"{api}/g/s/user-profile/{self.profile.userId}", json=data)
         return response.status_code
@@ -1322,7 +1458,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {"aminoId": aminoId}
 
@@ -1337,9 +1473,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **userId** : ID of the User.
 
         **Returns**
-            - **Success** : :meth:`Community List <amino.lib.util.objects.CommunityList>`
+            - **Success** : :meth:`Community List <AminoLightPy.lib.util.objects.CommunityList>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/user-profile/{userId}/linked-community")
         return objects.CommunityList(response.json()["linkedCommunityList"]).CommunityList
@@ -1352,9 +1488,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **userId** : ID of the User.
 
         **Returns**
-            - **Success** : :meth:`Community List <amino.lib.util.objects.CommunityList>`
+            - **Success** : :meth:`Community List <AminoLightPy.lib.util.objects.CommunityList>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/user-profile/{userId}/linked-community")
         return objects.CommunityList(response.json()["unlinkedCommunityList"]).CommunityList
@@ -1369,10 +1505,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {"ndcIds": comIds}
-
         response = self.session.post(f"{api}/g/s/user-profile/{self.profile.userId}/linked-community/reorder", json=data)
         return response.status_code
 
@@ -1386,7 +1521,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.post(f"{api}/g/s/user-profile/{self.profile.userId}/linked-community/{comId}")
         return response.status_code
@@ -1401,7 +1536,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.delete(f"{api}/g/s/user-profile/{self.profile.userId}/linked-community/{comId}")
         return response.status_code
@@ -1420,9 +1555,10 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if message is None: raise exceptions.MessageNeeded
+        if message is None:
+            raise exceptions.MessageNeeded
 
         data = {
             "content": message,
@@ -1430,21 +1566,19 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "type": 0,
         }
 
-        if replyTo: data["respondTo"] = replyTo
+        if replyTo:
+            data["respondTo"] = replyTo
 
         if userId:
             data["eventSource"] = "UserProfileView"
-            
             url = f"{api}/g/s/user-profile/{userId}/g-comment"
 
         elif blogId:
             data["eventSource"] = "PostDetailView"
-            
             url = f"{api}/g/s/blog/{blogId}/g-comment"
 
         elif wikiId:
             data["eventSource"] = "PostDetailView"
-            
             url = f"{api}/g/s/item/{wikiId}/g-comment"
 
         else: raise exceptions.SpecifyType
@@ -1465,12 +1599,16 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if userId: url = f"{api}/g/s/user-profile/{userId}/g-comment/{commentId}"
-        elif blogId: url = f"{api}/g/s/blog/{blogId}/g-comment/{commentId}"
-        elif wikiId: url = f"{api}/g/s/item/{wikiId}/g-comment/{commentId}"
-        else: raise exceptions.SpecifyType
+        if userId:
+            url = f"{api}/g/s/user-profile/{userId}/g-comment/{commentId}"
+        elif blogId:
+            url = f"{api}/g/s/blog/{blogId}/g-comment/{commentId}"
+        elif wikiId:
+            url = f"{api}/g/s/item/{wikiId}/g-comment/{commentId}"
+        else:
+            raise exceptions.SpecifyType
 
         response = self.session.delete(url)
         return response.status_code
@@ -1486,7 +1624,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {
             "value": 4,
@@ -1495,20 +1633,16 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         if blogId:
             if isinstance(blogId, str):
                 data["eventSource"] = "UserProfileView"
-                
                 url = f"{api}/g/s/blog/{blogId}/g-vote?cv=1.2"
 
             elif isinstance(blogId, list):
                 data["targetIdList"] = blogId
-                
                 url = f"{api}/g/s/feed/g-vote"
 
             else: raise exceptions.WrongType(type(blogId))
 
-
         elif wikiId:
             data["eventSource"] = "PostDetailView"
-            
             url = f"{api}/g/s/item/{wikiId}/g-vote?cv=1.2"
 
         else: raise exceptions.SpecifyType
@@ -1527,12 +1661,14 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if blogId: url = f"{api}/g/s/blog/{blogId}/g-vote?eventSource=UserProfileView"
-        elif wikiId: url = f"{api}/g/s/item/{wikiId}/g-vote?eventSource=PostDetailView"
-        else: raise exceptions.SpecifyType
-        
+        if blogId:
+            url = f"{api}/g/s/blog/{blogId}/g-vote?eventSource=UserProfileView"
+        elif wikiId:
+            url = f"{api}/g/s/item/{wikiId}/g-vote?eventSource=PostDetailView"
+        else:
+            raise exceptions.SpecifyType
         response = self.session.delete(url)
         return response.status_code
 
@@ -1549,7 +1685,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {
             "value": 4,
@@ -1557,17 +1693,14 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
         if userId:
             data["eventSource"] = "UserProfileView"
-            
             url = f"{api}/g/s/user-profile/{userId}/comment/{commentId}/g-vote?cv=1.2&value=1"
 
         elif blogId:
             data["eventSource"] = "PostDetailView"
-            
             url = f"{api}/g/s/blog/{blogId}/comment/{commentId}/g-vote?cv=1.2&value=1"
 
         elif wikiId:
             data["eventSource"] = "PostDetailView"
-            
             url = f"{api}/g/s/item/{wikiId}/comment/{commentId}/g-vote?cv=1.2&value=1"
 
         else: raise exceptions.SpecifyType
@@ -1588,12 +1721,16 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if userId: url = f"{api}/g/s/user-profile/{userId}/comment/{commentId}/g-vote?eventSource=UserProfileView"
-        elif blogId: url = f"{api}/g/s/blog/{blogId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
-        elif wikiId: url = f"{api}/g/s/item/{wikiId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
-        else: raise exceptions.SpecifyType
+        if userId:
+            url = f"{api}/g/s/user-profile/{userId}/comment/{commentId}/g-vote?eventSource=UserProfileView"
+        elif blogId:
+            url = f"{api}/g/s/blog/{blogId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
+        elif wikiId:
+            url = f"{api}/g/s/item/{wikiId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
+        else:
+            raise exceptions.SpecifyType
 
         response = self.session.delete(url)
         return response.status_code
@@ -1606,9 +1743,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - No parameters required.
 
         **Returns**
-            - **Success** : :meth:`Membership Object <amino.lib.util.objects.Membership>`
+            - **Success** : :meth:`Membership Object <AminoLightPy.lib.util.objects.Membership>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/membership?force=true")
         return objects.Membership(response.json()).Membership
@@ -1624,12 +1761,18 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - *size* : Size of the list.
 
         **Returns**
-            - **Success** : :meth:`Blogs List <amino.lib.util.objects.BlogList>`
+            - **Success** : :meth:`Blogs List <AminoLightPy.lib.util.objects.BlogList>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if language not in self.get_supported_languages(): raise exceptions.UnsupportedLanguage(language)
-        response = self.session.get(f"{api}/g/s/announcement?language={language}&start={start}&size={size}")
+        if language not in self.get_supported_languages():
+            raise exceptions.UnsupportedLanguage(language)
+        params = {
+            "language": language,
+            "start": start,
+            "size": size
+        }
+        response = self.session.get(f"{api}/g/s/announcement", params=params)
         return objects.BlogList(response.json()["blogList"]).BlogList
 
     def get_wallet_info(self):
@@ -1640,9 +1783,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - No parameters required.
 
         **Returns**
-            - **Success** : :meth:`Wallet Object <amino.lib.util.objects.WalletInfo>`
+            - **Success** : :meth:`Wallet Object <AminoLightPy.lib.util.objects.WalletInfo>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/wallet")
         return objects.WalletInfo(response.json()["wallet"]).WalletInfo
@@ -1656,9 +1799,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - *size* : Size of the list.
 
         **Returns**
-            - **Success** : :meth:`Wallet Object <amino.lib.util.objects.WalletInfo>`
+            - **Success** : :meth:`Wallet Object <AminoLightPy.lib.util.objects.WalletInfo>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/wallet/coin/history?start={start}&size={size}")
         return objects.WalletHistory(response.json()["coinHistoryList"]).WalletHistory
@@ -1671,9 +1814,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **deviceID** : ID of the Device.
 
         **Returns**
-            - **Success** : :meth:`User ID <amino.lib.util.objects.UserProfile.userId>`
+            - **Success** : :meth:`User ID <AminoLightPy.lib.util.objects.UserProfile.userId>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/auid?deviceId={deviceId}")
         return response.json()["auid"]
@@ -1687,9 +1830,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
                 - ``http://aminoapps.com/p/EXAMPLE``, the ``code`` is 'EXAMPLE'.
 
         **Returns**
-            - **Success** : :meth:`From Code Object <amino.lib.util.objects.FromCode>`
+            - **Success** : :meth:`From Code Object <AminoLightPy.lib.util.objects.FromCode>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/link-resolution?q={code}")
         return objects.FromCode(response.json()["linkInfoV2"]).FromCode
@@ -1704,18 +1847,19 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - *comId* : ID of the Community. Use if the Object is in a Community.
 
         **Returns**
-            - **Success** : :meth:`From Code Object <amino.lib.util.objects.FromCode>`
+            - **Success** : :meth:`From Code Object <AminoLightPy.lib.util.objects.FromCode>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {
             "objectId": objectId,
             "targetCode": 1,
             "objectType": objectType,
         }
-        
-        if comId: url = f"{api}/g/s-x{comId}/link-resolution"
-        else: url = f"{api}/g/s/link-resolution"
+        if comId:
+            url = f"{api}/g/s-x{comId}/link-resolution"
+        else:
+            url = f"{api}/g/s/link-resolution"
 
         response = self.session.post(url, json=data)
         return objects.FromCode(response.json()["linkInfoV2"]).FromCode
@@ -1730,7 +1874,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : :meth:`List of Supported Languages <List>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/community-collection/supported-languages?start=0&size=100")
         return response.json()["supportedLanguages"]
@@ -1745,7 +1889,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.post(f"{api}/g/s/coupon/new-user-coupon/claim")
         return response.status_code
@@ -1761,7 +1905,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : :meth:`List <List>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/store/subscription?objectType=122&start={start}&size={size}")
         return response.json()["storeSubscriptionItemList"]
@@ -1775,22 +1919,54 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - *size* : Size of the list.
 
         **Returns**
-            - **Success** : :meth:`User Profile Count List Object <amino.lib.util.objects.UserProfileCountList>`
+            - **Success** : :meth:`User Profile Count List Object <AminoLightPy.lib.util.objects.UserProfileCountList>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/user-profile?type=recent&start={start}&size={size}")
         return objects.UserProfileCountList(response.json()).UserProfileCountList
 
     def accept_host(self, chatId: str, requestId: str):
+        """
+        Accepts a host request for a chat.
+
+        **Parameters**
+            - **chatId** (str): ID of the chat.
+            - **requestId** (str): ID of the host request.
+
+        **Returns**
+            - **Success** : 200 (int)
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
+        """
         response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/transfer-organizer/{requestId}/accept")
         return response.status_code
 
     def accept_organizer(self, chatId: str, requestId: str):
+        """
+        Accepts a host request for a chat.
+
+        **Parameters**
+            - **chatId** (str): ID of the chat.
+            - **requestId** (str): ID of the host request.
+
+        **Returns**
+            - **Success** : 200 (int)
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
+        """
         self.accept_host(chatId, requestId)
 
     # Contributed by 'https://github.com/LynxN1'
     def link_identify(self, code: str):
+        """
+        Identifies a community link.
+
+        **Parameters**
+            - **code** (str): The code of the community link.
+
+        **Returns**
+            - **Success** : A JSON object with the community link information.
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
+        """
         response = self.session.get(f"{api}/g/s/community/link-identify?q=http%3A%2F%2Faminoapps.com%2Finvite%2F{code}")
         return response.json()
 
@@ -1805,7 +1981,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
 
         data = {
@@ -1826,7 +2002,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : 200 (int)
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
 
         data = {
@@ -1837,6 +2013,17 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         return response.status_code
 
     def purchase(self, objectId: str, isAutoRenew: bool = False):
+        """
+        Makes a purchase in the store.
+
+        **Parameters**
+            - **objectId** (str): ID of the object to be purchased.
+            - *isAutoRenew* (bool, optional): Whether the purchase should be auto-renewed. Defaults to False.
+
+        **Returns**
+            - **Success** : 200 (int)
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
+        """
         data = {
             "objectId": objectId,
             "objectType": 114,
@@ -1859,12 +2046,19 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **language** - Set up language
 
         **Returns**
-            - **Success** : :meth:`Community List <amino.lib.util.objects.CommunityList>`
+            - **Success** : :meth:`Community List <AminoLightPy.lib.util.objects.CommunityList>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
+        params = {
+            "language": language,
+            "type": "web-explore",
+            "categoryKey": "recommendation",
+            "size": size,
+            "pagingType": "t"
+        }
 
-        response = self.session.get(f"{api}/g/s/topic/0/feed/community?language={language}&type=web-explore&categoryKey=recommendation&size={size}&pagingType=t")
+        response = self.session.get(f"{api}/g/s/topic/0/feed/community", params=params)
         return objects.CommunityList(response.json()["communityList"]).CommunityList
 
 
@@ -1875,7 +2069,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         **Returns**
             - **Success** : :meth:`List <str>`
 
-            - **Fail** : :meth:`Exceptions <aminofix.lib.util.exceptions>`
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/g/s/block/full-list")
         return response.json()["blockerUidList"]
