@@ -1,46 +1,77 @@
-# AminoLightPy
-## _The best Amino.py alternative!_
+<h1 align="center">AmioLightPy</h1>
 
-Why should you choose this library?
-
-## Features
-
-- Improved performance
-- More flexible and simpler code
-- Full backwards compatibility
-- Fixed many Amino.py and Amino.fix errors
-- Cut out obsolete functions and ineffective parts of code
-
-I know that many people do not want to switch to alternative libraries, 
-since a huge part of the scripts are written in these libraries.
-
-Unfortunately they are no longer supported. Therefore, I offer a better alternative.
+![IMG_1363](https://github.com/AugustLigh/AminoLightPy/assets/125802350/ba1ae102-dee9-45ab-95c4-f5c5e0249d26)
 
 
-## Installation
+<p align="center">
+AminoApps python framework to create bots and scripts easily.
+</p>
 
-AminoLightPy requires [python](https://python.org/) v3.9+ to run.
+<p align="center">
+    <a href="https://github.com/AugustLigh/AminoLightPy/releases"><img src="https://img.shields.io/github/release/AugustLigh/AminoLightPy.svg" alt="GitHub release" />
+    <a href="https://aminopy.readthedocs.io/en/latest/index.html"><img src="https://img.shields.io/website?down_message=failing&label=docs&up_color=green&up_message=passing&url=https://aminopy.readthedocs.io/en/latest/index.html" alt="Docs" /></a>
+    <a href="https://github.com/AugustLigh/AminoLightPy/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="licence" /></a>
+</p>
 
-Install the dependencies and start the coding.
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#usage">Usage</a> •
+  <a href="#example">Example</a> •
+  <a href="#notes">Notes</a>
+  <br>
+  <a href="https://aminopy.readthedocs.io/en/latest/index.html" target="_blank">Documentation</a>
+</p>
 
-```sh
-pip install amino.light.py
+<h2 align="center">Features</h2>
+
+*  ⚡ **Optimization** : Most of the code has been rewritten.
+* ⚙ **Backward compatibility** : Write code with correct syntax.
+* 🎮 **Commands support** : Go even further with new requests.
+
+<h2 align="center">Usage</h2>
+
+Install the package :
+
+`pip install amino.light.py`
+
+---
+
+Import the `Client` and `SubClient` objects into your bot's code, and create your own help manual :
+
+```py
+from AminoLightPy import Client, SubClient
+# Your help message
+help_message = """
+Welcome!
+This is help page.
+"""
+# Create Client object
+client = Client()
+# Login into account
+client.login("example_mail@gmail.com", "example_password")
+# And display the help !
+@client.event("on_text_message")
+def on_message(data):
+	if data.message.author.userId != client.profile.userId:  # Do not answer to myself
+		# Create SubClient object
+		sub_client = SubClient(comId=data.comId, profile=client.profile)
+		if data.message.content.startswith('/help'):
+			sub_client.send_message(chatId=data.message.chatId, message=help_message)
 ```
-## Development
 
-Want to contribute? Great!
+<h2 align="center">Example</h2>
+
+Simply copy code above, and type `/help` in the chat.
+
+Also, take a look at the code for this interactive help !
+
+---
+
+If you can't find what you're looking for or need help with this library, you can [telegram me](https://t.me/augustlight) or an Discord - *engineer48*. We will be glad to help !
 
 
-Contact me on telegram to suggest ideas!
+<h2 align="center">Notes</h2>
 
--> @AugustLight
+* *This is not my project. Amino libraries already existed before me. I just wanted to create a simple and effective way to support bots*
 
-## API Reference
-Read The Docs: [Link Here](https://aminopy.readthedocs.io/en/latest/index.html)
-
-p.s: documentation is still up to date
-## License
-
-MIT
-
-**Free Software, Hell Yeah!**
+* *This is working only with the Python.*

@@ -88,7 +88,7 @@ class UserProfile:
         # extensions
         self.extensions: Optional[Dict] = data.get("extensions") or {}
         # style
-        self.style: Optional[Dict] = self.extensions.get("style", {})
+        self.style: Optional[Dict] = self.extensions.get("style") or {}
         self.backgroundImage: Optional[str] = self.style.get("backgroundImage")
         self.backgroundColor: Optional[str] = self.style.get("backgroundColor")
 
@@ -110,7 +110,7 @@ class UserProfile:
         self.influencerPinned: Optional[bool] = data.get("pinned")
 
         # adminInfo
-        self.staffInfo: Optional[Dict] = data.get("adminInfo", {})
+        self.staffInfo: Optional[Dict] = data.get("adminInfo") or {}
         self.globalStrikeCount: Optional[int] = self.staffInfo.get("globalStrikeCount")
         self.lastStrikeTime: Optional[int] = self.staffInfo.get("lastStrikeTime")
         self.lastWarningTime: Optional[int] = self.staffInfo.get("lastWarningTime")
@@ -147,7 +147,7 @@ class BlogList:
 
         for y in data:
             _author.append(y.get("author"))
-            _quizQuestionList.append(QuizQuestionList(y.get("quizQuestionList")).QuizQuestionList)
+            _quizQuestionList.append(QuizQuestionList(y.get("quizQuestionList", [])).QuizQuestionList)
 
         self.author: UserProfileList = UserProfileList(_author).UserProfileList
         self.quizQuestionList = _quizQuestionList
@@ -176,7 +176,6 @@ class BlogList:
         self.blogId = []
         self.viewCount = []
         self.fansOnly = []
-        self.backgroundColor = []
         self.votesCount = []
         self.endTime = []
         self.refObjectId = []
@@ -197,6 +196,9 @@ class BlogList:
     @property
     def BlogList(self):
         for x in self.json:
+            tipInfo = x.get("tipInfo") or {}
+            extensions = x.get("extensions") or {}
+
             self.globalVotesCount.append(x.get("globalVotesCount"))
             self.globalVotedValue.append(x.get("globalVotedValue"))
             self.keywords.append(x.get("keywords"))
@@ -226,27 +228,37 @@ class BlogList:
             self.commentsCount.append(x.get("commentsCount"))
 
             # tip info
-            self.tipInfo.append(x.get("tipInfo"))
-            self.tippersCount.append(self.tipInfo.get("tippersCount"))
-            self.tippable.append(self.tipInfo.get("tippable"))
-            self.tippedCoins.append(self.tipInfo.get("tippedCoins"))
+            self.tipInfo.append(tipInfo)
+            self.tippersCount.append(tipInfo.get("tippersCount"))
+            self.tippable.append(tipInfo.get("tippable"))
+            self.tippedCoins.append(tipInfo.get("tippedCoins"))
 
             # extensions
-            self.extensions.append(x.get("extensions"))
-            self.fansOnly.append(self.extensions.get("fansOnly"))
-            self.backgroundColor.append(self.extensions.get("style", {"backgroundColor": None})["backgroundColor"])
-            self.featuredType.append(self.extensions.get("featuredType"))
-            self.disabledTime.append(self.extensions.get("__disabledTime__"))
-            self.quizPlayedTimes.append(self.extensions.get("quizPlayedTimes"))
-            self.quizTotalQuestionCount.append(self.extensions.get("quizTotalQuestionCount"))
-            self.quizTrendingTimes.append(self.extensions.get("quizTrendingTimes"))
-            self.quizLastAddQuestionTime.append(self.extensions.get("quizLastAddQuestionTime"))
-            self.isIntroPost.append(self.extensions.get("isIntroPost"))
+            self.extensions.append(extensions)
+            self.fansOnly.append(extensions.get("fansOnly"))
+            self.featuredType.append(extensions.get("featuredType"))
+            self.disabledTime.append(extensions.get("__disabledTime__"))
+            self.quizPlayedTimes.append(extensions.get("quizPlayedTimes"))
+            self.quizTotalQuestionCount.append(extensions.get("quizTotalQuestionCount"))
+            self.quizTrendingTimes.append(extensions.get("quizTrendingTimes"))
+            self.quizLastAddQuestionTime.append(extensions.get("quizLastAddQuestionTime"))
+            self.isIntroPost.append(extensions.get("isIntroPost"))
 
         return self
 
 class RecentBlogs:
+    __slots__ = (
+        'json', 
+        'nextPageToken', 
+        'prevPageToken'
+    )
+
     def __init__(self, data):
+        if data is None:
+            for attr in self.__slots__:
+                setattr(self, attr, None)
+
+            return
         self.json = data
 
         self.nextPageToken = None
@@ -254,7 +266,7 @@ class RecentBlogs:
 
     @property
     def RecentBlogs(self):
-        paging = self.json.get("paging", {})
+        paging = self.json.get("paging") or {}
         self.nextPageToken = paging.get("nextPageToken")
         self.prevPageToken = paging.get("prevPageToken")
 
@@ -299,9 +311,9 @@ class Blog:
         self.author: UserProfile = UserProfile(data.get("author", [])).UserProfile
         self.quizQuestionList: QuizQuestionList = QuizQuestionList(data.get("quizQuestionList", [])).QuizQuestionList
 
-        extensions = self.json.get("extensions", {})
-        tipInfo = self.json.get("tipInfo", {})
-        style = extensions.get("style", {})
+        extensions = self.json.get("extensions") or {}
+        tipInfo = self.json.get("tipInfo") or {}
+        style = extensions.get("style") or {}
 
         self.globalVotesCount = self.json.get("globalVotesCount")
         self.globalVotedValue = self.json.get("globalVotedValue")
@@ -358,9 +370,9 @@ class Wiki:
         try: self.labels: WikiLabelList = WikiLabelList(data["extensions"]["props"]).WikiLabelList
         except (KeyError, TypeError): self.labels: WikiLabelList = WikiLabelList([])
 
-        extensions = self.json.get("extensions", {})
-        style = extensions.get("style", {})
-        knowledgeBase = extensions.get("knowledgeBase", {})
+        extensions = self.json.get("extensions") or {}
+        style = extensions.get("style") or {}
+        knowledgeBase = extensions.get("knowledgeBase") or {}
 
         self.wikiId = self.json.get("itemId")
         self.status = self.json.get("status")
@@ -467,14 +479,14 @@ class Community:
         try: self.rankingTable: RankingTableList = RankingTableList(data["advancedSettings"]["rankingTable"]).RankingTableList
         except (KeyError, TypeError): self.rankingTable: RankingTableList = RankingTableList([])
 
-        themePack: Dict = data.get("themePack", {})
-        configuration: Dict = data.get("configuration", {})
-        appearance: Dict = configuration.get("appearance", {})
-        leftSidePanel: Dict = appearance.get("leftSidePanel", {})
-        style: Dict = leftSidePanel.get("style", {})
-        page: Dict = configuration.get("page", {})
-        advancedSettings: Dict = data.get("advancedSettings", {})
-        extensions: Dict = data.get("extensions", {})
+        themePack: Dict = data.get("themePack") or {}
+        configuration: Dict = data.get("configuration") or {}
+        appearance: Dict = configuration.get("appearance") or {}
+        leftSidePanel: Dict = appearance.get("leftSidePanel") or {}
+        style: Dict = leftSidePanel.get("style") or {}
+        page: Dict = configuration.get("page") or {}
+        advancedSettings: Dict = data.get("advancedSettings") or {}
+        extensions: Dict = data.get("extensions") or {}
 
         self.name: Optional[str] = data.get("name")
         self.usersCount: Optional[int] = data.get("membersCount")
@@ -496,9 +508,9 @@ class Community:
         self.themeHash = themePack.get("themePackHash")
         self.themeVersion = themePack.get("themePackRevision")
         self.themeUrl = themePack.get("themePackUrl")
-        self.themeHomePageAppearance = appearance.get("homePage", {}).get("navigation")
-        self.themeLeftSidePanelTop = leftSidePanel.get("navigation", {}).get("level1")
-        self.themeLeftSidePanelBottom = leftSidePanel.get("navigation", {}).get("level2")
+        self.themeHomePageAppearance = appearance.get("homePage") or {}.get("navigation")
+        self.themeLeftSidePanelTop = leftSidePanel.get("navigation") or {}.get("level1")
+        self.themeLeftSidePanelBottom = leftSidePanel.get("navigation") or {}.get("level2")
         self.themeLeftSidePanelColor = style.get("iconColor")
         self.customList = page.get("customList")
         self.tagline = self.json.get("tagline")
@@ -574,7 +586,7 @@ class Membership:
     def __init__(self, data):
         self.json = data
 
-        membership = data.get("membership", {})
+        membership = data.get("membership") or {}
 
         self.premiumFeature = data.get("premiumFeatureEnabled")
         self.hasAnyAndroidSubscription = data.get("hasAnyAndroidSubscription")
@@ -596,8 +608,8 @@ class FromCode:
     def __init__(self, data):
         self.json = data
 
-        extensions = data.get("extensions", {})
-        linkInfo = extensions.get("linkInfo", {})
+        extensions = data.get("extensions") or {}
+        linkInfo = extensions.get("linkInfo") or {}
 
         self.community: Community = Community(extensions.get("community")).Community
         self.path = data.get("path")
@@ -609,7 +621,7 @@ class FromCode:
         self.shortUrl = linkInfo.get("shareURLShortCode")
         self.fullUrl = linkInfo.get("shareURLFullPath")
         self.comIdPost = linkInfo.get("ndcId")
-        self.comId = self.comIdPost or extensions.get("community", {}).get("ndcId")
+        self.comId = self.comIdPost or extensions.get("community") or {}.get("ndcId")
 
     @property
     def FromCode(self):
@@ -807,8 +819,8 @@ class WikiCategory:
         try: self.subCategory = WikiCategoryList(data["childrenWrapper"]["itemCategoryList"]).WikiCategoryList
         except (KeyError, TypeError): self.subCategory: WikiCategoryList = WikiCategoryList([])
 
-        itemCategory = data.get("itemCategory", {})
-        childrenWrapper = data.get("childrenWrapper", {})
+        itemCategory = data.get("itemCategory") or {}
+        childrenWrapper = data.get("childrenWrapper") or {}
 
         self.itemsCount = itemCategory.get("itemsCount")
         self.parentCategoryId = itemCategory.get("parentCategoryId")
@@ -900,7 +912,7 @@ class Thread:
         self.createdTime = data.get("createdTime")
 
         # extensions
-        self.extensions = data.get("extensions", {})
+        self.extensions = data.get("extensions") or {}
         self.viewOnly = self.extensions.get("viewOnly")
         self.coHosts = self.extensions.get("coHost")
         self.membersCanInvite = self.extensions.get("membersCanInvite")
@@ -920,11 +932,11 @@ class Thread:
         self.screeningRoomHostId = self.extensions.get("screeningRoomHostUid")
 
         # screeningRoomPermission
-        screeningRoomPermission = self.extensions.get("screeningRoomPermission", {})
+        screeningRoomPermission = self.extensions.get("screeningRoomPermission") or {}
         self.screeningRoomPermission = screeningRoomPermission.get("action")
 
         # organizerTransferRequest
-        organizerTransferRequest = self.extensions.get("organizerTransferRequest", {})
+        organizerTransferRequest = self.extensions.get("organizerTransferRequest") or {}
         self.organizerTransferCreatedTime = organizerTransferRequest.get("createdTime")
         self.organizerTransferId = organizerTransferRequest.get("requestId")
 
@@ -1119,7 +1131,7 @@ class StickerCollection:
         self.originalCommunity: Community = Community(self.extensions.get("originalCommunity")).Community
 
         #restrictionInfo
-        self.restrictionInfo = data.get("restrictionInfo", {})
+        self.restrictionInfo = data.get("restrictionInfo") or {}
         self.discountStatus = self.restrictionInfo.get("discountStatus")
         self.discountValue = self.restrictionInfo.get("discountValue")
         self.ownerId = self.restrictionInfo.get("ownerUid")
@@ -1216,8 +1228,8 @@ class Message:
 
         self.author: UserProfile = UserProfile(data.get("author", [])).UserProfile
 
-        extensions = data.get("extensions", {})
-        videoExtensions = extensions.get("videoExtensions", {})
+        extensions = data.get("extensions") or {}
+        videoExtensions = extensions.get("videoExtensions") or {}
 
         self.sticker: Sticker = Sticker(extensions.get("sticker")).Sticker
 
@@ -1311,10 +1323,10 @@ class MessageList:
             self.originalStickerId.append(self.extensions[n].get("originalStickerId"))
             self.mentionUserIds.append([m.get("uid") for m in self.extensions[n].get("mentionedArray", [])])
             self.videoExtensions.append(self.extensions[n].get("videoExtensions"))
-            self.videoDuration.append(self.extensions[n].get("videoExtensions", {}).get("duration"))
-            self.videoHeight.append(self.extensions[n].get("videoExtensions", {}).get("height"))
-            self.videoWidth.append(self.extensions[n].get("videoExtensions", {}).get("width"))
-            self.videoCoverImage.append(self.extensions[n].get("videoExtensions", {}).get("coverImage"))
+            self.videoDuration.append(self.extensions[n].get("videoExtensions") or {}.get("duration"))
+            self.videoHeight.append(self.extensions[n].get("videoExtensions") or {}.get("height"))
+            self.videoWidth.append(self.extensions[n].get("videoExtensions") or {}.get("width"))
+            self.videoCoverImage.append(self.extensions[n].get("videoExtensions") or {}.get("coverImage"))
             self.tippingCoins.append(self.extensions[n].get("tippingCoins"))
 
         return self
@@ -1329,7 +1341,7 @@ class GetMessages:
 
     @property
     def GetMessages(self):
-        paging = self.json.get("paging", {})
+        paging = self.json.get("paging") or {}
 
         self.nextPageToken = paging.get("nextPageToken")
         self.prevPageToken = paging.get("prevPageToken")
@@ -1418,7 +1430,7 @@ class AdminLogList:
     @property
     def AdminLogList(self):
         for x in self.json:
-            extData = x.get("extData", {})
+            extData = x.get("extData") or {}
 
             self.createdTime.append(x.get("createdTime"))
             self.objectType.append(x.get("objectType"))
@@ -1477,7 +1489,10 @@ class FanClubList:
     )
 
     def __init__(self, data):
-        if not data:
+        if data is None:
+            for attr in self.__slots__:
+                setattr(self, attr, None)
+
             return
 
         self.json = data
@@ -1529,7 +1544,19 @@ class InfluencerFans:
         return self
 
 class QuizQuestionList:
+    __slots__ = (
+        'json', 'status', 'parentType', 'title', 'createdTime',
+        'questionId', 'parentId', 'mediaList', 'extensions', 'style',
+        'backgroundImage', 'backgroundColor', 'answerExplanation',
+        'answersList'
+    )
     def __init__(self, data):
+        if data is None:
+            for attr in self.__slots__:
+                setattr(self, attr, None)
+
+            return
+
         _answersList = []
 
         self.json = data
@@ -1555,8 +1582,8 @@ class QuizQuestionList:
     @property
     def QuizQuestionList(self):
         for x in self.json:
-            extensions = x.get("extensions", {})
-            style = extensions.get("style", {})
+            extensions = x.get("extensions") or {}
+            style = extensions.get("style") or {}
             backgroundMediaList: Optional[MediaObject] = style.get("backgroundMediaList", [None, None])
 
             self.status.append(x.get("status"))
@@ -1755,7 +1782,7 @@ class Event:
 
     def __init__(self, data):
         self.json = data
-        params = self.json.get("params", {})
+        params = self.json.get("params") or {}
 
         self.comId = self.json.get("ndcId")
         self.alertOption = self.json.get("alertOption")
@@ -1931,9 +1958,9 @@ class NoticeList:
     @property
     def NoticeList(self):
         for x in self.json:
-            extensions = x.get("extensions", {})
-            config = extensions.get("config", {})
-            style = extensions.get("style", {})
+            extensions = x.get("extensions") or {}
+            config = extensions.get("config") or {}
+            style = extensions.get("style") or {}
 
             self.title.append(x.get("title"))
             self.icon.append(x.get("icon"))
@@ -2029,10 +2056,10 @@ class AvatarFrameList:
     @property
     def AvatarFrameList(self):
         for x in self.json:
-            config = x.get("config", {})
-            restrictionInfo = x.get("restrictionInfo", {})
-            ownershipInfo = x.get("ownershipInfo", {})
-            additionalBenefits = x.get("additionalBenefits", {})
+            config = x.get("config") or {}
+            restrictionInfo = x.get("restrictionInfo") or {}
+            ownershipInfo = x.get("ownershipInfo") or {}
+            additionalBenefits = x.get("additionalBenefits") or {}
 
             self.isGloballyAvailable.append(x.get("isGloballyAvailable"))
             self.extensions.append(x.get("extensions"))
@@ -2110,7 +2137,7 @@ class Bubble:
         self.status = data.get("status")
         self.modifiedTime = data.get("modifiedTime")
 
-        ownershipInfo = data.get("ownershipInfo", {})
+        ownershipInfo = data.get("ownershipInfo") or {}
         self.ownershipInfo = ownershipInfo
         self.expiredTime = ownershipInfo.get("expiredTime")
         self.isAutoRenew = ownershipInfo.get("isAutoRenew")
@@ -2130,7 +2157,7 @@ class Bubble:
         self.materialUrl = data.get("materialUrl")
         self.comId = data.get("ndcId")
 
-        restrictionInfo = data.get("restrictionInfo", {})
+        restrictionInfo = data.get("restrictionInfo") or {}
         self.restrictionInfo = restrictionInfo
         self.discountStatus = restrictionInfo.get("discountStatus")
         self.discountValue = restrictionInfo.get("discountValue")
@@ -2227,8 +2254,8 @@ class BubbleList:
     @property
     def BubbleList(self):
         for x in self.json:
-            ownershipInfo = x.get("ownershipInfo", {})
-            restrictionInfo = x.get("restrictionInfo", {})
+            ownershipInfo = x.get("ownershipInfo") or {}
+            restrictionInfo = x.get("restrictionInfo") or {}
 
             self.uid.append(x.get("uid"))
             self.isActivated.append(x.get("isActivated"))
@@ -2281,9 +2308,9 @@ class AvatarFrame:
     @property
     def AvatarFrame(self):
         for x in self.json:
-            refObject = x.get("refObject", {})
-            config = refObject.get("config", {})
-            restrictionInfo = refObject.get("restrictionInfo", {})
+            refObject = x.get("refObject") or {}
+            config = refObject.get("config") or {}
+            restrictionInfo = refObject.get("restrictionInfo") or {}
 
             self.name.append(config.get("name"))
             self.id.append(config.get("id"))
@@ -2309,9 +2336,9 @@ class ChatBubble:
     @property
     def ChatBubble(self):
         for x in self.json:
-            itemBasicInfo = x.get("itemBasicInfo", {})
-            refObject = x.get("refObject", {})
-            restrictionInfo = refObject.get("restrictionInfo", {})
+            itemBasicInfo = x.get("itemBasicInfo") or {}
+            refObject = x.get("refObject") or {}
+            restrictionInfo = refObject.get("restrictionInfo") or {}
 
             self.name.append(itemBasicInfo.get("name"))
             self.bubbleId.append(refObject.get("bubbleId"))
@@ -2335,9 +2362,9 @@ class StoreStickers:
     @property
     def StoreStickers(self):
         for x in self.json:
-            refObject = x.get("refObject", {})
-            itemBasicInfo = x.get("itemBasicInfo", {})
-            restrictionInfo = refObject.get("restrictionInfo", {})
+            refObject = x.get("refObject") or {}
+            itemBasicInfo = x.get("itemBasicInfo") or {}
+            restrictionInfo = refObject.get("restrictionInfo") or {}
 
             self.id.append(refObject.get("collectionId"))
             self.name.append(itemBasicInfo.get("name"))
