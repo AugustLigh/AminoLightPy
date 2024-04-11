@@ -30,10 +30,33 @@ AminoApps python framework to create bots and scripts easily.
 
 <h2 align="center">Usage</h2>
 
-Install the dependencies and start the coding.
+Install the package :
 
-```sh
-pip install amino.light.py
+`pip install amino.light.py`
+
+---
+
+Import the `Client` and `SubClient` objects into your bot's code, and create your own help manual :
+
+```py
+from AminoLightPy import Client, SubClient
+# Your help message
+help_message = """
+Welcome!
+This is help page.
+"""
+# Create Client object
+client = Client()
+# Login into account
+client.login("example_mail@gmail.com", "example_password")
+# And display the help !
+@client.event("on_text_message")
+def on_message(data):
+	if data.message.author.userId != client.profile.userId:  # Do not answer to myself
+		# Create SubClient object
+		sub_client = SubClient(comId=data.comId, profile=client.profile)
+		if data.message.content.startswith('/help'):
+			sub_client.send_message(chatId=data.message.chatId, message=help_message)
 ```
 
 <h2 align="center">Example</h2>
@@ -51,4 +74,4 @@ If you can't find what you're looking for or need help with this library, you ca
 
 * *This is not my project. Amino libraries already existed before me. I just wanted to create a simple and effective way to support bots*
 
-MIT
+* *This is working only with the Python.*

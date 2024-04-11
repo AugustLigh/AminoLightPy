@@ -611,7 +611,8 @@ class FromCode:
         extensions = data.get("extensions") or {}
         linkInfo = extensions.get("linkInfo") or {}
 
-        self.community: Community = Community(extensions.get("community")).Community
+        community = Community(extensions.get("community")).Community
+        self.community: Community = community
         self.path = data.get("path")
         self.objectType = linkInfo.get("objectType")
         self.shortCode = linkInfo.get("shortCode")
@@ -621,7 +622,7 @@ class FromCode:
         self.shortUrl = linkInfo.get("shareURLShortCode")
         self.fullUrl = linkInfo.get("shareURLFullPath")
         self.comIdPost = linkInfo.get("ndcId")
-        self.comId = self.comIdPost or extensions.get("community") or {}.get("ndcId")
+        self.comId = self.comIdPost or community.comId
 
     @property
     def FromCode(self):

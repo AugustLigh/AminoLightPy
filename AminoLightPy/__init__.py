@@ -2,7 +2,7 @@ __title__ = 'Amino.fix.light'
 __author__ = 'AugustLight'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2024 AugustLight'
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 
 from .acm import ACM
 from .client import Client
