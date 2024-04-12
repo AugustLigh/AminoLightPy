@@ -1382,10 +1382,15 @@ class SubClient():
         return objects.CommentList(response.json()["commentList"]).CommentList
 
     def get_recent_blogs(self, pageToken: str = None, start: int = 0, size: int = 25):
-        if pageToken is not None: url = f"{api}/x{self.comId}/s/feed/blog-all?pagingType=t&pageToken={pageToken}&size={size}"
-        else: url = f"{api}/x{self.comId}/s/feed/blog-all?pagingType=t&start={start}&size={size}"
+        params = {
+            "pagingType": "t",
+            "start": start,
+            "size": size,
+        }
+        if pageToken:
+            params["pageToken"] = pageToken
 
-        response = self.session.get(url)
+        response = self.session.get(f"{api}/x{self.comId}/s/feed/blog-all", params=params)
         return objects.RecentBlogs(response.json()).RecentBlogs
 
     def get_chat_users(self, chatId: str, start: int = 0, size: int = 25):

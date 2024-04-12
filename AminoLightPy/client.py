@@ -86,7 +86,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "secret": f"0 {password}",
             "clientType": 100,
             "deviceID": self.session.headers["NDCDEVICEID"],
-            "v": 2
+            "v": 2,
         }
 
         response = self.session.post(f"{api}/g/s/auth/login", json=data)
@@ -282,9 +282,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         })
 
         self.profile.session = None
-
-        if self.socket_enabled:
-            self.close()
+        #TODO
+        # if self.socket_enabled:
+        #     self.close()
 
         return response.status_code
 
@@ -912,7 +912,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         response = self.session.get(f"{api}/g/s/block/full-list?start={start}&size={size}")
         return response.json()["blockerUidList"]
 
-    def get_wall_comments(self, userId: str, sorting: str, start: int = 0, size: int = 25):
+    def get_wall_comments(self, userId: str, sorting: str = "newest", start: int = 0, size: int = 25):
         """
         List of Wall Comments of an User.
 
@@ -1184,7 +1184,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             res.append(response.status_code)
         if coHosts is not None:
             data = {"uidList": coHosts}
-            response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/co-host", data=data)
+            response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/co-host", json=data)
             res.append(response.status_code)
         if viewOnly is not None:
             if viewOnly:

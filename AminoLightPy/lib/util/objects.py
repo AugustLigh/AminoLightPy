@@ -1227,7 +1227,7 @@ class Message:
     def __init__(self, data):
         self.json = data
 
-        self.author: UserProfile = UserProfile(data.get("author", [])).UserProfile
+        self.author: UserProfile = UserProfile(data.get("author", None)).UserProfile
 
         extensions = data.get("extensions") or {}
         videoExtensions = extensions.get("videoExtensions") or {}

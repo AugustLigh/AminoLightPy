@@ -20,6 +20,7 @@ class AminoSession(Session):
         super().__init__()
         self.headers.update({
             "NDCDEVICEID": device_id,
+            "Accept-Encoding": "gzip, deflate",
             "User-Agent": "Apple iPhone13,1 iOS v16.5 Main/3.19.0"
         })
 
@@ -30,10 +31,11 @@ class AminoSession(Session):
 
         if method.lower() == "post":
             if "json" in kwargs and data is None:
-                data = kwargs.get("json")
-                
+                data = kwargs.get("json") or {}
                 data["timestamp"] = int(time() * 1000)
+
                 data = dumps(data)
+
                 headers["Content-Type"] = "application/json"
                 headers["NDC-MSG-SIG"] = signature(data)
 
@@ -85,9 +87,9 @@ def upload_media(self, file: BinaryIO, fileType: str) -> str:
     response = self.session.post(
         url=f"{api}/g/s/media/upload",
         data=data,
-        headers=custom_headers
+        headers=custom_headers,
+        stream=True
     )
-
 
     cache[file_hash] = response.json()["mediaValue"]
     if len(cache) >= 32:

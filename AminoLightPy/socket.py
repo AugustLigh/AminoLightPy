@@ -1,8 +1,10 @@
 # pylint: disable=invalid-name
 
+import traceback
+import threading
+
 from json import loads, dumps
 from time import time, sleep
-from threading import Thread
 from websocket import WebSocketApp
 
 from .lib.util.objects import Event
@@ -11,82 +13,71 @@ from .lib.util.helpers import gen_deviceId, signature
 
 class SocketHandler:
     def __init__(self, client, debug=False):
-        self.socket_url = "wss://ws1.aminoapps.com"
+        self.socket_url = "ws://ws1.aminoapps.com"
         self.client = client
         self.debug = debug
-        self.active = False
-        self.headers = None
         self.socket = None
-        self.reconnectTime = 180
+        self.event = threading.Event()
 
-        if self.socket_enabled:
-            self.reconnect_thread = Thread(target=self.reconnect_handler)
-            self.reconnect_thread.start()
-
-    def reconnect_handler(self):
-        while True:
-            sleep(self.reconnectTime)
-
-            if self.active:
-                self.debug_print("[socket][reconnect_handler] Reconnecting Socket")
-                self.close()
-                self.run_amino_socket()
-
-    def handle_message(self, ws, data):
+    def on_message(self, ws, data):
+        print(data)
         self.client.handle_socket_message(data)
+
+    def is_connected(self):
+        return self.socket.sock and self.socket.sock.connected
 
     def send(self, data):
         self.debug_print(f"[socket][send] Sending Data : {data}")
 
-        if not self.socket_thread:
+        if not self.is_connected():
             self.run_amino_socket()
             sleep(5)
 
         self.socket.send(data)
 
+    def on_close(self, ws, data, status):
+        self.debug_print("[socket][reconnect_handler] Reconnecting Socket")
+        self.starting_process()
+
+    def on_error(self, ws, error):
+        traceback.print_exc()
+        print("On error: ", error)
+
+    def on_open(self, ws):
+        self.debug_print("[socket][start] Socket Started")
+        self.event.set()
+
+    def starting_process(self):
+        deviceId = gen_deviceId()
+
+        final = f"{deviceId}|{int(time() * 1000)}"
+
+        headers = {
+            "NDCDEVICEID": deviceId,
+            "NDCAUTH": f"sid={self.client.sid}",
+            "NDC-MSG-SIG": signature(final)
+        }
+
+        self.socket = WebSocketApp(
+            f"{self.socket_url}/?signbody={final.replace('|', '%7C')}",
+            on_open=self.on_open,
+            on_error=self.on_error,
+            on_message=self.on_message,
+            on_close=self.on_close,
+            header=headers,
+        )
+
+        threading.Thread(target=self.socket.run_forever, kwargs={
+            "ping_interval": 10,
+            "ping_payload": '{"t": 116, "o": {"threadChannelUserInfoList": []}}'
+        }).start()
+
     def run_amino_socket(self):
-        try:
-            self.debug_print("[socket][start] Starting Socket")
+        if self.client.sid is None:
+            return
 
-            if self.client.sid is None:
-                return
-            
-            deviceId = gen_deviceId()
-
-            final = f"{deviceId}|{int(time() * 1000)}"
-
-            self.headers = {
-                "NDCDEVICEID": deviceId,
-                "NDCAUTH": f"sid={self.client.sid}",
-                "NDC-MSG-SIG": signature(final)
-            }
-
-            self.socket = WebSocketApp(
-                f"{self.socket_url}/?signbody={final.replace('|', '%7C')}",
-                on_message=self.handle_message,
-                header=self.headers
-            )
-
-            self.active = True
-            self.socket_thread = Thread(target=self.socket.run_forever)
-            self.socket_thread.start()
-
-            if self.reconnect_thread is None:
-                self.reconnect_thread = Thread(target=self.reconnect_handler)
-                self.reconnect_thread.start()
-
-            self.debug_print("[socket][start] Socket Started")
-        except Exception as e:
-            print(e)
-
-    def close(self):
-        self.debug_print("[socket][close] Closing Socket")
-
-        self.active = False
-        try:
-            self.socket.close()
-        except Exception as closeError:
-            self.debug_print(f"[socket][close] Error while closing Socket : {closeError}")
+        threading.Thread(target=self.starting_process).start()
+        self.event.wait()
 
     def debug_print(self, message):
         if self.debug:
@@ -94,7 +85,7 @@ class SocketHandler:
 
 
 class SocketRequests:
-    def __init__(self) -> None:
+    def __init__(self: SocketHandler) -> None:
         self.active_live_chats = set()
 
     def join_voice_chat(self, comId: int, chatId: str, joinType: int = 1):
@@ -140,19 +131,6 @@ class SocketRequests:
         data = dumps(data)
         self.send(data)
 
-    def join_video_chat_as_viewer(self, comId: int, chatId: str):
-        data = {
-            "o":
-                {
-                    "ndcId": int(comId),
-                    "threadId": chatId,
-                    "joinRole": 2,
-                },
-            "t": 112
-        }
-        data = dumps(data)
-        self.send(data)
-
 
     # Fixed by vedansh#4039
     def leave_from_live_chat(self, chatId: str):
@@ -163,32 +141,22 @@ class SocketRequests:
     def run_vc(self, comId: int, chatId: str, joinType: str):
         while chatId in self.active_live_chats:
             try:
-                data = {
-                    "o": {
-                        "ndcId": int(comId),
-                        "threadId": chatId,
-                        "joinRole": joinType,
-                    },
-                    "t": 112
-                }
-                data = dumps(data)
-                self.send(data)
+                self.join_video_chat(
+                    comId=comId,
+                    chatId=chatId,
+                    joinType=joinType
+                )
                 sleep(60)
 
             except Exception as e:
                 print(e)
 
     def start_vc(self, comId: int, chatId: str, joinType: int = 1):
-        data = {
-            "o": {
-                "ndcId": int(comId),
-                "threadId": chatId,
-                "joinRole": joinType,
-            },
-            "t": 112
-        }
-        data = dumps(data)
-        self.send(data)
+        self.join_video_chat(
+            comId=comId,
+            chatId=chatId,
+            joinType=joinType
+        )
         data = {
             "o": {
                 "ndcId": int(comId),
@@ -200,21 +168,15 @@ class SocketRequests:
         data = dumps(data)
         self.send(data)
         self.active_live_chats.add(chatId)
-        Thread(target=self.run_vc, args=(comId, chatId, joinType)).start()
+        threading.Thread(target=self.run_vc, args=(comId, chatId, joinType)).start()
 
     def end_vc(self, comId: int, chatId: str, joinType: int = 2):
         self.leave_from_live_chat(chatId)
-        data = {
-            "o": {
-                "ndcId": int(comId),
-                "threadId": chatId,
-                "joinRole": joinType,
-            },
-            "t": 112
-        }
-        data = dumps(data)
-        self.send(data)
-        self.active_live_chats.remove(chatId)
+        self.join_video_chat(
+            comId=comId,
+            chatId=chatId,
+            joinType=joinType
+        )
 
     def Browsing(self, comId: int, blogId: str = None, blogType: int = 0):
         """
@@ -309,16 +271,11 @@ class SocketRequests:
         self.send(data)
 
     def start_video_chat(self, comId: str, chatId: str, joinType: int = 1):
-        data = {
-            "o": {
-                "ndcId": comId,
-                "threadId": chatId,
-                "joinRole": joinType,
-            },
-            "t": 112
-        }
-        data = dumps(data)
-        self.send(data)
+        self.join_video_chat(
+            comId=comId,
+            chatId=chatId,
+            joinType=joinType
+        )
 
         data = {
             "o": {
