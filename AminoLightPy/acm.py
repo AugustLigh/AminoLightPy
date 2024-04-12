@@ -222,8 +222,9 @@ class ACM():
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         response = self.session.get(f"{api}/x{self.comId}/s/community/stats")
-        if response.status_code != 200: return exceptions.CheckException(response.text)
-        else: return objects.CommunityStats(response.json()["communityStats"]).CommunityStats
+        if response.status_code != 200:
+            return exceptions.CheckException(response.text)
+        return objects.CommunityStats(response.json()["communityStats"]).CommunityStats
 
     def get_community_user_stats(self, type: str, start: int = 0, size: int = 25):
         """
@@ -294,7 +295,7 @@ class ACM():
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = { "content": message }
-        
+
         response = self.session.post(f"{api}/x{self.comId}/s/community/guideline", json=data)
         return response.status_code
 

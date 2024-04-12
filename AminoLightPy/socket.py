@@ -1,4 +1,5 @@
 # pylint: disable=invalid-name
+# pylint: disable=no-member
 
 import traceback
 import threading
@@ -385,7 +386,7 @@ class Callbacks:
 
         return registerHandler
 
-    def event_handler_decorator(func):
+    def event_handler_decorator(self, func):
         def wrapper(self, data):
             event = Event(data["o"]).Event
             self.call(func.__name__, event)

@@ -874,83 +874,163 @@ def CheckException(data):
     except JSONDecodeError:
         api_code = 403
 
-    if api_code == 100: raise UnsupportedService(data)
-    elif api_code == 102: raise FileTooLarge(data)
-    elif api_code == 103 or api_code == 104: raise InvalidRequest(data)
-    elif api_code == 105: raise InvalidSession(data)
-    elif api_code == 106: raise AccessDenied(data)
-    elif api_code == 107: raise UnexistentData(data)
-    elif api_code == 110: raise ActionNotAllowed(data)
-    elif api_code == 111: raise ServiceUnderMaintenance(data)
-    elif api_code == 113: raise MessageNeeded(data)
-    elif api_code == 200: raise InvalidAccountOrPassword(data)
-    elif api_code == 201: raise AccountDisabled(data)
-    elif api_code == 213: raise InvalidEmail(data)
-    elif api_code == 214: raise InvalidPassword(data)
-    elif api_code == 215: raise EmailAlreadyTaken(data) and UnsupportedEmail(data)
-    elif api_code == 216: raise AccountDoesntExist(data)
-    elif api_code == 218: raise InvalidDevice(data)
-    elif api_code == 219: raise AccountLimitReached(data) or TooManyRequests(data)
-    elif api_code == 221: raise CantFollowYourself(data)
-    elif api_code == 225: raise UserUnavailable(data)
-    elif api_code == 229: raise YouAreBanned(data)
-    elif api_code == 230: raise UserNotMemberOfCommunity(data)
-    elif api_code == 235: raise RequestRejected(data)
-    elif api_code == 238: raise ActivateAccount(data)
-    elif api_code == 239: raise CantLeaveCommunity(data)
-    elif api_code == 240: raise ReachedTitleLength(data)
-    elif api_code == 245: raise UserHasBeenDeleted(data)
-    elif api_code == 246: raise AccountDeleted(data)
-    elif api_code == 251: raise API_ERR_EMAIL_NO_PASSWORD(data)
-    elif api_code == 257: raise API_ERR_COMMUNITY_USER_CREATED_COMMUNITIES_VERIFY(data)
-    elif api_code == 262: raise ReachedMaxTitles(data)
-    elif api_code == 270: raise VerificationRequired(data)
-    elif api_code == 271: raise API_ERR_INVALID_AUTH_NEW_DEVICE_LINK(data)
-    elif api_code == 291: raise CommandCooldown(data)
-    elif api_code == 293: raise UserBannedByTeamAmino(data)
-    elif api_code == 300: raise BadImage(data)
-    elif api_code == 313: raise InvalidThemepack(data)
-    elif api_code == 314: raise InvalidVoiceNote(data)
-    elif api_code == 403: raise IpTemporaryBan(data)
-    elif api_code == 500 or api_code == 700 or api_code == 1600: raise RequestedNoLongerExists(data)
-    elif api_code == 503: raise PageRepostedTooRecently(data)
-    elif api_code == 551: raise InsufficientLevel(data)
-    elif api_code == 702: raise WallCommentingDisabled(data)
-    elif api_code == 801: raise CommunityNoLongerExists(data)
-    elif api_code == 802: raise InvalidCodeOrLink(data)
-    elif api_code == 805: raise CommunityNameAlreadyTaken(data)
-    elif api_code == 806: raise CommunityCreateLimitReached(data)
-    elif api_code == 814: raise CommunityDisabled(data)
-    elif api_code == 833: raise CommunityDeleted(data)
-    elif api_code == 1501: raise DuplicatePollOption(data)
-    elif api_code == 1507: raise ReachedMaxPollOptions(data)
-    elif api_code == 1602: raise TooManyChats(data)
-    elif api_code == 1605: raise ChatFull(data)
-    elif api_code == 1606: raise TooManyInviteUsers(data)
-    elif api_code == 1611: raise ChatInvitesDisabled(data)
-    elif api_code == 1612: raise RemovedFromChat(data)
-    elif api_code == 1613: raise UserNotJoined(data)
-    elif api_code == 1627: raise API_ERR_CHAT_VVCHAT_NO_MORE_REPUTATIONS(data)
-    elif api_code == 1637: raise MemberKickedByOrganizer(data)
-    elif api_code == 1661: raise LevelFiveRequiredToEnableProps(data)
-    elif api_code == 1663: raise ChatViewOnly(data)
-    elif api_code == 1664: raise ChatMessageTooBig(data)
-    elif api_code == 1900: raise InviteCodeNotFound(data)
-    elif api_code == 2001: raise AlreadyRequestedJoinCommunity(data)
-    elif api_code == 2501: raise API_ERR_PUSH_SERVER_LIMITATION_APART(data)
-    elif api_code == 2502: raise API_ERR_PUSH_SERVER_LIMITATION_COUNT(data)
-    elif api_code == 2503: raise API_ERR_PUSH_SERVER_LINK_NOT_IN_COMMUNITY(data)
-    elif api_code == 2504: raise API_ERR_PUSH_SERVER_LIMITATION_TIME(data)
-    elif api_code == 2601: raise AlreadyCheckedIn(data)
-    elif api_code == 2611: raise AlreadyUsedMonthlyRepair(data)
-    elif api_code == 2800: raise AccountAlreadyRestored(data)
-    elif api_code == 3102: raise IncorrectVerificationCode(data)
-    elif api_code == 3905: raise NotOwnerOfChatBubble(data)
-    elif api_code == 4300: raise NotEnoughCoins(data)
-    elif api_code == 4400: raise AlreadyPlayedLottery(data)
-    elif api_code == 4500 or api_code == 4501: raise CannotSendCoins(data)
-    elif api_code == 4805: raise FailedSubscribeFanClub(data)
-    elif api_code == 6001: raise AminoIDAlreadyChanged(data)
-    elif api_code == 6002: raise InvalidAminoID(data)
-    elif api_code == 9901: raise InvalidName(data)
-    else: raise Exception(data)
+    if api_code == 100:
+        raise UnsupportedService(data)
+    elif api_code == 102:
+        raise FileTooLarge(data)
+    elif api_code == 103 or api_code == 104:
+        raise InvalidRequest(data)
+    elif api_code == 105:
+        raise InvalidSession(data)
+    elif api_code == 106:
+        raise AccessDenied(data)
+    elif api_code == 107:
+        raise UnexistentData(data)
+    elif api_code == 110:
+        raise ActionNotAllowed(data)
+    elif api_code == 111:
+        raise ServiceUnderMaintenance(data)
+    elif api_code == 113:
+        raise MessageNeeded(data)
+    elif api_code == 200:
+        raise InvalidAccountOrPassword(data)
+    elif api_code == 201:
+        raise AccountDisabled(data)
+    elif api_code == 213:
+        raise InvalidEmail(data)
+    elif api_code == 214:
+        raise InvalidPassword(data)
+    elif api_code == 215:
+        raise EmailAlreadyTaken(data) and UnsupportedEmail(data)
+    elif api_code == 216:
+        raise AccountDoesntExist(data)
+    elif api_code == 218:
+        raise InvalidDevice(data)
+    elif api_code == 219:
+        raise AccountLimitReached(data) or TooManyRequests(data)
+    elif api_code == 221:
+        raise CantFollowYourself(data)
+    elif api_code == 225:
+        raise UserUnavailable(data)
+    elif api_code == 229:
+        raise YouAreBanned(data)
+    elif api_code == 230:
+        raise UserNotMemberOfCommunity(data)
+    elif api_code == 235:
+        raise RequestRejected(data)
+    elif api_code == 238:
+        raise ActivateAccount(data)
+    elif api_code == 239:
+        raise CantLeaveCommunity(data)
+    elif api_code == 240:
+        raise ReachedTitleLength(data)
+    elif api_code == 245:
+        raise UserHasBeenDeleted(data)
+    elif api_code == 246:
+        raise AccountDeleted(data)
+    elif api_code == 251:
+        raise API_ERR_EMAIL_NO_PASSWORD(data)
+    elif api_code == 257:
+        raise API_ERR_COMMUNITY_USER_CREATED_COMMUNITIES_VERIFY(data)
+    elif api_code == 262:
+        raise ReachedMaxTitles(data)
+    elif api_code == 270:
+        raise VerificationRequired(data)
+    elif api_code == 271:
+        raise API_ERR_INVALID_AUTH_NEW_DEVICE_LINK(data)
+    elif api_code == 291:
+        raise CommandCooldown(data)
+    elif api_code == 293:
+        raise UserBannedByTeamAmino(data)
+    elif api_code == 300:
+        raise BadImage(data)
+    elif api_code == 313:
+        raise InvalidThemepack(data)
+    elif api_code == 314:
+        raise InvalidVoiceNote(data)
+    elif api_code == 403:
+        raise IpTemporaryBan(data)
+    elif api_code == 500 or api_code == 700 or api_code == 1600:
+        raise RequestedNoLongerExists(data)
+    elif api_code == 503:
+        raise PageRepostedTooRecently(data)
+    elif api_code == 551:
+        raise InsufficientLevel(data)
+    elif api_code == 702:
+        raise WallCommentingDisabled(data)
+    elif api_code == 801:
+        raise CommunityNoLongerExists(data)
+    elif api_code == 802:
+        raise InvalidCodeOrLink(data)
+    elif api_code == 805:
+        raise CommunityNameAlreadyTaken(data)
+    elif api_code == 806:
+        raise CommunityCreateLimitReached(data)
+    elif api_code == 814:
+        raise CommunityDisabled(data)
+    elif api_code == 833:
+        raise CommunityDeleted(data)
+    elif api_code == 1501:
+        raise DuplicatePollOption(data)
+    elif api_code == 1507:
+        raise ReachedMaxPollOptions(data)
+    elif api_code == 1602:
+        raise TooManyChats(data)
+    elif api_code == 1605:
+        raise ChatFull(data)
+    elif api_code == 1606:
+        raise TooManyInviteUsers(data)
+    elif api_code == 1611:
+        raise ChatInvitesDisabled(data)
+    elif api_code == 1612:
+        raise RemovedFromChat(data)
+    elif api_code == 1613:
+        raise UserNotJoined(data)
+    elif api_code == 1627:
+        raise API_ERR_CHAT_VVCHAT_NO_MORE_REPUTATIONS(data)
+    elif api_code == 1637:
+        raise MemberKickedByOrganizer(data)
+    elif api_code == 1661:
+        raise LevelFiveRequiredToEnableProps(data)
+    elif api_code == 1663:
+        raise ChatViewOnly(data)
+    elif api_code == 1664:
+        raise ChatMessageTooBig(data)
+    elif api_code == 1900:
+        raise InviteCodeNotFound(data)
+    elif api_code == 2001:
+        raise AlreadyRequestedJoinCommunity(data)
+    elif api_code == 2501:
+        raise API_ERR_PUSH_SERVER_LIMITATION_APART(data)
+    elif api_code == 2502:
+        raise API_ERR_PUSH_SERVER_LIMITATION_COUNT(data)
+    elif api_code == 2503:
+        raise API_ERR_PUSH_SERVER_LINK_NOT_IN_COMMUNITY(data)
+    elif api_code == 2504:
+        raise API_ERR_PUSH_SERVER_LIMITATION_TIME(data)
+    elif api_code == 2601:
+        raise AlreadyCheckedIn(data)
+    elif api_code == 2611:
+        raise AlreadyUsedMonthlyRepair(data)
+    elif api_code == 2800:
+        raise AccountAlreadyRestored(data)
+    elif api_code == 3102:
+        raise IncorrectVerificationCode(data)
+    elif api_code == 3905:
+        raise NotOwnerOfChatBubble(data)
+    elif api_code == 4300:
+        raise NotEnoughCoins(data)
+    elif api_code == 4400:
+        raise AlreadyPlayedLottery(data)
+    elif api_code == 4500 or api_code == 4501:
+        raise CannotSendCoins(data)
+    elif api_code == 4805:
+        raise FailedSubscribeFanClub(data)
+    elif api_code == 6001:
+        raise AminoIDAlreadyChanged(data)
+    elif api_code == 6002:
+        raise InvalidAminoID(data)
+    elif api_code == 9901:
+        raise InvalidName(data)
+    else:
+        raise Exception(data)

@@ -11,6 +11,7 @@ from .lib.util import exceptions, objects, helpers, self_deviceId
 #@dorthegra/IDörthe#8835 thanks for support!
 
 class Client(Callbacks, SocketHandler, SocketRequests):
+    "Module for work with global"
     def __init__(self, proxies: dict = None, socketDebugging = False, socket_enabled = True):
         self.api = api
         self.authenticated = False
@@ -282,9 +283,6 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         })
 
         self.profile.session = None
-        #TODO
-        # if self.socket_enabled:
-        #     self.close()
 
         return response.status_code
 
@@ -994,7 +992,11 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         "Check params in send_message metod."
         return any(arg is None for arg in args)
 
-    def send_message(self, chatId: str, message: str = None, messageType: int = 0, file: BinaryIO = None, fileType: str = None, replyTo: str = None, mentionUserIds: list = None, stickerId: str = None, embedId: str = None, embedType: int = None, embedLink: str = None, embedTitle: str = None, embedContent: str = None, embedImage: BinaryIO = None):
+    def send_message(self, chatId: str, message: str = None, messageType: int = 0,
+                        file: BinaryIO = None, fileType: str = None, replyTo: str = None,
+                        mentionUserIds: list = None, stickerId: str = None, embedId: str = None,
+                        embedType: int = None, embedLink: str = None, embedTitle: str = None,
+                        embedContent: str = None, embedImage: BinaryIO = None):
         """
         Send a Message to a Chat.
 
@@ -1112,7 +1114,12 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/mark-as-read", json=data)
         return response.status_code
 
-    def edit_chat(self, chatId: str, doNotDisturb: bool = None, pinChat: bool = None, title: str = None, icon: str = None, backgroundImage: str = None, content: str = None, announcement: str = None, coHosts: list = None, keywords: list = None, pinAnnouncement: bool = None, publishToGlobal: bool = None, canTip: bool = None, viewOnly: bool = None, canInvite: bool = None, fansOnly: bool = None):
+    def edit_chat(self, chatId: str, doNotDisturb: bool = None, pinChat: bool = None,
+            title: str = None, icon: str = None, backgroundImage: str = None,
+            content: str = None, announcement: str = None, coHosts: list = None,
+            keywords: list = None, pinAnnouncement: bool = None, publishToGlobal: bool = None,
+            canTip: bool = None, viewOnly: bool = None, canInvite: bool = None,
+            fansOnly: bool = None):
         """
         Send a Message to a Chat.
 
@@ -1165,50 +1172,88 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         if doNotDisturb is not None:
             if doNotDisturb:
                 data = {"alertOption": 2}
-                response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/member/{self.profile.userId}/alert", json=data)
+                response = self.session.post(
+                    url=f"{api}/g/s/chat/thread/{chatId}/member/{self.profile.userId}/alert",
+                    json=data
+                )
                 res.append(response.status_code)
             if not doNotDisturb:
                 data = {"alertOption": 1}
-                response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/member/{self.profile.userId}/alert", json=data)
+                response = self.session.post(
+                    url=f"{api}/g/s/chat/thread/{chatId}/member/{self.profile.userId}/alert",
+                    json=data
+                )
                 res.append(response.status_code)
         if pinChat is not None:
             if pinChat:
-                response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/pin", json=data)
+                response = self.session.post(
+                    url=f"{api}/g/s/chat/thread/{chatId}/pin",
+                    json=data
+                )
                 res.append(response.status_code)
             if not pinChat:
-                response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/unpin", json=data)
+                response = self.session.post(
+                    url=f"{api}/g/s/chat/thread/{chatId}/unpin",
+                    json=data
+                )
                 res.append(response.status_code)
         if backgroundImage is not None:
             data = {"media": [100, backgroundImage, None]}
-            response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/member/{self.profile.userId}/background", json=data)
+            response = self.session.post(
+                url=f"{api}/g/s/chat/thread/{chatId}/member/{self.profile.userId}/background",
+                json=data
+            )
             res.append(response.status_code)
         if coHosts is not None:
             data = {"uidList": coHosts}
-            response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/co-host", json=data)
+            response = self.session.post(
+                url=f"{api}/g/s/chat/thread/{chatId}/co-host",
+                son=data
+            )
             res.append(response.status_code)
         if viewOnly is not None:
             if viewOnly:
-                response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/view-only/enable")
+                response = self.session.post(
+                    url=f"{api}/g/s/chat/thread/{chatId}/view-only/enable"
+                )
                 res.append(response.status_code)
 
             if not viewOnly:
-                response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/view-only/disable")
+                response = self.session.post(
+                    url=f"{api}/g/s/chat/thread/{chatId}/view-only/disable"
+                )
                 res.append(response.status_code)
         if canInvite is not None:
             if canInvite:
-                response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/members-can-invite/enable", json=data)
+                response = self.session.post(
+                    url=f"{api}/g/s/chat/thread/{chatId}/members-can-invite/enable",
+                    json=data
+                )
                 res.append(response.status_code)
             if not canInvite:
-                response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/members-can-invite/disable", json=data)
+                response = self.session.post(
+                    url=f"{api}/g/s/chat/thread/{chatId}/members-can-invite/disable",
+                    json=data
+                )
                 res.append(response.status_code)
         if canTip is not None:
             if canTip:
-                response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/tipping-perm-status/enable", json=data)
+                response = self.session.post(
+                    url=f"{api}/g/s/chat/thread/{chatId}/tipping-perm-status/enable",
+                    json=data
+                )
                 res.append(response.status_code)
             if not canTip:
-                response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/tipping-perm-status/disable", json=data)
+                response = self.session.post(
+                    url=f"{api}/g/s/chat/thread/{chatId}/tipping-perm-status/disable",
+                    json=data
+                )
                 res.append(response.status_code)
-        response = self.session.post(f"{api}/g/s/chat/thread/{chatId}", json=data)
+
+        response = self.session.post(
+            url=f"{api}/g/s/chat/thread/{chatId}",
+            json=data
+        )
         res.append(response.status_code)
 
         return res

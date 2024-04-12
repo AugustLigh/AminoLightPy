@@ -11,6 +11,7 @@ from .lib.util import exceptions, objects
 
 
 class SubClient():
+    "Module for work with community"
     def __init__(self, comId: int = None, *, profile: objects.UserProfile):
         self.vc_connect = False
         self.profile = profile
@@ -41,6 +42,19 @@ class SubClient():
         return objects.InviteCodeList(response.json()["communityInvitationList"]).InviteCodeList
 
     def generate_invite_code(self, duration: int = 0, force: bool = True):
+        """
+        Generate an invitation code for the community.
+
+        **Parameters**
+            - **duration** : The validity duration of the invite code in seconds.
+            - **force** : A boolean to force the creation of a new invite code.
+
+        **Returns**
+            - **InviteCode** : An object containing the invite code details.
+
+        **Raises**
+            - **Exceptions** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
+        """
         data = {
             "duration": duration,
             "force": force
@@ -49,12 +63,45 @@ class SubClient():
         return objects.InviteCode(response.json()["communityInvitation"]).InviteCode
 
     def delete_invite_code(self, inviteId: str):
+        """
+        Delete an existing invitation code from the community.
+
+        **Parameters**
+            - **inviteId** : The unique identifier of the invite code to be deleted.
+
+        **Returns**
+            - **Success** : 200 (int) if the invite code is successfully deleted.
+            - **Fail** : Corresponding HTTP status code (int) if the deletion fails.
+
+        **Raises**
+            - **Exceptions** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
+        """
         response = self.session.delete(f"{api}/g/s-x{self.comId}/community/invitation/{inviteId}")
         return response.status_code
 
     def post_blog(self, title: str, content: str, imageList: list = None, captionList: list = None,
                         categoriesList: list = None, backgroundColor: str = None,
                         fansOnly: bool = False, extensions: dict = None):
+        """
+        Post a blog entry to the community.
+
+        **Parameters**
+            - **title** : The title of the blog post.
+            - **content** : The main content of the blog post.
+            - **imageList** : A list of image URLs to be included in the post. Default is None.
+            - **captionList** : A list of captions corresponding to each image. Default is None.
+            - **categoriesList** : A list of category IDs to tag the blog post with. Default is None.
+            - **backgroundColor** : The background color for the blog post. Default is None.
+            - **fansOnly** : A boolean to set the blog post as accessible to fans only. Default is False.
+            - **extensions** : Additional extension data for the blog post. Default is None.
+
+        **Returns**
+            - **Success** : 200 (int) if the blog post is successfully created.
+            - **Fail** : Corresponding HTTP status code (int) if the creation fails.
+
+        **Raises**
+            - **Exceptions** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>` if the request fails.
+        """
         mediaList = list()
 
         if captionList is not None:
@@ -77,16 +124,26 @@ class SubClient():
             "eventSource": "GlobalComposeMenu",
         }
 
-        if fansOnly: data["extensions"] = {"fansOnly": fansOnly}
-        if backgroundColor: data["extensions"] = {"style": {"backgroundColor": backgroundColor}}
-        if categoriesList: data["taggedBlogCategoryIdList"] = categoriesList
+        if fansOnly:
+            data["extensions"] = {"fansOnly": fansOnly}
+        if backgroundColor:
+            data["extensions"] = {"style": {"backgroundColor": backgroundColor}}
+        if categoriesList:
+            data["taggedBlogCategoryIdList"] = categoriesList
         response = self.session.post(f"{api}/x{self.comId}/s/blog", json=data)
 
         return response.status_code
 
     def post_wiki(self, title: str, content: str, icon: str = None, imageList: list = None,
-                        keywords: str = None, backgroundColor: str = None, props: list = [],
-                        backgroundMediaList: list = []):
+                        keywords: str = None, backgroundColor: str = None, props: list = None,
+                        backgroundMediaList: list = None):
+
+        if imageList is None:
+            imageList = []
+        if props is None:
+            props = []
+        if backgroundMediaList is None:
+            backgroundMediaList = []
         data = {
             "label": title,
             "content": content,
@@ -108,7 +165,9 @@ class SubClient():
         response = self.session.post(f"{api}/x{self.comId}/s/item", json=data)
         return response.status_code
 
-    def edit_blog(self, blogId: str, title: str = None, content: str = None, imageList: list = None, categoriesList: list = None, backgroundColor: str = None, fansOnly: bool = False):
+    def edit_blog(self, blogId: str, title: str = None, content: str = None,
+                imageList: list = None, categoriesList: list = None,
+                backgroundColor: str = None, fansOnly: bool = False):
         mediaList = list()
 
         for image in imageList:
@@ -225,10 +284,14 @@ class SubClient():
             "eventSource": "PostDetailView"
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/blog/{blogId}/poll/option/{optionId}/vote", json=data)
+        response = self.session.post(
+            url=f"{api}/x{self.comId}/s/blog/{blogId}/poll/option/{optionId}/vote",
+            json=data
+        )
         return response.status_code
 
-    def comment(self, message: str, userId: str = None, blogId: str = None, wikiId: str = None, replyTo: str = None, isGuest: bool = False):
+    def comment(self, message: str, userId: str = None, blogId: str = None, wikiId: str = None,
+                replyTo: str = None, isGuest: bool = False):
         data = {
             "content": message,
             "stickerId": None,
@@ -258,11 +321,16 @@ class SubClient():
 
         return response.status_code
 
-    def delete_comment(self, commentId: str, userId: str = None, blogId: str = None, wikiId: str = None):
-        if userId: url = f"{api}/x{self.comId}/s/user-profile/{userId}/comment/{commentId}"
-        elif blogId: url = f"{api}/x{self.comId}/s/blog/{blogId}/comment/{commentId}"
-        elif wikiId: url = f"{api}/x{self.comId}/s/item/{wikiId}/comment/{commentId}"
-        else: raise exceptions.SpecifyType
+    def delete_comment(self, commentId: str, userId: str = None, blogId: str = None,
+                        wikiId: str = None):
+        if userId:
+            url = f"{api}/x{self.comId}/s/user-profile/{userId}/comment/{commentId}"
+        elif blogId:
+            url = f"{api}/x{self.comId}/s/blog/{blogId}/comment/{commentId}"
+        elif wikiId:
+            url = f"{api}/x{self.comId}/s/item/{wikiId}/comment/{commentId}"
+        else:
+            raise exceptions.SpecifyType
 
         response = self.session.delete(url)
         return response.status_code
@@ -312,7 +380,8 @@ class SubClient():
         response = self.session.delete(url)
         return response.status_code
 
-    def like_comment(self, commentId: str, userId: str = None, blogId: str = None, wikiId: str = None):
+    def like_comment(self, commentId: str, userId: str = None, blogId: str = None,
+                    wikiId: str = None):
         data = {
             "value": 1
         }
@@ -340,10 +409,14 @@ class SubClient():
         return response.status_code
 
     def unlike_comment(self, commentId: str, userId: str = None, blogId: str = None, wikiId: str = None):
-        if userId: url = f"{api}/x{self.comId}/s/user-profile/{userId}/comment/{commentId}/g-vote?eventSource=UserProfileView"
-        elif blogId: url = f"{api}/x{self.comId}/s/blog/{blogId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
-        elif wikiId: url = f"{api}/x{self.comId}/s/item/{wikiId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
-        else: raise exceptions.SpecifyType()
+        if userId:
+            url = f"{api}/x{self.comId}/s/user-profile/{userId}/comment/{commentId}/g-vote?eventSource=UserProfileView"
+        elif blogId:
+            url = f"{api}/x{self.comId}/s/blog/{blogId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
+        elif wikiId:
+            url = f"{api}/x{self.comId}/s/item/{wikiId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
+        else:
+            raise exceptions.SpecifyType()
 
         response = self.session.delete(url)
         return response.status_code
@@ -353,8 +426,15 @@ class SubClient():
             "value": 1,
             "eventSource": "PostDetailView"
         }
-
-        response = self.session.post(f"{api}/x{self.comId}/s/blog/{blogId}/comment/{commentId}/vote?cv=1.2&value=1", json=data)
+        params = {
+            "cv": "1.2",
+            "value": "1"
+        }
+        response = self.session.post(
+            url=f"{api}/x{self.comId}/s/blog/{blogId}/comment/{commentId}/vote",
+            params=params,
+            json=data
+        )
         return response.status_code
 
     def downvote_comment(self, blogId: str, commentId: str):
@@ -390,8 +470,16 @@ class SubClient():
         response = self.session.post(f"{api}/x{self.comId}/s/user-profile/{userId}/comment", json=data)
         return response.status_code
 
-    def send_active_obj(self, startTime: int = None, endTime: int = None, optInAdsFlags: int = 2147483647, tz: int = -timezone // 1000, timers: list = None):
-        data = {"userActiveTimeChunkList": [{"start": startTime, "end": endTime}], "optInAdsFlags": optInAdsFlags, "timezone": tz}
+    def send_active_obj(self, startTime: int = None, endTime: int = None,
+                        tz: int = -timezone // 1000, timers: list = None):
+        data = {
+            "userActiveTimeChunkList": [{
+                "start": startTime,
+                "end": endTime
+            }],
+            "optInAdsFlags": 2147483647,
+            "timezone": tz
+        }
         if timers: data["userActiveTimeChunkList"] = timers
 
         response = self.session.post(f"{api}/x{self.comId}/s/community/stats/user-active-time", json=data)
@@ -410,11 +498,6 @@ class SubClient():
         response = self.session.post(f"{api}/x{self.comId}/s/user-profile/{self.profile.userId}/online-status", json=data)
         return response.status_code
 
-    # TODO : Finish this
-    def watch_ad(self):
-        response = self.session.post(f"{api}/g/s/wallet/ads/video/start")
-        return response.status_code
-
     def check_notifications(self):
         response = self.session.post(f"{api}/x{self.comId}/s/notification/checked")
         return response.status_code
@@ -427,7 +510,8 @@ class SubClient():
         response = self.session.delete(f"{api}/x{self.comId}/s/notification")
         return response.status_code
 
-    def start_chat(self, userId: Union[str, list], message: str, title: str = None, content: str = None, isGlobal: bool = False, publishToGlobal: bool = False):
+    def start_chat(self, userId: Union[str, list, tuple], message: str, title: str = None,
+                    content: str = None, isGlobal: bool = False, publishToGlobal: bool = False):
         if isinstance(userId, str): userIds = [userId]
         elif isinstance(userId, list): userIds = userId
         elif isinstance(userId, tuple): userIds = userId
@@ -568,7 +652,9 @@ class SubClient():
         response = self.session.delete(f"{api}/x{self.comId}/s/block/{userId}")
         return response.status_code
 
-    def flag(self, reason: str, flagType: int, userId: str = None, blogId: str = None, wikiId: str = None, asGuest: bool = False):
+    def flag(self, reason: str, flagType: int,
+            userId: str = None, blogId: str = None, wikiId: str = None,
+            asGuest: bool = False):
         """
         Flag a User, Blog or Wiki.
 
@@ -616,7 +702,11 @@ class SubClient():
     def check_values(self, *args):
         return any(arg is None for arg in args)
 
-    def send_message(self, chatId: str, message: str = None, messageType: int = 0, file: BinaryIO = None, fileType: str = None, replyTo: str = None, mentionUserIds: list = None, stickerId: str = None, embedId: str = None, embedType: int = None, embedLink: str = None, embedTitle: str = None, embedContent: str = None, embedImage: BinaryIO = None):
+    def send_message(self, chatId: str, message: str = None, messageType: int = 0,
+                        file: BinaryIO = None, fileType: str = None, replyTo: str = None,
+                        mentionUserIds: list = None, stickerId: str = None, embedId: str = None,
+                        embedType: int = None, embedLink: str = None, embedTitle: str = None,
+                        embedContent: str = None, embedImage: BinaryIO = None):
         """
         Send a Message to a Chat.
 
@@ -707,7 +797,7 @@ class SubClient():
             },
             "attachedObject": None
         }
-        
+
         response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/message", json=data)
         return response.status_code
 
@@ -760,7 +850,12 @@ class SubClient():
         response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/mark-as-read", json=data)
         return response.status_code
 
-    def edit_chat(self, chatId: str, doNotDisturb: bool = None, pinChat: bool = None, title: str = None, icon: str = None, backgroundImage: str = None, content: str = None, announcement: str = None, coHosts: list = None, keywords: list = None, pinAnnouncement: bool = None, publishToGlobal: bool = None, canTip: bool = None, viewOnly: bool = None, canInvite: bool = None, fansOnly: bool = None):
+    def edit_chat(self, chatId: str, doNotDisturb: bool = None, pinChat: bool = None,
+                title: str = None, icon: str = None, backgroundImage: str = None,
+                content: str = None, announcement: str = None, coHosts: list = None,
+                keywords: list = None, pinAnnouncement: bool = None, publishToGlobal: bool = None,
+                canTip: bool = None, viewOnly: bool = None, canInvite: bool = None,
+                fansOnly: bool = None):
         """
         Send a Message to a Chat.
 
@@ -806,61 +901,95 @@ class SubClient():
             if doNotDisturb:
                 data = {"alertOption": 2 }
 
-                response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}/alert", json=data)
+                response = self.session.post(
+                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}/alert",
+                    json=data
+                )
                 res.append(response.status_code)
 
             if not doNotDisturb:
                 data = {"alertOption": 1 }
 
-                response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}/alert", json=data)
+                response = self.session.post(
+                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}/alert",
+                    json=data
+                )
                 res.append(response.status_code)
 
         if pinChat is not None:
             if pinChat:
-                response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/pin", json=data)
+                response = self.session.post(
+                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/pin",
+                    json=data
+                )
                 res.append(response.status_code)
 
             if not pinChat:
-                response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/unpin", json=data)
+                response = self.session.post(
+                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/unpin",
+                    json=data
+                )
                 res.append(response.status_code)
 
         if backgroundImage is not None:
             data = {"media": [100, backgroundImage, None] }
 
-            response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}/background", json=data)
+            response = self.session.post(
+                url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}/background",
+                json=data
+            )
             res.append(response.status_code)
 
         if coHosts is not None:
             data = {"uidList": coHosts }
 
-            response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/co-host", json=data)
+            response = self.session.post(
+                url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/co-host",
+                json=data
+            )
             res.append(response.status_code)
 
         if viewOnly is not None:
             if viewOnly:
-                response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/view-only/enable")
+                response = self.session.post(
+                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/view-only/enable"
+                )
                 res.append(response.status_code)
 
             if not viewOnly:
-                response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/view-only/disable")
+                response = self.session.post(
+                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/view-only/disable"
+                )
                 res.append(response.status_code)
 
         if canInvite is not None:
             if canInvite:
-                response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/members-can-invite/enable", json=data)
+                response = self.session.post(
+                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/members-can-invite/enable",
+                    json=data
+                )
                 res.append(response.status_code)
 
             if not canInvite:
-                response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/members-can-invite/disable", json=data)
+                response = self.session.post(
+                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/members-can-invite/disable",
+                    json=data
+                )
                 res.append(response.status_code)
 
         if canTip is not None:
             if canTip:
-                response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/tipping-perm-status/enable", json=data)
+                response = self.session.post(
+                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/tipping-perm-status/enable",
+                    json=data
+                )
                 res.append(response.status_code)
 
             if not canTip:
-                response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/tipping-perm-status/disable", json=data)
+                response = self.session.post(
+                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/tipping-perm-status/disable",
+                    json=data
+                )
                 res.append(response.status_code)
 
         response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}", json=data)
@@ -871,7 +1000,10 @@ class SubClient():
     def transfer_host(self, chatId: str, userIds: list):
         data = { "uidList": userIds }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/transfer-organizer", json=data)
+        response = self.session.post(
+            url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/transfer-organizer",
+            json=data
+        )
         return response.status_code
 
     def transfer_organizer(self, chatId: str, userIds: list):
@@ -889,7 +1021,9 @@ class SubClient():
             - **Success** : 200 (int)
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/transfer-organizer/{requestId}/accept")
+        response = self.session.post(
+            url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/transfer-organizer/{requestId}/accept"
+        )
         return response.status_code
 
     def accept_organizer(self, chatId: str, requestId: str):
@@ -1438,20 +1572,42 @@ class SubClient():
 
     # TODO : Finish this
     def get_store_chat_bubbles(self, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/store/items?sectionGroupId=chat-bubble&start={start}&size={size}")
+        params = {
+            "sectionGroupId": "chat-bubble",
+            "start": start,
+            "size": size
+        }
+        response = self.session.get(f"{api}/x{self.comId}/s/store/items", params=params)
         return response.json()
 
     # TODO : Finish this
     def get_store_stickers(self, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/store/items?sectionGroupId=sticker&start={start}&size={size}")
+        params = {
+            "sectionGroupId": "sticker",
+            "start": start,
+            "size": size
+        }
+        response = self.session.get(f"{api}/x{self.comId}/s/store/items", params=params)
         return response.json()
 
     def get_community_stickers(self):
-        response = self.session.get(f"{api}/x{self.comId}/s/sticker-collection?type=community-shared")
+        params = {
+            "type": "community-shared"
+        }
+        response = self.session.get(
+            url=f"{api}/x{self.comId}/s/sticker-collection",
+            paams=params
+        )
         return objects.CommunityStickerCollection(response.json()).CommunityStickerCollection
 
     def get_sticker_collection(self, collectionId: str):
-        response = self.session.get(f"{api}/x{self.comId}/s/sticker-collection/{collectionId}?includeStickers=true")
+        params = {
+            "includeStickers": True
+        }
+        response = self.session.get(
+            url=f"{api}/x{self.comId}/s/sticker-collection/{collectionId}",
+            parmas=params
+        )
         return objects.StickerCollection(response.json()["stickerCollection"]).StickerCollection
 
     def get_shared_folder_info(self):
@@ -1459,7 +1615,12 @@ class SubClient():
         return objects.GetSharedFolderInfo(response.json()["stats"]).GetSharedFolderInfo
 
     def get_shared_folder_files(self, type: str = "latest", start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/shared-folder/files?type={type}&start={start}&size={size}")
+        params = {
+            "type": type,
+            "start": start,
+            "size": size
+        }
+        response = self.session.get(f"{api}/x{self.comId}/s/shared-folder/files", params=params)
         return objects.SharedFolderFileList(response.json()["fileList"]).SharedFolderFileList
 
     #
@@ -1533,22 +1694,18 @@ class SubClient():
 
         if userId:
             data["adminOpValue"] = {"featuredType": 0}
-
             url = f"{api}/x{self.comId}/s/user-profile/{userId}/admin"
 
         elif blogId:
             data["adminOpValue"] = {"featuredType": 0}
-
             url = f"{api}/x{self.comId}/s/blog/{blogId}/admin"
 
         elif wikiId:
             data["adminOpValue"] = {"featuredType": 0}
-            
             url = f"{api}/x{self.comId}/s/item/{wikiId}/admin"
 
         elif chatId:
             data["adminOpValue"] = {"featuredType": 0}
-            
             url = f"{api}/x{self.comId}/s/chat/thread/{chatId}/admin"
 
         else: raise exceptions.SpecifyType
@@ -1572,25 +1729,22 @@ class SubClient():
         elif blogId:
             data["adminOpName"] = 110
             data["adminOpValue"] = 9
-
             url = f"{api}/x{self.comId}/s/blog/{blogId}/admin"
 
         elif quizId:
             data["adminOpName"] = 110
             data["adminOpValue"] = 9
- 
+
             url = f"{api}/x{self.comId}/s/blog/{quizId}/admin"
 
         elif wikiId:
             data["adminOpName"] = 110
             data["adminOpValue"] = 9
-
             url = f"{api}/x{self.comId}/s/item/{wikiId}/admin"
 
         elif chatId:
             data["adminOpName"] = 110
             data["adminOpValue"] = 9
- 
             url = f"{api}/x{self.comId}/s/chat/thread/{chatId}/admin"
 
         elif fileId:

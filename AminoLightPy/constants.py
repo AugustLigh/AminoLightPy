@@ -2,8 +2,8 @@ from time import time
 from json import dumps
 from hashlib import sha1
 from typing import BinaryIO
-from requests import Session
 from collections import OrderedDict
+from requests import Session
 
 from .lib.util.exceptions import SpecifyType
 from .lib.util import signature, gen_deviceId
@@ -80,7 +80,6 @@ def upload_media(self, file: BinaryIO, fileType: str) -> str:
         t = "image/gif"
     else: raise SpecifyType(fileType)
 
-    
     custom_headers = self.session.headers
     custom_headers["Content-Type"] = t
 
@@ -96,3 +95,4 @@ def upload_media(self, file: BinaryIO, fileType: str) -> str:
         cache.popitem(last=False)
 
     return cache[file_hash]
+    
