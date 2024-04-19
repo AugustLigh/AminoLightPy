@@ -149,7 +149,7 @@ class BlogList:
             _author.append(y.get("author"))
             _quizQuestionList.append(QuizQuestionList(y.get("quizQuestionList", [])).QuizQuestionList)
 
-        self.author: UserProfileList = UserProfileList(_author).UserProfileList
+        self.author = UserProfileList(_author).UserProfileList
         self.quizQuestionList = _quizQuestionList
 
         self.createdTime = []
@@ -308,8 +308,8 @@ class Blog:
     def __init__(self, data):
         self.json = data
 
-        self.author: UserProfile = UserProfile(data.get("author", [])).UserProfile
-        self.quizQuestionList: QuizQuestionList = QuizQuestionList(data.get("quizQuestionList", [])).QuizQuestionList
+        self.author = UserProfile(data.get("author", [])).UserProfile
+        self.quizQuestionList = QuizQuestionList(data.get("quizQuestionList", [])).QuizQuestionList
 
         extensions = self.json.get("extensions") or {}
         tipInfo = self.json.get("tipInfo") or {}
@@ -366,13 +366,12 @@ class Wiki:
     def __init__(self, data):
         self.json = data
 
-        self.author: UserProfile = UserProfile(data.get("author", [])).UserProfile
-        try: self.labels: WikiLabelList = WikiLabelList(data["extensions"]["props"]).WikiLabelList
-        except (KeyError, TypeError): self.labels: WikiLabelList = WikiLabelList([])
+        self.author = UserProfile(data.get("author")).UserProfile
 
         extensions = self.json.get("extensions") or {}
         style = extensions.get("style") or {}
         knowledgeBase = extensions.get("knowledgeBase") or {}
+        self.labels = WikiLabelList(extensions.get("props")).WikiLabelList
 
         self.wikiId = self.json.get("itemId")
         self.status = self.json.get("status")
@@ -474,9 +473,9 @@ class Community:
 
         self.json = data
 
-        self.agent: UserProfile = UserProfile(data.get("agent", [])).UserProfile
+        self.agent = UserProfile(data.get("agent", [])).UserProfile
 
-        try: self.rankingTable: RankingTableList = RankingTableList(data["advancedSettings"]["rankingTable"]).RankingTableList
+        try: self.rankingTable = RankingTableList(data["advancedSettings"]["rankingTable"]).RankingTableList
         except (KeyError, TypeError): self.rankingTable: RankingTableList = RankingTableList([])
 
         themePack: Dict = data.get("themePack") or {}
@@ -612,7 +611,7 @@ class FromCode:
         linkInfo = extensions.get("linkInfo") or {}
 
         community = Community(extensions.get("community")).Community
-        self.community: Community = community
+        self.community = community
         self.path = data.get("path")
         self.objectType = linkInfo.get("objectType")
         self.shortCode = linkInfo.get("shortCode")
@@ -642,7 +641,7 @@ class UserProfileCountList:
 
         self.json = data
 
-        self.profile: UserProfileList = UserProfileList(data.get("userProfileList")).UserProfileList
+        self.profile = UserProfileList(data.get("userProfileList")).UserProfileList
 
         self.userProfileCount = data.get("userProfileCount")
 
@@ -766,7 +765,7 @@ class GetWikiInfo:
     def __init__(self, data):
         self.json = data
 
-        self.wiki: Wiki = Wiki(data.get("item")).Wiki
+        self.wiki = Wiki(data.get("item")).Wiki
 
         self.inMyFavorites = data.get("inMyFavorites")
         self.isBookmarked = data.get("isBookmarked")
@@ -780,7 +779,7 @@ class GetBlogInfo:
     def __init__(self, data):
         self.json = data
 
-        self.blog: Blog = Blog(data.get("blog")).Blog
+        self.blog = Blog(data.get("blog")).Blog
         self.isBookmarked = data.get("isBookmarked")
 
     @property
@@ -846,7 +845,7 @@ class TippedUsersSummary:
         for y in data["tippedUserList"]:
             _author.append(y.get("tipper"))
 
-        self.author: UserProfileList = UserProfileList(_author).UserProfileList
+        self.author = UserProfileList(_author).UserProfileList
         self.tipSummary = data.get("tipSummary") or {}
         self.totalCoins = self.tipSummary.get("totalCoins")
         self.tippersCount = self.tipSummary.get("tippersCount")
@@ -887,8 +886,8 @@ class Thread:
 
         self.json = data
 
-        self.author: UserProfile = UserProfile(data.get("author")).UserProfile
-        self.membersSummary: UserProfileList = UserProfileList(data.get("membersSummary")).UserProfileList
+        self.author = UserProfile(data.get("author")).UserProfile
+        self.membersSummary = UserProfileList(data.get("membersSummary")).UserProfileList
 
         self.userAddedTopicList = data.get("userAddedTopicList")
         self.membersQuota = data.get("membersQuota")
@@ -956,7 +955,7 @@ class ThreadList:
             _author.append(y.get("author"))
             _membersSummary.append(UserProfileList(y.get("membersSummary")).UserProfileList)
 
-        self.author: UserProfileList = UserProfileList(_author).UserProfileList
+        self.author = UserProfileList(_author).UserProfileList
         self.membersSummary = _membersSummary
         self.userAddedTopicList = []
         self.membersQuota = []
@@ -1069,7 +1068,7 @@ class Sticker:
 
         self.json = data
 
-        self.collection: StickerCollection = StickerCollection(data.get("stickerCollectionSummary")).StickerCollection
+        self.collection = StickerCollection(data.get("stickerCollectionSummary")).StickerCollection
 
         self.status: Optional[str] = data.get("status")
         self.icon: Optional[str] = data.get("icon")
@@ -1106,7 +1105,7 @@ class StickerCollection:
     def __init__(self, data):
         self.json = data
 
-        self.author: UserProfile = UserProfile(data.get("author")).UserProfile
+        self.author = UserProfile(data.get("author")).UserProfile
 
         self.status = data.get("status")
         self.collectionType = data.get("collectionType")
@@ -1128,8 +1127,8 @@ class StickerCollection:
         #extensions
         self.extensions = data.get("extensions") or {}
         self.iconSourceStickerId = self.extensions.get("iconSourceStickerId")
-        self.originalAuthor: UserProfile = UserProfile(self.extensions.get("originalAuthor")).UserProfile
-        self.originalCommunity: Community = Community(self.extensions.get("originalCommunity")).Community
+        self.originalAuthor = UserProfile(self.extensions.get("originalAuthor")).UserProfile
+        self.originalCommunity = Community(self.extensions.get("originalCommunity")).Community
 
         #restrictionInfo
         self.restrictionInfo = data.get("restrictionInfo") or {}
@@ -1160,9 +1159,9 @@ class StickerCollectionList:
             try: _originalCommunity.append(y["extensions"]["originalCommunity"])
             except (KeyError, TypeError): _originalCommunity.append(None)
 
-        self.author: UserProfileList = UserProfileList(_author).UserProfileList
-        self.originalAuthor: UserProfileList = UserProfileList(_originalAuthor).UserProfileList
-        self.originalCommunity: CommunityList = CommunityList(_originalCommunity).CommunityList
+        self.author = UserProfileList(_author).UserProfileList
+        self.originalAuthor = UserProfileList(_originalAuthor).UserProfileList
+        self.originalCommunity = CommunityList(_originalCommunity).CommunityList
         self.status = []
         self.collectionType = []
         self.modifiedTime = []
@@ -1227,12 +1226,12 @@ class Message:
     def __init__(self, data):
         self.json = data
 
-        self.author: UserProfile = UserProfile(data.get("author", None)).UserProfile
+        self.author = UserProfile(data.get("author", None)).UserProfile
 
         extensions = data.get("extensions") or {}
         videoExtensions = extensions.get("videoExtensions") or {}
 
-        self.sticker: Sticker = Sticker(extensions.get("sticker")).Sticker
+        self.sticker = Sticker(extensions.get("sticker")).Sticker
 
         self.content = data.get("content")
         self.includedInSummary = data.get("includedInSummary")
@@ -1276,8 +1275,8 @@ class MessageList:
             try: _sticker.append(y["extensions"]["sticker"])
             except (KeyError, TypeError): _sticker.append(None)
 
-        self.author: UserProfileList = UserProfileList(_author).UserProfileList
-        self.sticker: StickerList = StickerList(_sticker).StickerList
+        self.author = UserProfileList(_author).UserProfileList
+        self.sticker = StickerList(_sticker).StickerList
         self.content = []
         self.includedInSummary = []
         self.isHidden = []
@@ -1354,7 +1353,7 @@ class CommunityStickerCollection:
     def __init__(self, data):
         self.json = data
 
-        self.sticker: StickerCollectionList = StickerCollectionList(data.get("stickerCollectionList")).StickerCollectionList
+        self.sticker = StickerCollectionList(data.get("stickerCollectionList")).StickerCollectionList
 
         self.stickerCollectionCount = data.get("stickerCollectionCount")
 
@@ -1369,7 +1368,7 @@ class NotificationList:
 
         self.json = data
 
-        self.author: UserProfileList = UserProfileList(_author).UserProfileList
+        self.author = UserProfileList(_author).UserProfileList
         self.contextComId = []
         self.objectText = []
         self.objectType = []
@@ -1411,7 +1410,7 @@ class AdminLogList:
 
         self.json = data
 
-        self.author: UserProfileList = UserProfileList(_author).UserProfileList
+        self.author = UserProfileList(_author).UserProfileList
         self.createdTime = []
         self.objectType = []
         self.operationName = []
@@ -1534,8 +1533,8 @@ class InfluencerFans:
     def __init__(self, data):
         self.json = data
 
-        self.influencerProfile: UserProfile = UserProfile(data.get("influencerUserProfile", [])).UserProfile
-        self.fanClubList: FanClubList = FanClubList(data.get("fanClubList", [])).FanClubList
+        self.influencerProfile = UserProfile(data.get("influencerUserProfile", [])).UserProfile
+        self.fanClubList = FanClubList(data.get("fanClubList", [])).FanClubList
 
 
         self.myFanClub = data.get("myFanClub")
@@ -1634,7 +1633,7 @@ class QuizRankings:
         self.rankingList = _rankingList
         self.quizPlayedTimes = data.get("quizPlayedTimes")
         self.quizInBestQuizzes = data.get("quizInBestQuizzes")
-        self.profile: QuizRanking = data.get("quizResultOfCurrentUser")
+        self.profile = data.get("quizResultOfCurrentUser")
 
     @property
     def QuizRankings(self):
@@ -1668,7 +1667,7 @@ class QuizRankingList:
 
         self.json = data
 
-        self.author: UserProfileList = UserProfileList(_author).UserProfileList
+        self.author = UserProfileList(_author).UserProfileList
         self.highestMode = []
         self.modifiedTime = []
         self.isFinished = []
@@ -1702,7 +1701,7 @@ class SharedFolderFile:
     def __init__(self, data):
         self.json = data
 
-        self.author: UserProfile = UserProfile(data.get("author")).UserProfile
+        self.author = UserProfile(data.get("author")).UserProfile
 
         self.votesCount = self.json.get("votesCount")
         self.createdTime = self.json.get("createdTime")
@@ -1731,7 +1730,7 @@ class SharedFolderFileList:
 
         self.json = data
 
-        self.author: UserProfileList = UserProfileList(_author).UserProfileList
+        self.author = UserProfileList(_author).UserProfileList
         self.votesCount = []
         self.createdTime = []
         self.modifiedTime = []
@@ -1795,7 +1794,7 @@ class Event:
         self.duration = params.get("duration")
         self.id = self.json.get("id")
 
-        self.message: Message = Message(data.get("chatMessage")).Message
+        self.message = Message(data.get("chatMessage")).Message
 
     @property
     def Event(self):
@@ -1808,7 +1807,7 @@ class JoinRequest:
 
         self.json = data
 
-        self.author: UserProfileList = UserProfileList(_author).UserProfileList
+        self.author = UserProfileList(_author).UserProfileList
         self.communityMembershipRequestCount = self.json.get("communityMembershipRequestCount")
 
     @property
@@ -1835,7 +1834,7 @@ class InviteCode:
     def __init__(self, data):
         self.json = data
 
-        self.author: UserProfile = UserProfile(data.get("author", [])).UserProfile
+        self.author = UserProfile(data.get("author", [])).UserProfile
 
         self.status = self.json.get("status")
         self.duration = self.json.get("duration")
@@ -1857,7 +1856,7 @@ class InviteCodeList:
 
         self.json = data
 
-        self.author: UserProfileList = UserProfileList(_author).UserProfileList
+        self.author = UserProfileList(_author).UserProfileList
         self.status = []
         self.duration = []
         self.invitationId = []
@@ -1892,9 +1891,9 @@ class WikiRequestList:
             _wiki.append(y.get("item"))
             _originalWiki.append(y.get("originalItem"))
 
-        self.author: UserProfileList = UserProfileList(_author).UserProfileList
-        self.wiki: WikiList = WikiList(_wiki).WikiList
-        self.originalWiki: WikiList = WikiList(_originalWiki).WikiList
+        self.author = UserProfileList(_author).UserProfileList
+        self.wiki = WikiList(_wiki).WikiList
+        self.originalWiki = WikiList(_originalWiki).WikiList
 
         self.authorId = []
         self.status = []
@@ -1932,8 +1931,8 @@ class NoticeList:
             _author.append(y.get("operator"))
             _targetUser.append(y.get("targetUser"))
 
-        self.author: UserProfileList = UserProfileList(_author).UserProfileList
-        self.targetUser: UserProfileList = UserProfileList(_targetUser).UserProfileList
+        self.author = UserProfileList(_author).UserProfileList
+        self.targetUser = UserProfileList(_targetUser).UserProfileList
 
         self.title = []
         self.icon = []
@@ -2015,8 +2014,8 @@ class AvatarFrameList:
 
         self.json = data
 
-        self.author: UserProfileList = UserProfileList(_author).UserProfileList
-        self.targetUser: UserProfileList = UserProfileList(_targetUser).UserProfileList
+        self.author = UserProfileList(_author).UserProfileList
+        self.targetUser = UserProfileList(_targetUser).UserProfileList
 
         self.isGloballyAvailable = []
         self.extensions = []
@@ -2126,7 +2125,7 @@ class BubbleConfig:
 
 class Bubble:
     def __init__(self, data):
-        self.config: BubbleConfig = BubbleConfig(data.get("config", [])).BubbleConfig
+        self.config = BubbleConfig(data.get("config", [])).BubbleConfig
 
         self.json = data
         self.uid = data.get("uid")
@@ -2216,7 +2215,7 @@ class BubbleList:
 
         self.json = data
 
-        self.config: BubbleConfigList = BubbleConfigList(_config).BubbleConfigList
+        self.config = BubbleConfigList(_config).BubbleConfigList
         self.uid = []
         self.isActivated = []
         self.isNew = []

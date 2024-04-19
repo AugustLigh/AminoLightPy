@@ -376,7 +376,7 @@ class Callbacks:
             for handler in self.handlers[type]:
                 handler(data)
 
-    def event(self, type):
+    def event(type):
         def registerHandler(handler):
             if type in self.handlers:
                 self.handlers[type].append(handler)

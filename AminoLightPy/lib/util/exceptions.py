@@ -1033,4 +1033,4 @@ def CheckException(data):
     elif api_code == 9901:
         raise InvalidName(data)
     else:
-        raise Exception(data)
+        raise UnknownError(data)
