@@ -27,7 +27,7 @@ AminoApps python framework to create bots and scripts easily.
 * ⚡ **Optimization** : Most of the code has been rewritten.
 * ⚙ **Backward compatibility** : Write code with correct syntax.
 * 🎮 **Commands support** : Go even further with new requests.
-* 🍎 **Supported on iPhones, free, and without jailbreak.
+* 🍎 **Supported on iPhones** : free, and without jailbreak.
 
 <h2 align="center">Usage</h2>
 

@@ -831,28 +831,60 @@ class GetSharedFolderInfo:
         return self
 
 class WikiCategoryList:
-    def __init__(self, data):
-        self.json = data
-        _categoryObjects = tuple(WikiCategory(x).WikiCategory for x in data)
+    __slots__ = (
+        "json", "subCategory", "author", "itemsCount",
+        "parentCategoryId", "categoryId", "extensions",
+        "createdTime", "title", "mediaList", "icon", "parentType"
+    )
 
-        set_attributes(self, _categoryObjects)
+    def __init__(self, data):
+        _author = [x.get("author") for x in data]
+
+        self.json = data
+
+        self.author: UserProfileList = UserProfileList(_author).UserProfileList
+        self.itemsCount = []
+        self.parentCategoryId = []
+        self.categoryId = []
+        self.extensions = []
+        self.createdTime = []
+        self.title = []
+        self.mediaList = []
+        self.icon = []
 
     @property
     def WikiCategoryList(self):
+        for x in self.json:
+            self.itemsCount.append(x.get("itemsCount"))
+            self.parentCategoryId.append(x.get("parentCategoryId"))
+            self.categoryId.append(x.get("categoryId"))
+            self.extensions.append(x.get("extensions"))
+            self.createdTime.append(x.get("createdTime"))
+            self.title.append(x.get("label"))
+            self.mediaList.append(x.get("mediaList"))
+            self.icon.append(x.get("icon"))
 
         return self
 
 class WikiCategory:
+    __slots__ = (
+        "json", "subCategory", "author", "itemsCount",
+        "parentCategoryId", "categoryId", "extensions",
+        "createdTime", "title", "mediaList", "icon", "parentType"
+    )
     def __init__(self, data):
-        self.json = data
+        if not data:
+            for attr in self.__slots__:
+                setattr(self, attr, None)
+            return
 
-        try: self.author = UserProfile(data["itemCategory"]["author"]).UserProfile
-        except (KeyError, TypeError): self.author: UserProfile = UserProfile([])
-        try: self.subCategory = WikiCategoryList(data["childrenWrapper"]["itemCategoryList"]).WikiCategoryList
-        except (KeyError, TypeError): self.subCategory: WikiCategoryList = WikiCategoryList([])
+        self.json = data
 
         itemCategory = data.get("itemCategory") or {}
         childrenWrapper = data.get("childrenWrapper") or {}
+
+        self.author = UserProfile(itemCategory.get("author")).UserProfile
+        self.subCategory = WikiCategoryList(childrenWrapper.get("itemCategoryList")).WikiCategoryList
 
         self.itemsCount = itemCategory.get("itemsCount")
         self.parentCategoryId = itemCategory.get("parentCategoryId")
@@ -980,109 +1012,13 @@ class Thread:
 class ThreadList:
     __slots__ = Thread.__slots__
     def __init__(self, data):
-        _author, _membersSummary = [], []
-
         self.json = data
+        _threadObjects = tuple(Thread(x).Thread for x in data)
 
-        for y in data:
-            _author.append(y.get("author"))
-            _membersSummary.append(UserProfileList(y.get("membersSummary")).UserProfileList)
-
-        self.author = UserProfileList(_author).UserProfileList
-        self.membersSummary = _membersSummary
-        self.userAddedTopicList = []
-        self.membersQuota = []
-        self.chatId = []
-        self.keywords = []
-        self.membersCount = []
-        self.isPinned = []
-        self.title = []
-        self.membershipStatus = []
-        self.content = []
-        self.needHidden = []
-        self.alertOption = []
-        self.lastReadTime = []
-        self.type = []
-        self.status = []
-        self.publishToGlobal = []
-        self.modifiedTime = []
-        self.condition = []
-        self.icon = []
-        self.latestActivityTime = []
-        self.extensions = []
-        self.viewOnly = []
-        self.coHosts = []
-        self.membersCanInvite = []
-        self.announcement = []
-        self.language = []
-        self.lastMembersSummaryUpdateTime = []
-        self.backgroundImage = []
-        self.channelType = []
-        self.comId = []
-        self.createdTime = []
-        self.creatorId = []
-        self.bannedUsers = []
-        self.tippingPermStatus = []
-        self.visibility = []
-        self.fansOnly = []
-        self.pinAnnouncement = []
-        self.vvChatJoinType = []
-        self.screeningRoomHostId = []
-        self.screeningRoomPermission = []
-        self.disabledTime = []
-        self.organizerTransferCreatedTime = []
-        self.organizerTransferId = []
+        set_attributes(self, _threadObjects)
 
     @property
     def ThreadList(self):
-        for chat in self.json:
-            extensions = chat.get("extensions") or {}
-            screeningRoomPermission = extensions.get("screeningRoomPermission") or {}
-            organizerTransferRequest = extensions.get("organizerTransferRequest") or {}
-
-            self.userAddedTopicList.append(chat.get("userAddedTopicList"))
-            self.membersQuota.append(chat.get("membersQuota"))
-            self.chatId.append(chat.get("threadId"))
-            self.keywords.append(chat.get("keywords"))
-            self.membersCount.append(chat.get("membersCount"))
-            self.isPinned.append(chat.get("isPinned"))
-            self.title.append(chat.get("title"))
-            self.membershipStatus.append(chat.get("membershipStatus"))
-            self.content.append(chat.get("content"))
-            self.needHidden.append(chat.get("needHidden"))
-            self.alertOption.append(chat.get("alertOption"))
-            self.lastReadTime.append(chat.get("lastReadTime"))
-            self.type.append(chat.get("type"))
-            self.status.append(chat.get("status"))
-            self.publishToGlobal.append(chat.get("publishToGlobal"))
-            self.modifiedTime.append(chat.get("modifiedTime"))
-            self.condition.append(chat.get("condition"))
-            self.icon.append(chat.get("icon"))
-            self.latestActivityTime.append(chat.get("latestActivityTime"))
-            self.comId.append(chat.get("ndcId"))
-            self.createdTime.append(chat.get("createdTime"))
-            self.extensions.append(extensions)
-            self.viewOnly.append(extensions.get("viewOnly"))
-            self.coHosts.append(extensions.get("coHost"))
-            self.membersCanInvite.append(extensions.get("membersCanInvite"))
-            self.language.append(extensions.get("language"))
-            self.announcement.append(extensions.get("announcement"))
-            self.backgroundImage.append(extensions.get("bm", [None, None])[1])
-            self.lastMembersSummaryUpdateTime.append(extensions.get("lastMembersSummaryUpdateTime"))
-            self.channelType.append(extensions.get("channelType"))
-            self.creatorId.append(extensions.get("creatorUid"))
-            self.bannedUsers.append(extensions.get("bannedMemberUidList"))
-            self.visibility.append(extensions.get("visibility"))
-            self.fansOnly.append(extensions.get("fansOnly"))
-            self.pinAnnouncement.append(extensions.get("pinAnnouncement"))
-            self.vvChatJoinType.append(extensions.get("vvChatJoinType"))
-            self.tippingPermStatus.append(extensions.get("tippingPermStatus"))
-            self.screeningRoomHostId.append(extensions.get("screeningRoomHostUid"))
-            self.disabledTime.append(extensions.get("__disabledTime__"))
-            self.screeningRoomPermission.append(screeningRoomPermission.get("action"))
-            self.organizerTransferCreatedTime.append(organizerTransferRequest.get("createdTime"))
-            self.organizerTransferId.append(organizerTransferRequest.get("requestId"))
-
         return self
 
 class Sticker:
@@ -2176,7 +2112,21 @@ class BubbleConfig:
 
 
 class Bubble:
+    __slots__ = (
+        "config", "json", "uid", "isActivated", "isNew", "bubbleId", "resourceUrl",
+        "backgroundImage", "status", "modifiedTime", "ownershipInfo", "expiredTime",
+        "isAutoRenew", "ownershipStatus", "bannerImage", "md5", "name", "coverImage",
+        "bubbleType", "extensions", "templateId", "createdTime", "deletable",
+        "backgroundMedia", "description", "materialUrl", "comId", "restrictionInfo",
+        "discountStatus", "discountValue", "ownerId", "ownerType", "restrictType",
+        "restrictValue", "availableDuration"
+    )
     def __init__(self, data):
+        if not data:
+            for attr in self.__slots__:
+                setattr(self, attr, None)
+            return
+
         self.config = BubbleConfig(data.get("config", [])).BubbleConfig
 
         self.json = data
