@@ -1,4 +1,5 @@
 # pylint: disable=invalid-name
+# pylint: disable=too-many-lines
 # You don"t even know how long this shit took...
 # F*ck you Sand for making me do this.
 
@@ -125,7 +126,25 @@ class UserProfile:
         return self
 
 class UserProfileList:
-    __slots__ = UserProfile.__slots__
+    __slots__ = (
+        "json", "fanClub", "accountMembershipStatus", "activation", "activePublicLiveThreadId",
+        "age", "aminoId", "aminoIdEditable", "avatarFrame", "avatarFrameId",
+        "blogsCount", "commentsCount", "content", "createdTime",
+        "followersCount", "followingCount", "followingStatus", "gender",
+        "icon", "isGlobal", "isNicknameVerified", "itemsCount", "level",
+        "mediaList", "membershipStatus", "modifiedTime", "mood", "moodSticker", "nickname",
+        "notificationSubscriptionStatus", "onlineStatus", "onlineStatus2",
+        "postsCount", "pushEnabled", "race", "reputation", "role", "securityLevel",
+        "status", "storiesCount", "tagList", "userId", "verified",
+        "totalQuizHighestScore", "totalQuizPlayedTimes", "requestId", "message", "applicant",
+        "avgDailySpendTimeIn7Days", "adminLogCountIn7Days", "extensions", "style",
+        "backgroundImage", "backgroundColor", "coverAnimation", "customTitles", "defaultBubbleId",
+        "disabledLevel", "disabledStatus", "disabledTime", "isMemberOfTeamAmino",
+        "privilegeOfChatInviteRequest", "privilegeOfCommentOnUserProfile", "influencerInfo",
+        "fansCount", "influencerCreatedTime", "influencerMonthlyFee", "influencerPinned",
+        "staffInfo", "globalStrikeCount", "lastStrikeTime", "lastWarningTime", "strikeCount",
+        "warningCount", "session"
+    )
 
     def __init__(self, data):
         self.json = data
@@ -353,7 +372,14 @@ class Wiki:
         return self
 
 class WikiList:
-    __slots__ = Wiki.__slots__
+    __slots__ = (
+        "json", "author", "labels", "wikiId", "status", "style",
+        "globalCommentsCount", "modifiedTime", "votedValue", "globalVotesCount",
+        "globalVotedValue", "contentRating", "title", "content", "keywords",
+        "needHidden", "guestVotesCount", "extensions", "votesCount", "comId",
+        "createdTime", "mediaList", "commentsCount", "backgroundColor", "fansOnly",
+        "knowledgeBase", "version", "originalWikiId", "contributors"
+    )
     def __init__(self, data: Dict):
         self.json = data
 
@@ -366,7 +392,6 @@ class WikiList:
 
     @property
     def WikiList(self):
-
         return self
 
 
@@ -499,7 +524,22 @@ class Community:
         return self
 
 class CommunityList:
-    __slots__ = Community.__slots__
+    __slots__ = (
+        "json", "agent", "rankingTable", "usersCount", "createdTime", "aminoId",
+        "icon", "link", "comId", "modifiedTime", "status", "joinType", "tagline",
+        "primaryLanguage", "heat", "themePack", "probationStatus", "listedStatus",
+        "userAddedTopicList", "name", "isStandaloneAppDeprecated", "searchable",
+        "influencerList", "keywords", "mediaList", "description",
+        "isStandaloneAppMonetizationEnabled", "advancedSettings", "activeInfo",
+        "configuration", "extensions", "nameAliases", "templateId",
+        "promotionalMediaList", "defaultRankingTypeInLeaderboard",
+        "joinedBaselineCollectionIdList", "newsfeedPages", "catalogEnabled",
+        "pollMinFullBarVoteCount", "leaderboardStyle", "facebookAppIdList",
+        "welcomeMessage", "welcomeMessageEnabled", "hasPendingReviewRequest",
+        "frontPageLayout", "themeColor", "themeHash", "themeVersion", "themeUrl",
+        "themeHomePageAppearance", "themeLeftSidePanelTop", "themeLeftSidePanelBottom",
+        "themeLeftSidePanelColor", "customList"
+    )
 
     def __init__(self, data: dict):
         self.json = data
@@ -1010,7 +1050,16 @@ class Thread:
 
 
 class ThreadList:
-    __slots__ = Thread.__slots__
+    __slots__ = (
+        "json", "author", "membersSummary", "userAddedTopicList", "membersQuota", "chatId",
+        "keywords", "membersCount", "isPinned", "title", "membershipStatus", "content",
+        "needHidden", "alertOption", "lastReadTime", "type", "status", "publishToGlobal", "modifiedTime",
+        "condition", "icon", "latestActivityTime", "comId", "createdTime", "extensions", "viewOnly",
+        "coHosts", "membersCanInvite", "language", "announcement", "backgroundImage", "lastMembersSummaryUpdateTime",
+        "channelType", "creatorId", "bannedUsers", "visibility", "fansOnly", "pinAnnouncement",
+        "vvChatJoinType", "disabledTime", "tippingPermStatus", "screeningRoomHostId", "screeningRoomPermission",
+        "organizerTransferCreatedTime", "organizerTransferId"
+    )
     def __init__(self, data):
         self.json = data
         _threadObjects = tuple(Thread(x).Thread for x in data)
@@ -1058,20 +1107,37 @@ class Sticker:
         return self
 
 class StickerList:
-    __slots__ = Sticker.__slots__
+    __slots__ = (
+        "json", "collection", "status", "icon", "iconV2", "name", "stickerId",
+        "smallIcon", "smallIconV2", "stickerCollectionId", "mediumIcon",
+        "mediumIconV2", "extensions", "usedCount", "createdTime"
+    )
 
     def __init__(self, data: dict):
         self.json = data
 
-        _StickerObjects = tuple(Sticker(x).Sticker for x in data)
-        set_attributes(self, _StickerObjects)
+        _stickerObjects = tuple(Sticker(x).Sticker for x in data)
+        set_attributes(self, _stickerObjects)
 
     @property
     def StickerList(self):
         return self
 
 class StickerCollection:
+    __slots__ = (
+        "json", "author", "status", "collectionType", "modifiedTime", "bannerUrl",
+        "smallIcon", "stickersCount", "usedCount", "icon", "title", "collectionId",
+        "isActivated", "ownershipStatus", "isNew", "availableComIds", "description",
+        "extensions", "iconSourceStickerId", "originalAuthor", "originalCommunity",
+        "restrictionInfo", "discountStatus", "discountValue", "ownerId", "ownerType",
+        "restrictType", "restrictValue", "availableDuration"
+    )
     def __init__(self, data):
+        if not data:
+            for attr in self.__slots__:
+                setattr(self, attr, None)
+            return
+
         self.json = data
 
         self.author = UserProfile(data.get("author")).UserProfile
@@ -1263,34 +1329,6 @@ class MessageList:
 
     @property
     def MessageList(self):
-        for x in self.json:
-            extensions = x.get("extensions") or {}
-
-            self.content.append(x.get("content"))
-            self.includedInSummary.append(x.get("includedInSummary"))
-            self.isHidden.append(x.get("isHidden"))
-            self.messageId.append(x.get("messageId"))
-            self.chatBubbleId.append(x.get("chatBubbleId"))
-            self.clientRefId.append(x.get("clientRefId"))
-            self.chatId.append(x.get("threadId"))
-            self.messageType.append(x.get("messageType"))
-            self.createdTime.append(x.get("createdTime"))
-            self.chatBubbleVersion.append(x.get("chatBubbleVersion"))
-            self.type.append(x.get("type"))
-            self.mediaValue.append(x.get("mediaValue"))
-            self.mediaType.append(x.get("mediaType"))
-
-            # extensions
-            self.extensions.append(extensions)
-            self.originalStickerId.append(extensions.get("originalStickerId"))
-            self.mentionUserIds.append([m.get("uid") for m in extensions.get("mentionedArray", [])])
-            self.videoExtensions.append(extensions.get("videoExtensions"))
-            self.videoDuration.append((extensions.get("videoExtensions") or {}).get("duration"))
-            self.videoHeight.append((extensions.get("videoExtensions") or {}).get("height"))
-            self.videoWidth.append((extensions.get("videoExtensions") or {}).get("width"))
-            self.videoCoverImage.append((extensions.get("videoExtensions") or {}).get("coverImage"))
-            self.tippingCoins.append(extensions.get("tippingCoins"))
-
         return self
 
 class GetMessages:
@@ -1478,14 +1516,14 @@ class FanClubList:
             status_data.append(x.get("fansStatus"))
             targetUserId_data.append(x.get("targetUid"))
 
-        self.profile = UserProfileList(tuple(profile_data)).UserProfileList
-        self.targetUserProfile = UserProfileList(tuple(targetUserProfile_data)).UserProfileList
-        self.userId = tuple(userId_data)
-        self.lastThankedTime = tuple(lastThankedTime_data)
-        self.expiredTime = tuple(expiredTime_data)
-        self.createdTime = tuple(createdTime_data)
-        self.status = tuple(status_data)
-        self.targetUserId = tuple(targetUserId_data)
+        self.profile = UserProfileList(profile_data).UserProfileList
+        self.targetUserProfile = UserProfileList(targetUserProfile_data).UserProfileList
+        self.userId = userId_data
+        self.lastThankedTime = lastThankedTime_data
+        self.expiredTime = expiredTime_data
+        self.createdTime = createdTime_data
+        self.status = status_data
+        self.targetUserId = targetUserId_data
 
     @property
     def FanClubList(self):
@@ -2089,7 +2127,17 @@ class AvatarFrameList:
 
 
 class BubbleConfig:
+    __slots__ = (
+        'json', 'status', 'allowedSlots', 'name', 'vertexInset', 'zoomPoint',
+        'coverImage', 'bubbleType', 'contentInsets', 'version', 'linkColor',
+        'backgroundPath', 'id', 'previewBackgroundUrl'
+    )
     def __init__(self, data):
+        if not data:
+            for attr in self.__slots__:
+                setattr(self, attr, None)
+            return
+
         self.json = data
 
         self.status = data.get("status")
@@ -2127,7 +2175,7 @@ class Bubble:
                 setattr(self, attr, None)
             return
 
-        self.config = BubbleConfig(data.get("config", [])).BubbleConfig
+        self.config = BubbleConfig(data.get("config")).BubbleConfig
 
         self.json = data
         self.uid = data.get("uid")
@@ -2213,100 +2261,22 @@ class BubbleConfigList:
 
 class BubbleList:
     __slots__ = (
-        "json", "config", "uid", "isActivated", "isNew", "bubbleId", "resourceUrl",
-        "version", "backgroundImage", "status", "modifiedTime", "ownershipInfo",
-        "expiredTime", "isAutoRenew", "ownershipStatus", "bannerImage", "md5",
-        "name", "coverImage", "bubbleType", "extensions", "templateId",
-        "createdTime", "deletable", "backgroundMedia", "description", "materialUrl",
-        "comId", "restrictionInfo", "discountValue", "discountStatus", "ownerId",
-        "ownerType", "restrictType", "restrictValue", "availableDuration"
+        "config", "json", "uid", "isActivated", "isNew", "bubbleId", "resourceUrl",
+        "backgroundImage", "status", "modifiedTime", "ownershipInfo", "expiredTime",
+        "isAutoRenew", "ownershipStatus", "bannerImage", "md5", "name", "coverImage",
+        "bubbleType", "extensions", "templateId", "createdTime", "deletable",
+        "backgroundMedia", "description", "materialUrl", "comId", "restrictionInfo",
+        "discountStatus", "discountValue", "ownerId", "ownerType", "restrictType",
+        "restrictValue", "availableDuration"
     )
     def __init__(self, data):
-        if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
-
-        _config = tuple(x.get("config") for x in data)
-
         self.json = data
 
-        self.config = BubbleConfigList(_config).BubbleConfigList
-        self.uid = []
-        self.isActivated = []
-        self.isNew = []
-        self.bubbleId = []
-        self.resourceUrl = []
-        self.version = []
-        self.backgroundImage = []
-        self.status = []
-        self.modifiedTime = []
-        self.ownershipInfo = []
-        self.expiredTime = []
-        self.isAutoRenew = []
-        self.ownershipStatus = []
-        self.bannerImage = []
-        self.md5 = []
-        self.name = []
-        self.coverImage = []
-        self.bubbleType = []
-        self.extensions = []
-        self.templateId = []
-        self.createdTime = []
-        self.deletable = []
-        self.backgroundMedia: List[Optional[MediaObject]] = []
-        self.description = []
-        self.materialUrl = []
-        self.comId = []
-        self.restrictionInfo = []
-        self.discountValue = []
-        self.discountStatus = []
-        self.ownerId = []
-        self.ownerType = []
-        self.restrictType = []
-        self.restrictValue = []
-        self.availableDuration = []
+        _bubbleObjects = tuple(Bubble(x).Bubble for x in data)
+        set_attributes(self, _bubbleObjects)
 
     @property
     def BubbleList(self):
-        for x in self.json:
-            ownershipInfo = x.get("ownershipInfo") or {}
-            restrictionInfo = x.get("restrictionInfo") or {}
-
-            self.uid.append(x.get("uid"))
-            self.isActivated.append(x.get("isActivated"))
-            self.isNew.append(x.get("isNew"))
-            self.bubbleId.append(x.get("bubbleId"))
-            self.resourceUrl.append(x.get("resourceUrl"))
-            self.backgroundImage.append(x.get("backgroundImage"))
-            self.status.append(x.get("status"))
-            self.modifiedTime.append(x.get("modifiedTime"))
-            self.ownershipInfo.append(ownershipInfo)
-            self.expiredTime.append(ownershipInfo.get("expiredTime"))
-            self.isAutoRenew.append(ownershipInfo.get("isAutoRenew"))
-            self.ownershipStatus.append(x.get("ownershipStatus"))
-            self.bannerImage.append(x.get("bannerImage"))
-            self.md5.append(x.get("md5"))
-            self.name.append(x.get("name"))
-            self.coverImage.append(x.get("coverImage"))
-            self.bubbleType.append(x.get("bubbleType"))
-            self.extensions.append(x.get("extensions"))
-            self.templateId.append(x.get("templateId"))
-            self.createdTime.append(x.get("createdTime"))
-            self.deletable.append(x.get("deletable"))
-            self.backgroundMedia.append(x.get("backgroundMedia"))
-            self.description.append(x.get("description"))
-            self.materialUrl.append(x.get("materialUrl"))
-            self.comId.append(x.get("ndcId"))
-            self.restrictionInfo.append(restrictionInfo)
-            self.discountStatus.append(restrictionInfo.get("discountStatus"))
-            self.discountValue.append(restrictionInfo.get("discountValue"))
-            self.ownerId.append(restrictionInfo.get("ownerUid"))
-            self.ownerType.append(restrictionInfo.get("ownerType"))
-            self.restrictType.append(restrictionInfo.get("restrictType"))
-            self.restrictValue.append(restrictionInfo.get("restrictValue"))
-            self.availableDuration.append(restrictionInfo.get("availableDuration"))
-
         return self
 
 
@@ -2388,6 +2358,17 @@ class StoreStickers:
             self.value.append(restrictionInfo.get("restrictValue"))
             self.smallIcon.append(refObject.get("smallIcon"))
 
+        return self
+
+class StoreChatBubble:
+    def __init__(self, data):
+        self.json = data
+        self.storeItemList = data.get("storeItemList")
+
+        self.refObject = BubbleList([data.get("refObject") for data in self.storeItemList]).BubbleList
+
+    @property
+    def StoreChatBubble(self):
         return self
 
 class MediaObject(List[List[TypeVar("T")]]):

@@ -1,4 +1,5 @@
 # pylint: disable=invalid-name
+# pylint: disable=too-many-lines
 
 from uuid import uuid4
 from typing import BinaryIO, Union
@@ -1553,7 +1554,10 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {"ndcIds": comIds}
-        response = self.session.post(f"{api}/g/s/user-profile/{self.profile.userId}/linked-community/reorder", json=data)
+        response = self.session.post(
+            url=f"{api}/g/s/user-profile/{self.profile.userId}/linked-community/reorder",
+            json=data
+        )
         return response.status_code
 
     def add_linked_community(self, comId: int):
@@ -1568,7 +1572,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.post(f"{api}/g/s/user-profile/{self.profile.userId}/linked-community/{comId}")
+        response = self.session.post(
+            url=f"{api}/g/s/user-profile/{self.profile.userId}/linked-community/{comId}"
+        )
         return response.status_code
 
     def remove_linked_community(self, comId: int):
@@ -1583,7 +1589,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.delete(f"{api}/g/s/user-profile/{self.profile.userId}/linked-community/{comId}")
+        response = self.session.delete(
+            url=f"{api}/g/s/user-profile/{self.profile.userId}/linked-community/{comId}"
+        )
         return response.status_code
 
     def comment(self, message: str, userId: str = None, blogId: str = None, wikiId: str = None, replyTo: str = None):

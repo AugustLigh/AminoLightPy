@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from json import loads, JSONDecodeError
 
 class UnsupportedService(Exception):
@@ -363,7 +364,7 @@ class PageRepostedTooRecently(Exception):
 class InsufficientLevel(Exception):
     """
     - **API Code** : 551
-    - **API Message** : This post type is restricted to members with a level ``X`` ranking and above.
+    - **API Message** : This post type is restricted to members with a level ``X`` ranking.
     - **API String** : ``Unknown String``
     """
     def __init__(self, *args, **kwargs):
@@ -1034,3 +1035,4 @@ def CheckException(data):
         raise InvalidName(data)
     else:
         raise UnknownError(data)
+        

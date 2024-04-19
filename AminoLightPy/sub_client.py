@@ -1,4 +1,5 @@
 # pylint: disable=invalid-name
+# pylint: disable=too-many-lines
 
 from uuid import uuid4
 from time import timezone
@@ -102,7 +103,7 @@ class SubClient():
         **Raises**
             - **Exceptions** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>` if the request fails.
         """
-        mediaList = list()
+        mediaList = []
 
         if captionList is not None:
             for image, caption in zip(imageList, captionList):
@@ -168,7 +169,7 @@ class SubClient():
     def edit_blog(self, blogId: str, title: str = None, content: str = None,
                 imageList: list = None, categoriesList: list = None,
                 backgroundColor: str = None, fansOnly: bool = False):
-        mediaList = list()
+        mediaList = []
 
         for image in imageList:
             mediaList.append([100, upload_media(self, image, "image"), None])
@@ -895,7 +896,7 @@ class SubClient():
         if publishToGlobal: data["publishToGlobal"] = 0
         if not publishToGlobal: data["publishToGlobal"] = 1
 
-        res = list()
+        res = []
 
         if doNotDisturb is not None:
             if doNotDisturb:
@@ -1134,7 +1135,7 @@ class SubClient():
         return response.status_code
 
     def play_quiz(self, quizId: str, questionIdsList: list, answerIdsList: list, quizMode: int = 0):
-        quizAnswerList = list()
+        quizAnswerList = []
 
         for question, answer in zip(questionIdsList, answerIdsList):
             part = {
@@ -1570,7 +1571,6 @@ class SubClient():
         response = self.session.get(f"{api}/x{self.comId}/s/sticker-collection?includeStickers=false&type=my-active-collection")
         return objects.StickerCollection(response.json()["stickerCollection"]).StickerCollection
 
-    # TODO : Finish this
     def get_store_chat_bubbles(self, start: int = 0, size: int = 25):
         params = {
             "sectionGroupId": "chat-bubble",
@@ -1578,7 +1578,8 @@ class SubClient():
             "size": size
         }
         response = self.session.get(f"{api}/x{self.comId}/s/store/items", params=params)
-        return response.json()
+        return objects.StoreChatBubble(response.json()).StoreChatBubble
+        # return response.text
 
     # TODO : Finish this
     def get_store_stickers(self, start: int = 0, size: int = 25):
