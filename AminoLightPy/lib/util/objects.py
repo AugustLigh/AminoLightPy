@@ -1262,7 +1262,7 @@ class Message:
         "json", "author", "sticker", "content",
         "includedInSummary", "isHidden", "messageType", "messageId", "mediaType",
         "mediaValue", "chatBubbleId", "clientRefId", "chatId", "createdTime",
-        "chatBubbleVersion", "type", "extensions", "mentionUserIds", "duration",
+        "chatBubbleVersion", "type", "extensions", "replyMessage", "mentionUserIds", "duration",
         "originalStickerId", "videoExtensions", "videoDuration", "videoHeight",
         "videoWidth", "videoCoverImage", "tippingCoins"
     )

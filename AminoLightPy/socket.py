@@ -21,7 +21,6 @@ class SocketHandler:
         self.thread_event = threading.Event()
 
     def on_message(self, ws, data):
-        print(data)
         self.client.handle_socket_message(data)
 
     def is_connected(self):
@@ -376,7 +375,7 @@ class Callbacks:
             for handler in self.handlers[type]:
                 handler(data)
 
-    def event(type):
+    def event(self, type):
         def registerHandler(handler):
             if type in self.handlers:
                 self.handlers[type].append(handler)
