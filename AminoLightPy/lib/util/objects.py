@@ -1774,7 +1774,7 @@ class SharedFolderFileList:
         return self
 
 class Event:
-    __sloots__ = (
+    __slots__ = (
         "json", "comId", "alertOption", "membershipStatus",
         "actions", "target", "params", "threadType", "duration",
         "id", "message"

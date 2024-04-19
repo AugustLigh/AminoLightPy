@@ -8,7 +8,7 @@ from json import loads, dumps
 from time import time, sleep
 from websocket import WebSocketApp
 
-from .lib.util.objects import Event
+from .lib.util import objects
 from .lib.util.helpers import gen_deviceId, signature
 
 
@@ -18,7 +18,7 @@ class SocketHandler:
         self.client = client
         self.debug = debug
         self.socket = None
-        self.event = threading.Event()
+        self.thread_event = threading.Event()
 
     def on_message(self, ws, data):
         print(data)
@@ -46,7 +46,7 @@ class SocketHandler:
 
     def on_open(self, ws):
         self.debug_print("[socket][start] Socket Started")
-        self.event.set()
+        self.thread_event.set()
 
     def starting_process(self):
         deviceId = gen_deviceId()
@@ -78,7 +78,7 @@ class SocketHandler:
             return
 
         threading.Thread(target=self.starting_process).start()
-        self.event.wait()
+        self.thread_event.wait()
 
     def debug_print(self, message):
         if self.debug:
@@ -388,7 +388,7 @@ class Callbacks:
 
     def event_handler_decorator(func):
         def wrapper(self, data):
-            event = Event(data["o"]).Event
+            event = objects.Event(data["o"]).Event
             self.call(func.__name__, event)
         return wrapper
 
