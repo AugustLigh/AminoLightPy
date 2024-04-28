@@ -883,11 +883,16 @@ class WikiCategoryList:
 	)
 
 	def __init__(self, data):
+		if not data:
+			for attr in self.__slots__:
+				setattr(self, attr, None)
+			return
+
 		_author = [x.get("author") for x in data]
 
 		self.json = data
 
-		self.author: UserProfileList = UserProfileList(_author).UserProfileList
+		self.author = UserProfileList(_author).UserProfileList
 		self.itemsCount = []
 		self.parentCategoryId = []
 		self.categoryId = []
