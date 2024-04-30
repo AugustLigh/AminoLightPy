@@ -12,7 +12,7 @@ class Typing():
         self.context.typing_request(self.comId, self.chatId, True)    
 
 class Recording():
-     def __init__(self, context, chatId: str, comId: int = None) -> None:
+    def __init__(self, context, chatId: str, comId: int = None) -> None:
         self.chatId = chatId
         self.context = context
         self.comId = 0 if not comId else comId
