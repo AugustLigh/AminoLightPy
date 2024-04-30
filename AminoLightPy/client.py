@@ -3,6 +3,7 @@
 
 from uuid import uuid4
 from typing import BinaryIO, Union
+from .managers import Typing, Recording
 
 from .constants import api, upload_media, AminoSession
 from .amino_socket import Callbacks, SocketHandler, SocketRequests
@@ -2145,3 +2146,21 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
         response = self.session.post(f"{api}/g/s/account/visit-settings", json=data)
         return response.json()
+
+    def typing(self, chatId: str, comId: int = None) -> Typing:
+        """
+        Start typing message in context manager.
+
+        **Returns**
+            - **Success** : :meth:`class <Typing>`
+        """
+        return Typing(self, chatId=chatId, comId=comId)
+
+    def recording(self, chatId: str, comId: int = None) -> Recording:
+        """
+        Start recording in context manager.
+
+        **Returns**
+            - **Success** : :meth:`class <Recording>`
+        """
+        return Recording(self, chatId=chatId, comId=comId)
