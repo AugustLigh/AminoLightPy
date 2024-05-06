@@ -4,6 +4,7 @@ from hashlib import sha1
 from typing import BinaryIO
 from collections import OrderedDict
 from requests import Session
+from mimetypes import guess_type
 
 from .lib.util.exceptions import SpecifyType
 from .lib.util import signature, gen_deviceId
@@ -54,7 +55,7 @@ class AminoSession(Session):
         return response
 
 
-def upload_media(self, file: BinaryIO, fileType: str) -> str:
+def upload_media(self, file: BinaryIO) -> str:
     """
     Upload file to the amino servers.
 
@@ -71,15 +72,13 @@ def upload_media(self, file: BinaryIO, fileType: str) -> str:
     file_hash  = sha1(data).hexdigest()
     if file_hash in cache:
         return cache[file_hash]
-
-    if fileType == "audio":
-        t = "audio/aac"
-    elif fileType == "image":
-        t = "image/jpg"
-    elif fileType == "gif":
-        t = "image/gif"
-    else: raise SpecifyType(fileType)
-
+        
+    fileType = guess_type(file.name)[0]
+    if fileType not in (
+        "image/gif", "image/jpg",
+        "audio/aac", "audio/png"
+    ): raise SpecifyType(fileType) #but this check can be removed, I think
+        
     custom_headers = self.session.headers
     custom_headers["Content-Type"] = t
 
