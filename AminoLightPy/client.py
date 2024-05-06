@@ -1007,7 +1007,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **chatId** : ID of the Chat.
             - **file** : File to be sent.
             - **fileType** : Type of the file.
-                - ``audio``, ``image``, ``gif``
+                - It's deprecated
             - **messageType** : Type of the Message.
             - **mentionUserIds** : List of User IDS to mention. '@' needed in the Message.
             - **replyTo** : Message ID to reply to.
@@ -1047,7 +1047,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
                 attachedObject["content"] = embedContent
 
             if embedImage:
-                attachedObject["mediaList"] = [[100, upload_media(self, embedImage, "image"), None]]
+                attachedObject["mediaList"] = [[100, upload_media(self, embedImage), None]]
             data["attachedObject"] = attachedObject
         if mentionUserIds:
             mentions = [{"uid": mention_uid} for mention_uid in mentionUserIds]
@@ -1063,7 +1063,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
         if file:
             data["content"] = None
-            url = upload_media(self, file, fileType)
+            url = upload_media(self, file)
 
             data["mediaValue"] = url
 
@@ -1482,7 +1482,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         if nickname:
             data["nickname"] = nickname
         if icon:
-            data["icon"] = upload_media(self, icon, "image")
+            data["icon"] = upload_media(self, icon)
         if content:
             data["content"] = content
         if backgroundColor:

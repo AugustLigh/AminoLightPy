@@ -302,7 +302,7 @@ class SocketRequests:
         data = dumps(data)
         self.client.send(data)
 
-    def recording_reqest(self, comId: int, chatId: str, stop: bool):
+    def recording_request(self, comId: int, chatId: str, stop: bool):
         data = {
             "o": {
                 "actions": ["Recording"],

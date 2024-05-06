@@ -80,7 +80,7 @@ def upload_media(self, file: BinaryIO) -> str:
     ): raise SpecifyType(fileType) #but this check can be removed, I think
         
     custom_headers = self.session.headers
-    custom_headers["Content-Type"] = t
+    custom_headers["Content-Type"] = fileType
 
     response = self.session.post(
         url=f"{api}/g/s/media/upload",
