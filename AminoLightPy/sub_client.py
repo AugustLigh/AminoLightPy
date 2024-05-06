@@ -107,12 +107,12 @@ class SubClient():
 
 		if captionList is not None:
 			for image, caption in zip(imageList, captionList):
-				mediaList.append([100, upload_media(self, image, "image"), caption])
+				mediaList.append([100, upload_media(self, image), caption])
 
 		else:
 			if imageList is not None:
 				for image in imageList:
-					mediaList.append([100, upload_media(self, image, "image"), None])
+					mediaList.append([100, upload_media(self, image), None])
 
 		data = {
 			"address": None,
@@ -172,7 +172,7 @@ class SubClient():
 		mediaList = []
 
 		for image in imageList:
-			mediaList.append([100, upload_media(self, image, "image"), None])
+			mediaList.append([100, upload_media(self, image), None])
 
 		data = {
 			"address": None,
@@ -238,12 +238,12 @@ class SubClient():
 		data = {}
 		if captionList is not None:
 			for image, caption in zip(imageList, captionList):
-				mediaList.append([100, upload_media(self, image, "image"), caption])
+				mediaList.append([100, upload_media(self, image), caption])
 
 		else:
 			if imageList is not None:
 				for image in imageList:
-					mediaList.append([100, upload_media(self, image, "image"), None])
+					mediaList.append([100, upload_media(self, image), None])
 
 		if imageList is not None or captionList is not None:
 			data["mediaList"] = mediaList
@@ -251,7 +251,7 @@ class SubClient():
 		if nickname:
 			data["nickname"] = nickname
 		if icon:
-			data["icon"] = upload_media(self, icon, "image")
+			data["icon"] = upload_media(self, icon)
 		if content:
 			data["content"] = content
 
@@ -716,7 +716,7 @@ class SubClient():
 			- **chatId** : ID of the Chat.
 			- **file** : File to be sent.
 			- **fileType** : Type of the file.
-				- ``audio``, ``image``, ``gif``
+				- It's deprecated
 			- **messageType** : Type of the Message.
 			- **mentionUserIds** : List of User IDS to mention. '@' needed in the Message.
 			- **replyTo** : Message ID to reply to.
@@ -757,7 +757,7 @@ class SubClient():
 				attachedObject["content"] = embedContent
 
 			if embedImage:
-				attachedObject["mediaList"] = [[100, upload_media(self, embedImage, "image"), None]]
+				attachedObject["mediaList"] = [[100, upload_media(self, embedImage), None]]
 
 			data["attachedObject"] = attachedObject
 
@@ -774,7 +774,7 @@ class SubClient():
 
 		if file:
 			data["content"] = None
-			url = upload_media(self, file, fileType)
+			url = upload_media(self, file)
 
 			data["mediaValue"] = url
 
@@ -786,7 +786,7 @@ class SubClient():
 		return response.status_code
 
 	def full_embed(self, link: str, image: BinaryIO, message: str, chatId: str):
-		url = upload_media(self, image, "image/png")
+		url = upload_media(self, image)
 		data = {
 			"type": 0,
 			"content": message,
