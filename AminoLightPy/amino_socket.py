@@ -426,6 +426,7 @@ class Callbacks:
         def wrapper(self, data):
             event = objects.Event(data["o"]).Event
             self.call(func.__name__, event)
+            self.call("all", event)
         return wrapper
 
     @event_handler_decorator
@@ -521,3 +522,6 @@ class Callbacks:
     def on_user_typing_end(self, data): pass
 
     def default(self, data): self.call("default", data)
+
+    @event_handler_decorator
+    def all(self, data): pass
