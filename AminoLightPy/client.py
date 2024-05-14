@@ -2,6 +2,7 @@
 # pylint: disable=too-many-lines
 
 from uuid import uuid4
+from base64 import b64encode
 from typing import BinaryIO, Union
 from .managers import Typing, Recording
 
@@ -1062,10 +1063,14 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             data["type"] = 3
 
         if file:
-            data["content"] = None
-            url = upload_media(self, file)
+            if fileType == "audio":
+                data["type"] = 2
+                data["mediaType"] = 110
+                data["mediaUploadValue"] = b64encode(file.read()).decode()
 
-            data["mediaValue"] = url
+            else:
+                url = upload_media(self, file)
+                data["mediaValue"] = url
 
         response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/message", json=data)
         return response.status_code

@@ -15,6 +15,7 @@ from .lib.util.exceptions import CheckException
 api = "http://service.aminoapps.com:80/api/v1"
 device_id = gen_deviceId()
 cache = OrderedDict()
+cache_len = 32
 
 class AminoSession(Session):
     def __init__(self) -> None:
@@ -74,10 +75,6 @@ def upload_media(self, file: BinaryIO) -> str:
         return cache[file_hash]
         
     fileType = guess_type(file.name)[0]
-    if fileType not in (
-        "image/gif", "image/jpg",
-        "audio/aac", "audio/png"
-    ): raise SpecifyType(fileType) #but this check can be removed, I think
         
     custom_headers = self.session.headers
     custom_headers["Content-Type"] = fileType
@@ -90,7 +87,7 @@ def upload_media(self, file: BinaryIO) -> str:
     )
 
     cache[file_hash] = response.json()["mediaValue"]
-    if len(cache) >= 32:
+    if len(cache) >= cache_len:
         cache.popitem(last=False)
 
     return cache[file_hash]

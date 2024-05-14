@@ -148,6 +148,12 @@ class UserProfileList:
 
     def __init__(self, data):
         self.json = data
+        if not data:
+            for attr in self.__slots__:
+                setattr(self, attr, None)
+
+            return
+
         _userObjects = tuple(UserProfile(x).UserProfile for x in data)
 
         set_attributes(self, _userObjects)
@@ -190,12 +196,12 @@ class RecentBlogs:
     )
 
     def __init__(self, data):
+        self.json = data
         if not data:
             for attr in self.__slots__:
                 setattr(self, attr, None)
 
             return
-        self.json = data
 
         self.nextPageToken = None
         self.prevPageToken = None
@@ -338,7 +344,7 @@ class Wiki:
         extensions = data.get("extensions") or {}
         style = extensions.get("style") or {}
         knowledgeBase = extensions.get("knowledgeBase") or {}
-        self.labels = WikiLabelList(extensions.get("props", [])).WikiLabelList
+        self.labels = WikiLabelList(extensions.get("props")).WikiLabelList
 
         self.wikiId = data.get("itemId")
         self.status = data.get("status")
@@ -397,18 +403,19 @@ class WikiList:
 
 class WikiLabelList:
     __slots__ = ("json", "title", "content", "type")
-    def __init__(self, data):
+    def __init__(self, data: dict):
+        if not data:
+            for attr in self.__slots__:
+                setattr(self, attr, None)
+
+            return
         self.json = data
-        self.title = []
-        self.content = []
-        self.type = []
+        self.title = data.get("title")
+        self.content = data.get("value")
+        self.type = data.get("type")
 
     @property
     def WikiLabelList(self):
-        for x in self.json:
-            self.title.append(x.get("title"))
-            self.content.append(x.get("value"))
-            self.type.append(x.get("type"))
 
         return self
 
@@ -446,7 +453,7 @@ class Community:
         "welcomeMessage", "welcomeMessageEnabled", "hasPendingReviewRequest",
         "frontPageLayout", "themeColor", "themeHash", "themeVersion", "themeUrl",
         "themeHomePageAppearance", "themeLeftSidePanelTop", "themeLeftSidePanelBottom",
-        "themeLeftSidePanelColor", "customList"
+        "themeLeftSidePanelColor", "customList", "communityHeadList"
     )
 
     def __init__(self, data: Dict):
@@ -459,6 +466,7 @@ class Community:
         self.json = data
 
         self.agent = UserProfile(data.get("agent")).UserProfile
+        self.communityHeadList = UserProfileList(data.get("communityHeadList", [])).UserProfileList
 
         themePack: Dict = data.get("themePack") or {}
         configuration: Dict = data.get("configuration") or {}
@@ -542,7 +550,7 @@ class CommunityList:
         "welcomeMessage", "welcomeMessageEnabled", "hasPendingReviewRequest",
         "frontPageLayout", "themeColor", "themeHash", "themeVersion", "themeUrl",
         "themeHomePageAppearance", "themeLeftSidePanelTop", "themeLeftSidePanelBottom",
-        "themeLeftSidePanelColor", "customList"
+        "themeLeftSidePanelColor", "customList", "communityHeadList"
     )
 
     def __init__(self, data: dict):
@@ -882,6 +890,11 @@ class WikiCategoryList:
     )
 
     def __init__(self, data):
+        if not data:
+            for attr in self.__slots__:
+                setattr(self, attr, None)
+            return
+
         _author = [x.get("author") for x in data]
 
         self.json = data
@@ -928,7 +941,7 @@ class WikiCategory:
         childrenWrapper = data.get("childrenWrapper") or {}
 
         self.author = UserProfile(itemCategory.get("author")).UserProfile
-        self.subCategory = WikiCategoryList(childrenWrapper.get("itemCategoryList", [])).WikiCategoryList
+        self.subCategory = WikiCategoryList(childrenWrapper.get("itemCategoryList")).WikiCategoryList
 
         self.itemsCount = itemCategory.get("itemsCount")
         self.parentCategoryId = itemCategory.get("parentCategoryId")
@@ -1281,8 +1294,8 @@ class Message:
         self.author = UserProfile(data.get("author")).UserProfile
 
         extensions = data.get("extensions") or {}
-        videoExtensions = extensions.get("videoExtensions") or {}
-
+        self.videoExtensions = extensions.get("videoExtensions") or {}
+        
         self.sticker = Sticker(extensions.get("sticker")).Sticker
 
         self.content = data.get("content")
@@ -1301,10 +1314,10 @@ class Message:
         self.mediaValue = data.get("mediaValue")
         self.extensions = extensions
         self.duration = extensions.get("duration")
-        self.videoDuration = videoExtensions.get("duration")
-        self.videoHeight = videoExtensions.get("height")
-        self.videoWidth = videoExtensions.get("width")
-        self.videoCoverImage = videoExtensions.get("coverImage")
+        self.videoDuration = self.videoExtensions.get("duration")
+        self.videoHeight = self.videoExtensions.get("height")
+        self.videoWidth = self.videoExtensions.get("width")
+        self.videoCoverImage = self.videoExtensions.get("coverImage")
         self.originalStickerId = extensions.get("originalStickerId")
         self.mentionUserIds = tuple(m.get("uid") for m in extensions.get("mentionedArray", ()))
         self.tippingCoins = extensions.get("tippingCoins")
@@ -1321,13 +1334,16 @@ class MessageList:
         "mediaValue", "chatBubbleId", "clientRefId", "chatId", "createdTime",
         "chatBubbleVersion", "type", "extensions", "mentionUserIds", "duration",
         "originalStickerId", "videoExtensions", "videoDuration", "videoHeight",
-        "videoWidth", "videoCoverImage", "tippingCoins"
+        "videoWidth", "videoCoverImage", "tippingCoins", "replyMessage"
     )
     def __init__(self, data, nextPageToken = None, prevPageToken = None):
         self.json = data
         self.nextPageToken = nextPageToken
         self.prevPageToken = prevPageToken
         _messageyObjects = tuple(Message(x).Message for x in data)
+
+        self.author = UserProfileList([x.author.json for x in _messageyObjects]).UserProfileList
+        self.sticker = StickerList([x.sticker.json for x in _messageyObjects]).StickerList
 
         set_attributes(self, _messageyObjects)
 
@@ -2382,4 +2398,6 @@ def set_attributes(instance, _ListObjects):
     if _ListObjects:
         attributes = tuple(attr for attr in dir(_ListObjects[0]) if not attr.startswith("__") and not callable(getattr(_ListObjects[0], attr)) and attr != _ListObjects[0].__class__.__name__)
         for attr in attributes:
-            setattr(instance, attr, tuple(getattr(user, attr, None) for user in _ListObjects))
+            if not hasattr(instance, attr): 
+                setattr(instance, attr, tuple(getattr(user, attr, None) for user in _ListObjects))
+

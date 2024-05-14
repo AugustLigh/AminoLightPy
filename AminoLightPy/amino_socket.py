@@ -1,6 +1,7 @@
 # pylint: disable=invalid-name
 # pylint: disable=no-member
 
+import ssl
 import traceback
 import threading
 
@@ -47,6 +48,13 @@ class SocketHandler:
         self.debug_print("[socket][start] Socket Started")
         self.thread_event.set()
 
+    def on_ping(self, ws, somesing):
+        self.debug_print("[socket][Ping] Servier send ping")
+        self.send(dumps({"t": 116, "o": {"threadChannelUserInfoList": []}}))
+
+    def on_pong(self, ws, somesing):
+        self.debug_print("server send pong")
+
     def starting_process(self):
         deviceId = gen_deviceId()
 
@@ -62,14 +70,18 @@ class SocketHandler:
             f"{self.socket_url}/?signbody={final.replace('|', '%7C')}",
             on_open=self.on_open,
             on_error=self.on_error,
+            on_ping=self.on_ping,
+            on_pong=self.on_pong,
             on_message=self.on_message,
             on_close=self.on_close,
             header=headers,
         )
 
         threading.Thread(target=self.socket.run_forever, kwargs={
-            "ping_interval": 10,
-            "ping_payload": '{"t": 116, "o": {"threadChannelUserInfoList": []}}'
+            "sslopt": {"cert_reqs": ssl.CERT_NONE},
+            "skip_utf8_validation": True,
+            "ping_interval": 60*5,
+            "ping_payload": dumps({"t": 116, "o": {"threadChannelUserInfoList": []}})
         }).start()
 
     def run_amino_socket(self):
@@ -142,7 +154,7 @@ class SocketRequests:
     def run_vc(self, comId: int, chatId: str, joinType: str):
         while chatId in self.active_live_chats:
             try:
-                self.join_video_chat(
+                self.join_voice_chat(
                     comId=comId,
                     chatId=chatId,
                     joinType=joinType
@@ -153,7 +165,7 @@ class SocketRequests:
                 print(e)
 
     def start_vc(self, comId: int, chatId: str, joinType: int = 1):
-        self.join_video_chat(
+        self.join_voice_chat(
             comId=comId,
             chatId=chatId,
             joinType=joinType
@@ -162,6 +174,7 @@ class SocketRequests:
             "o": {
                 "ndcId": int(comId),
                 "threadId": chatId,
+                "jointype": joinType,
                 "channelType": 1,
             },
             "t": 108

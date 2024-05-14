@@ -28,7 +28,7 @@ keywords = [
 
 setup(
     name="amino.light.py",
-    version="0.1.9",
+    version="0.2.0",
     url="https://github.com/AugustLigh/AminoLightPy",
     license="MIT",
     description="Best Amino.py alternative",

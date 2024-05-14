@@ -240,14 +240,11 @@ class ACM():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if type.lower() == "leader":
-            target = "leader"
-        elif type.lower() == "curator":
-            target = "curator"
-        else: raise exceptions.WrongType(type)
+        if type.lower() not in ("leader", "curator"):
+            raise exceptions.WrongType(type)
 
         data = {
-            "type": target,
+            "type": type.lower(),
             "start": start,
             "size": size
         }
