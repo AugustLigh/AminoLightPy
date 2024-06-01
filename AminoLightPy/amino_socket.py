@@ -192,6 +192,25 @@ class SocketRequests:
             joinType=joinType
         )
 
+    def start_video_chat(self, comId: str, chatId: str, joinType: int = 1):
+        self.join_voice_chat(
+            comId=comId,
+            chatId=chatId,
+            joinType=joinType
+        )
+
+        data = {
+            "o": {
+                "ndcId": int(comId),
+                "threadId": chatId,
+                "joinRole": joinType,
+                "channelType": 4,
+            },
+            "t": 108
+        }
+        data = dumps(data)
+        self.client.send(data)
+
     def Browsing(self, comId: int, blogId: str = None, blogType: int = 0):
         """
         Send Browsing Action
@@ -280,25 +299,6 @@ class SocketRequests:
                 "params": {"duration": 859},
             },
             "t": 306
-        }
-        data = dumps(data)
-        self.client.send(data)
-
-    def start_video_chat(self, comId: str, chatId: str, joinType: int = 1):
-        self.join_video_chat(
-            comId=comId,
-            chatId=chatId,
-            joinType=joinType
-        )
-
-        data = {
-            "o": {
-                "ndcId": int(comId),
-                "threadId": chatId,
-                "joinRole": joinType,
-                "channelType": 4,
-            },
-            "t": 108
         }
         data = dumps(data)
         self.client.send(data)

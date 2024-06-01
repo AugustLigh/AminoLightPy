@@ -344,7 +344,7 @@ class Wiki:
         extensions = data.get("extensions") or {}
         style = extensions.get("style") or {}
         knowledgeBase = extensions.get("knowledgeBase") or {}
-        self.labels = WikiLabelList(extensions.get("props")).WikiLabelList
+        self.labels = WikiLabelList(extensions.get("props", [])).WikiLabelList
 
         self.wikiId = data.get("itemId")
         self.status = data.get("status")
@@ -400,42 +400,40 @@ class WikiList:
     def WikiList(self):
         return self
 
-
 class WikiLabelList:
     __slots__ = ("json", "title", "content", "type")
-    def __init__(self, data: dict):
-        if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-
-            return
+    def __init__(self, data):
         self.json = data
-        self.title = data.get("title")
-        self.content = data.get("value")
-        self.type = data.get("type")
+        self.title = []
+        self.content = []
+        self.type = []
 
     @property
     def WikiLabelList(self):
+        for x in self.json:
+            self.title.append(x.get("title"))
+            self.content.append(x.get("value"))
+            self.type.append(x.get("type"))
 
         return self
 
 class RankingTableList:
     __slots__ = ("json", "title", "level", "reputation", "id")
     def __init__(self, data: list[dict]):
-        if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
 
-            return
         self.json = data
-        self.title = tuple(x.get("title") for x in data)
-        self.level = tuple(x.get("level") for x in data)
-        self.reputation = tuple(x.get("reputation") for x in data)
-        self.id = tuple(x.get("id") for x in data)
+        self.title = []
+        self.level = []
+        self.reputation = []
+        self.id = []
 
     @property
     def RankingTableList(self):
-
+        for x in self.json:
+            self.title.append(x.get("title"))
+            self.level.append(x.get("level"))
+            self.reputation.append(x.get("reputation"))
+            self.id.append(x.get("id"))
         return self
 
 class Community:
@@ -890,14 +888,9 @@ class WikiCategoryList:
     )
 
     def __init__(self, data):
-        if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
+        self.json = data
 
         _author = [x.get("author") for x in data]
-
-        self.json = data
 
         self.author = UserProfileList(_author).UserProfileList
         self.itemsCount = []
@@ -930,18 +923,17 @@ class WikiCategory:
         "createdTime", "title", "mediaList", "icon", "parentType"
     )
     def __init__(self, data):
+        self.json = data
         if not data:
             for attr in self.__slots__:
                 setattr(self, attr, None)
             return
 
-        self.json = data
-
         itemCategory = data.get("itemCategory") or {}
         childrenWrapper = data.get("childrenWrapper") or {}
 
         self.author = UserProfile(itemCategory.get("author")).UserProfile
-        self.subCategory = WikiCategoryList(childrenWrapper.get("itemCategoryList")).WikiCategoryList
+        self.subCategory = WikiCategoryList(childrenWrapper.get("itemCategoryList", [])).WikiCategoryList
 
         self.itemsCount = itemCategory.get("itemsCount")
         self.parentCategoryId = itemCategory.get("parentCategoryId")
