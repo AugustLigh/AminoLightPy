@@ -2071,12 +2071,13 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         response = self.session.post(f"{api}/g/s/wallet/ads/config", json=data)
         return response.status_code
 
-    def purchase(self, objectId: str, isAutoRenew: bool = False):
+    def purchase(self, objectId: str, objectType: int = 114, isAutoRenew: bool = False):
         """
         Makes a purchase in the store.
 
         **Parameters**
             - **objectId** (str): ID of the object to be purchased.
+            - **objectType** : Type of the Object.
             - *isAutoRenew* (bool, optional): Whether the purchase should be auto-renewed. Defaults to False.
 
         **Returns**
@@ -2085,7 +2086,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         """
         data = {
             "objectId": objectId,
-            "objectType": 114,
+            "objectType": objectType,
             "v": 1,
             "paymentContext":
             {
