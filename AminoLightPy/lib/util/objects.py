@@ -420,20 +420,20 @@ class WikiLabelList:
 class RankingTableList:
     __slots__ = ("json", "title", "level", "reputation", "id")
     def __init__(self, data: list[dict]):
+        if not data:
+            for attr in self.__slots__:
+                setattr(self, attr, None)
+            return
 
         self.json = data
-        self.title = []
-        self.level = []
-        self.reputation = []
-        self.id = []
+        self.title = tuple(x.get("title") for x in data)
+        self.level = tuple(x.get("level") for x in data)
+        self.reputation = tuple(x.get("reputation") for x in data)
+        self.id = tuple(x.get("id") for x in data)
 
     @property
     def RankingTableList(self):
-        for x in self.json:
-            self.title.append(x.get("title"))
-            self.level.append(x.get("level"))
-            self.reputation.append(x.get("reputation"))
-            self.id.append(x.get("id"))
+
         return self
 
 class Community:
@@ -1563,12 +1563,6 @@ class QuizQuestionList:
         "answersList"
     )
     def __init__(self, data):
-        if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-
-            return
-
         _answersList = []
 
         self.json = data
