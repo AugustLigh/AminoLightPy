@@ -420,20 +420,20 @@ class WikiLabelList:
 class RankingTableList:
     __slots__ = ("json", "title", "level", "reputation", "id")
     def __init__(self, data: list[dict]):
-        if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
 
         self.json = data
-        self.title = tuple(x.get("title") for x in data)
-        self.level = tuple(x.get("level") for x in data)
-        self.reputation = tuple(x.get("reputation") for x in data)
-        self.id = tuple(x.get("id") for x in data)
+        self.title = []
+        self.level = []
+        self.reputation = []
+        self.id = []
 
     @property
     def RankingTableList(self):
-
+        for x in self.json:
+            self.title.append(x.get("title"))
+            self.level.append(x.get("level"))
+            self.reputation.append(x.get("reputation"))
+            self.id.append(x.get("id"))
         return self
 
 class Community:
@@ -567,33 +567,47 @@ class CommentList:
         "parentId", "parentType", "content", "extensions", "comId", "modifiedTime",
         "createdTime", "commentId", "subcommentsCount", "type"
     )
-    def __init__(self, data):
-        if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
 
+    def __init__(self, data):
         self.json = data
-        self.author = UserProfileList(tuple(y.get("author") for y in data)).UserProfileList
-        self.votesSum = tuple(x.get("votesSum") for x in data)
-        self.votedValue = tuple(x.get("votedValue") for x in data)
-        self.mediaList: Optional[List[MediaObject]] = tuple(x.get("mediaList") for x in data)
-        self.parentComId = tuple(x.get("parentNdcId") for x in data)
-        self.parentId = tuple(x.get("parentId") for x in data)
-        self.parentType = tuple(x.get("parentType") for x in data)
-        self.content = tuple(x.get("content") for x in data)
-        self.extensions = tuple(x.get("extensions") for x in data)
-        self.comId = tuple(x.get("ndcId") for x in data)
-        self.modifiedTime = tuple(x.get("modifiedTime") for x in data)
-        self.createdTime = tuple(x.get("createdTime") for x in data)
-        self.commentId = tuple(x.get("commentId") for x in data)
-        self.subcommentsCount = tuple(x.get("subcommentsCount") for x in data)
-        self.type = tuple(x.get("type") for x in data)
+
+        _author = [x.get("author") for x in data]
+
+        self.author = UserProfileList(_author).UserProfileList
+        self.votesSum = []
+        self.votedValue = []
+        self.mediaList = []
+        self.parentComId = []
+        self.parentId = []
+        self.parentType = []
+        self.content = []
+        self.extensions = []
+        self.comId = []
+        self.modifiedTime = []
+        self.createdTime = []
+        self.commentId = []
+        self.subcommentsCount = []
+        self.type = []
 
     @property
     def CommentList(self):
-        return self
+        for x in self.json:
+            self.votesSum.append(x.get("votesSum"))
+            self.votedValue.append(x.get("votedValue"))
+            self.mediaList.append(x.get("mediaList"))
+            self.parentComId.append(x.get("parentNdcId"))
+            self.parentId.append(x.get("parentId"))
+            self.parentType.append(x.get("parentType"))
+            self.content.append(x.get("content"))
+            self.extensions.append(x.get("extensions"))
+            self.comId.append(x.get("ndcId"))
+            self.modifiedTime.append(x.get("modifiedTime"))
+            self.createdTime.append(x.get("createdTime"))
+            self.commentId.append(x.get("commentId"))
+            self.subcommentsCount.append(x.get("subcommentsCount"))
+            self.type.append(x.get("type"))
 
+        return self
 
 class Membership:
     __slots__ = (
@@ -794,10 +808,6 @@ class UserSavedBlogs:
         "json", "object", "objectType", "bookmarkedTime", "objectId", "objectJson"
     )
     def __init__(self, data):
-        if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
         _object = []
 
         self.json = data
