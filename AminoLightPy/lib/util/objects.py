@@ -386,15 +386,22 @@ class WikiList:
         "createdTime", "mediaList", "commentsCount", "backgroundColor", "fansOnly",
         "knowledgeBase", "version", "originalWikiId", "contributors"
     )
+
     def __init__(self, data: Dict):
         self.json = data
-
         self.author = UserProfileList(tuple(y.get("author") for y in data)).UserProfileList
-        self.labels = tuple(WikiLabelList(y["extensions"]["props"]).WikiLabelList if "extensions" in y and "props" in y["extensions"] else None for y in data)
-
+        self.labels = self._get_labels(data)
         _wikiObjects = tuple(Wiki(x).Wiki for x in data)
-
         set_attributes(self, _wikiObjects)
+
+    def _get_labels(self, data):
+        labels = []
+        for y in data:
+            if "extensions" in y and y["extensions"] is not None and "props" in y["extensions"] and y["extensions"]["props"] is not None:
+                labels.append(WikiLabelList(y["extensions"]["props"]).WikiLabelList)
+            else:
+                labels.append([])
+        return labels
 
     @property
     def WikiList(self):
@@ -1321,7 +1328,7 @@ class Message:
         self.videoWidth = self.videoExtensions.get("width")
         self.videoCoverImage = self.videoExtensions.get("coverImage")
         self.originalStickerId = extensions.get("originalStickerId")
-        self.mentionUserIds = tuple(m.get("uid") for m in extensions.get("mentionedArray", ()))
+        self.mentionUserIds = tuple(m.get("uid") for m in extensions.get("mentionedArray", {}))
         self.tippingCoins = extensions.get("tippingCoins")
 
 

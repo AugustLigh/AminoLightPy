@@ -650,7 +650,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "initialMessageContent": message,
             "content": content,
             "type": 2 if isGlobal else 0,
-            "publishToGlobal": 1 if publishToGlobal else 0
+            "publishToGlobal": int(publishToGlobal)
         }
 
         if isGlobal:
@@ -702,11 +702,10 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
         params = {"allowRejoin": int(allowRejoin)}
 
-        response = self.session.delete(
+        return self.session.delete(
             url=f"{api}/g/s/chat/thread/{chatId}/member/{userId}",
             params=params
-        )
-        return response.status_code
+        ).status_code
 
     def get_chat_messages(self, chatId: str, size: int = 25, pageToken: str = None):
         """
@@ -958,9 +957,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if reason is None:
+        if not reason:
             raise exceptions.ReasonNeeded
-        if flagType is None:
+        if not flagType:
             raise exceptions.FlagTypeNeeded
 
         data = {
@@ -1185,7 +1184,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
                         json=data
                     ).status_code
                 )
-            if not doNotDisturb:
+            else:
                 data = {"alertOption": 1}
                 response = self.session.post(
                     url=f"{api}/g/s/chat/thread/{chatId}/member/{userId}/alert",
@@ -1199,7 +1198,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
                     json=data
                 )
                 res.append(response.status_code)
-            if not pinChat:
+            else:
                 response = self.session.post(
                     url=f"{api}/g/s/chat/thread/{chatId}/unpin",
                     json=data
@@ -1227,7 +1226,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
                 )
                 res.append(response.status_code)
 
-            if not viewOnly:
+            else:
                 response = self.session.post(
                     url=f"{api}/g/s/chat/thread/{chatId}/view-only/disable"
                 )
@@ -1239,7 +1238,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
                     json=data
                 )
                 res.append(response.status_code)
-            if not canInvite:
+            else:
                 response = self.session.post(
                     url=f"{api}/g/s/chat/thread/{chatId}/members-can-invite/disable",
                     json=data
@@ -1252,7 +1251,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
                     json=data
                 )
                 res.append(response.status_code)
-            if not canTip:
+            else:
                 response = self.session.post(
                     url=f"{api}/g/s/chat/thread/{chatId}/tipping-perm-status/disable",
                     json=data
@@ -1283,25 +1282,23 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        url = None
-        if transactionId is None:
-            transactionId = str(uuid4())
+        if not transactionId: transactionId = str(uuid4())
 
         data = {
             "coins": coins,
             "tippingContext": {"transactionId": transactionId},
         }
 
-        if blogId is not None:
+        if blogId:
             url = f"{api}/g/s/blog/{blogId}/tipping"
-        if chatId is not None:
+        elif chatId:
             url = f"{api}/g/s/chat/thread/{chatId}/tipping"
-        if objectId is not None:
+        elif objectId:
             data["objectId"] = objectId
             data["objectType"] = 2
             url = f"{api}/g/s/tipping"
 
-        if url is None:
+        else:
             raise exceptions.SpecifyType
 
         return self.session.post(url, json=data).status_code
@@ -1443,9 +1440,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if reason is None:
+        if not reason:
             raise exceptions.ReasonNeeded
-        if flagType is None:
+        if not flagType:
             raise exceptions.FlagTypeNeeded
 
         data = {
@@ -1621,7 +1618,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if message is None:
+        if not message:
             raise exceptions.MessageNeeded
 
         data = {
