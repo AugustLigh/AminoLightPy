@@ -15,7 +15,6 @@ from .lib.util import exceptions, objects
 class SubClient():
     "Module for work with community"
     def __init__(self, comId: int = None, *, profile: objects.UserProfile):
-        self.vc_connect = False
         self.profile = profile
         self.session: Session = self.profile.session
 
@@ -219,9 +218,9 @@ class SubClient():
         return response.status_code
 
     def repair_check_in(self, method: int = 0):
-        data = {}
-        if method == 0: data["repairMethod"] = "1"  # Coins
-        if method == 1: data["repairMethod"] = "2"  # Amino+
+        data = {
+            "repairMethod": str(method+1)
+        }
         response = self.session.post(f"{api}/x{self.comId}/s/check-in/repair", json=data)
         return response.status_code
 
@@ -274,11 +273,10 @@ class SubClient():
 
             data["extensions"] = {"customTitles": tlt}
 
-        response = self.session.post(
+        return self.session.post(
             url=f"{api}/x{self.comId}/s/user-profile/{self.profile.userId}",
             json=data
-        )
-        return response.status_code
+        ).status_code
 
     def vote_poll(self, blogId: str, optionId: str):
         data = {
@@ -286,11 +284,10 @@ class SubClient():
             "eventSource": "PostDetailView"
         }
 
-        response = self.session.post(
+        return self.session.post(
             url=f"{api}/x{self.comId}/s/blog/{blogId}/poll/option/{optionId}/vote",
             json=data
-        )
-        return response.status_code
+        ).status_code
 
     def comment(self, message: str, userId: str = None, blogId: str = None, wikiId: str = None,
                 replyTo: str = None, isGuest: bool = False):
@@ -319,9 +316,7 @@ class SubClient():
 
         else: raise exceptions.SpecifyType
 
-        response = self.session.post(url, json=data)
-
-        return response.status_code
+        return self.session.post(url, json=data).status_code
 
     def delete_comment(self, commentId: str, userId: str = None, blogId: str = None,
                         wikiId: str = None):
@@ -334,8 +329,7 @@ class SubClient():
         else:
             raise exceptions.SpecifyType
 
-        response = self.session.delete(url)
-        return response.status_code
+        return self.session.delete(url).status_code
 
     def like_blog(self, blogId: Union[str, list] = None, wikiId: str = None):
         """
@@ -371,16 +365,14 @@ class SubClient():
 
         else: raise exceptions.SpecifyType()
 
-        response = self.session.post(url, json=data)
-        return response.status_code
+        return self.session.post(url, json=data).status_code
 
     def unlike_blog(self, blogId: str = None, wikiId: str = None):
         if blogId: url = f"{api}/x{self.comId}/s/blog/{blogId}/vote?eventSource=UserProfileView"
         elif wikiId: url = f"{api}/x{self.comId}/s/item/{wikiId}/vote?eventSource=PostDetailView"
         else: raise exceptions.SpecifyType()
 
-        response = self.session.delete(url)
-        return response.status_code
+        return self.session.delete(url).status_code
 
     def like_comment(self, commentId: str, userId: str = None, blogId: str = None,
                     wikiId: str = None):
@@ -404,11 +396,9 @@ class SubClient():
             data["eventSource"] = "PostDetailView"
             url = f"{api}/x{self.comId}/s/item/{wikiId}/comment/{commentId}/g-vote"
 
-        else:
-            raise exceptions.SpecifyType()
+        else: raise exceptions.SpecifyType()
 
-        response = self.session.post(url=url, json=data, params=params)
-        return response.status_code
+        return self.session.post(url, json=data, params=params).status_code
 
     def unlike_comment(self, commentId: str, userId: str = None, blogId: str = None, wikiId: str = None):
         if userId:
@@ -420,8 +410,7 @@ class SubClient():
         else:
             raise exceptions.SpecifyType()
 
-        response = self.session.delete(url)
-        return response.status_code
+        return self.session.delete(url).status_code
 
     def upvote_comment(self, blogId: str, commentId: str):
         data = {
@@ -432,12 +421,11 @@ class SubClient():
             "cv": "1.2",
             "value": "1"
         }
-        response = self.session.post(
+        return self.session.post(
             url=f"{api}/x{self.comId}/s/blog/{blogId}/comment/{commentId}/vote",
             params=params,
             json=data
-        )
-        return response.status_code
+        ).status_code
 
     def downvote_comment(self, blogId: str, commentId: str):
         data = {
@@ -449,12 +437,11 @@ class SubClient():
             "value": "-1"
         }
 
-        response = self.session.post(
+        return self.session.post(
             url=f"{api}/x{self.comId}/s/blog/{blogId}/comment/{commentId}/vote",
             json=data,
             params=params
-        )
-        return response.status_code
+        ).status_code
 
     def unvote_comment(self, blogId: str, commentId: str):
         response = self.session.delete(f"{api}/x{self.comId}/s/blog/{blogId}/comment/{commentId}/vote?eventSource=PostDetailView")
@@ -488,6 +475,17 @@ class SubClient():
         return response.status_code
 
     def activity_status(self, status: str):
+        """
+        Edit online status.
+
+        **Parameters**
+            - **status** : on or off.
+
+        **Returns**
+            - **Success** : 200 (int)
+
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
+        """
         if "on" in status.lower(): status = 1
         elif "off" in status.lower(): status = 2
         else: raise exceptions.WrongType(status)
@@ -523,7 +521,8 @@ class SubClient():
             "title": title,
             "inviteeUids": userIds,
             "initialMessageContent": message,
-            "content": content
+            "content": content,
+            "publishToGlobal": int(publishToGlobal)
         }
 
         if isGlobal is True:
@@ -531,11 +530,6 @@ class SubClient():
             data["eventSource"] = "GlobalComposeMenu"
         else:
             data["type"] = 0
-
-        if publishToGlobal is True:
-            data["publishToGlobal"] = 1
-        else:
-            data["publishToGlobal"] = 0
 
         response = self.session.post(f"{api}/x{self.comId}/s/chat/thread", json=data)
         return objects.Thread(response.json()["thread"]).Thread
@@ -556,31 +550,28 @@ class SubClient():
         return response.status_code
 
     def send_coins(self, coins: int, blogId: str = None, chatId: str = None, objectId: str = None, transactionId: str = None):
-        url = None
-        if transactionId is None: transactionId = str(uuid4())
+        if not transactionId: transactionId = str(uuid4())
 
         data = {
             "coins": coins,
             "tippingContext": {"transactionId": transactionId}
         }
 
-        if blogId is not None: url = f"{api}/x{self.comId}/s/blog/{blogId}/tipping"
-        if chatId is not None: url = f"{api}/x{self.comId}/s/chat/thread/{chatId}/tipping"
-        if objectId is not None:
+        if blogId: url = f"{api}/x{self.comId}/s/blog/{blogId}/tipping"
+        elif chatId: url = f"{api}/x{self.comId}/s/chat/thread/{chatId}/tipping"
+        elif objectId:
             data["objectId"] = objectId
             data["objectType"] = 2
             url = f"{api}/x{self.comId}/s/tipping"
 
-        if url is None: raise exceptions.SpecifyType
+        else: raise exceptions.SpecifyType
 
-        response = self.session.post(url, json=data)
-        return response.status_code
+        return self.session.post(url, json=data).status_code
 
     def thank_tip(self, chatId: str, userId: str):
-        response = self.session.post(
+        return self.session.post(
             url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/tipping/tipped-users/{userId}/thank"
-        )
-        return response.status_code
+        ).status_code
 
     def follow(self, userId: Union[str, list]):
         """
@@ -598,11 +589,9 @@ class SubClient():
             response = self.session.post(f"{api}/x{self.comId}/s/user-profile/{userId}/member")
 
         elif isinstance(userId, list):
-            data = { "targetUidList": userId }
-
             response = self.session.post(
                 url=f"{api}/x{self.comId}/s/user-profile/{self.profile.userId}/joined",
-                json=data
+                json={"targetUidList": userId}
             )
 
         else: raise exceptions.WrongType(type(userId))
@@ -785,12 +774,10 @@ class SubClient():
                 url = upload_media(self, file)
                 data["mediaValue"] = url
 
-        response = self.session.post(
+        return self.session.post(
             url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/message",
             json=data
-        )
-
-        return response.status_code
+        ).status_code
 
     def full_embed(self, link: str, image: BinaryIO, message: str, chatId: str):
         url = upload_media(self, image)
@@ -915,7 +902,7 @@ class SubClient():
                 )
                 res.append(response.status_code)
 
-            if not doNotDisturb:
+            else:
                 data = {"alertOption": 1 }
 
                 response = self.session.post(
@@ -932,7 +919,7 @@ class SubClient():
                 )
                 res.append(response.status_code)
 
-            if not pinChat:
+            else:
                 response = self.session.post(
                     url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/unpin",
                     json=data
@@ -964,7 +951,7 @@ class SubClient():
                 )
                 res.append(response.status_code)
 
-            if not viewOnly:
+            else:
                 response = self.session.post(
                     url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/view-only/disable"
                 )
@@ -978,7 +965,7 @@ class SubClient():
                 )
                 res.append(response.status_code)
 
-            if not canInvite:
+            else:
                 response = self.session.post(
                     url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/members-can-invite/disable",
                     json=data
@@ -993,7 +980,7 @@ class SubClient():
                 )
                 res.append(response.status_code)
 
-            if not canTip:
+            else:
                 response = self.session.post(
                     url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/tipping-perm-status/disable",
                     json=data
@@ -1006,13 +993,10 @@ class SubClient():
         return res
 
     def transfer_host(self, chatId: str, userIds: list):
-        data = { "uidList": userIds }
-
-        response = self.session.post(
+        return self.session.post(
             url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/transfer-organizer",
-            json=data
-        )
-        return response.status_code
+            json={"uidList": userIds}
+        ).status_code
 
     def transfer_organizer(self, chatId: str, userIds: list):
         self.transfer_host(chatId, userIds)
@@ -1029,10 +1013,9 @@ class SubClient():
             - **Success** : 200 (int)
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.post(
+        return self.session.post(
             url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/transfer-organizer/{requestId}/accept"
-        )
-        return response.status_code
+        ).status_code
 
     def accept_organizer(self, chatId: str, requestId: str):
         """
@@ -1064,11 +1047,10 @@ class SubClient():
 
         params = {"allowRejoin": int(allowRejoin)}
 
-        response = self.session.delete(
+        return self.session.delete(
             url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/member/{userId}",
             params=params
-        )
-        return response.status_code
+        ).status_code
 
     def join_chat(self, chatId: str):
         """
@@ -1167,11 +1149,10 @@ class SubClient():
         3 - Invite Only
         """
         data = { "vvChatJoinType": permission }
-        response = self.session.post(
+        return self.session.post(
             url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/vvchat-permission",
             json=data
-        )
-        return response.status_code
+        ).status_code
 
     def get_vc_reputation_info(self, chatId: str):
         response = self.session.get(f"{api}/x{self.comId}/s/chat/thread/{chatId}/avchat-reputation")
@@ -1182,7 +1163,7 @@ class SubClient():
         return objects.VcReputation(response.json()).VcReputation
 
     def get_all_users(self, type: str = "recent", start: int = 0, size: int = 25):
-        types = ["recent", "banned", "featured", "leaders", "curators"]
+        types = ("recent", "banned", "featured", "leaders", "curators")
 
         if type not in types:
             raise exceptions.WrongType(type)
@@ -1427,7 +1408,7 @@ class SubClient():
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
 
-        if pageToken is not None: url = f"{api}/x{self.comId}/s/chat/thread/{chatId}/message?v=2&pagingType=t&pageToken={pageToken}&size={size}"
+        if pageToken: url = f"{api}/x{self.comId}/s/chat/thread/{chatId}/message?v=2&pagingType=t&pageToken={pageToken}&size={size}"
         else: url = f"{api}/x{self.comId}/s/chat/thread/{chatId}/message?v=2&pagingType=t&size={size}"
 
         response = self.session.get(url)
@@ -1636,91 +1617,64 @@ class SubClient():
     #
 
     def moderation_history(self, userId: str = None, blogId: str = None, wikiId: str = None, quizId: str = None, fileId: str = None, size: int = 25):
-        object_types = {
-            'userId': {'id': userId, 'type': 0},
-            'blogId': {'id': blogId, 'type': 1},
-            'wikiId': {'id': wikiId, 'type': 2},
-            'quizId': {'id': quizId, 'type': 1},
-            'fileId': {'id': fileId, 'type': 109}
-        }
-
-        for key, value in object_types.items():
-            if value['id']:
-                response = self.session.get(f"{api}/x{self.comId}/s/admin/operation?objectId={value['id']}&objectType={value['type']}&pagingType=t&size={size}")
+        types = {'userId': 0, 'blogId': 1, 'wikiId': 2, 'quizId': 1, 'fileId': 109}
+        ids = (userId, blogId, wikiId, quizId, fileId)
+        for id, type in zip(ids, types.values()):
+            if id:
+                url = f"{api}/x{self.comId}/s/admin/operation?objectId={id}&objectType={type}&pagingType=t&size={size}"
                 break
         else:
-            response = self.session.get(f"{api}/x{self.comId}/s/admin/operation?pagingType=t&size={size}")
-
-        return objects.AdminLogList(response.json()["adminLogList"]).AdminLogList
+            url = f"{api}/x{self.comId}/s/admin/operation?pagingType=t&size={size}"
+        return objects.AdminLogList(self.session.get(url).json()["adminLogList"]).AdminLogList
 
     def feature(self, time: int, userId: str = None, chatId: str = None, blogId: str = None, wikiId: str = None):
-        if chatId:
-            if time == 1: time = 3600
-            if time == 1: time = 7200
-            if time == 1: time = 10800
-
-        else:
-            if time == 1: time = 86400
-            elif time == 2: time = 172800
-            elif time == 3: time = 259200
-            else: raise exceptions.WrongType(time)
+        time_map = {1: 3600, 2: 7200, 3: 10800} if chatId else {1: 86400, 2: 172800, 3: 259200}
+        if time not in time_map:
+            raise exceptions.WrongType(time)
 
         data = {
             "adminOpName": 114,
             "adminOpValue": {
-                "featuredDuration": time
+                "featuredDuration": time_map[time],
+                "featuredType": 5 if chatId else 4 if userId else 1
             }
         }
 
+        url = f"{api}/x{self.comId}/s/"
         if userId:
-            data["adminOpValue"] = {"featuredType": 4}
-            url = f"{api}/x{self.comId}/s/user-profile/{userId}/admin"
-
+            url += f"user-profile/{userId}/admin"
         elif blogId:
-            data["adminOpValue"] = {"featuredType": 1}
-            url = f"{api}/x{self.comId}/s/blog/{blogId}/admin"
-
+            url += f"blog/{blogId}/admin"
         elif wikiId:
-            data["adminOpValue"] = {"featuredType": 1}
-            url = f"{api}/x{self.comId}/s/item/{wikiId}/admin"
-
+            url += f"item/{wikiId}/admin"
         elif chatId:
-            data["adminOpValue"] = {"featuredType": 5}
-            url = f"{api}/x{self.comId}/s/chat/thread/{chatId}/admin"
+            url += f"chat/thread/{chatId}/admin"
+        else: 
+            raise exceptions.SpecifyType
 
-        else: raise exceptions.SpecifyType
-
-        response = self.session.post(url, json=data)
-
-        return response.json()
+        return self.session.post(url, json=data).json()
 
     def unfeature(self, userId: str = None, chatId: str = None, blogId: str = None, wikiId: str = None):
         data = {
             "adminOpName": 114,
-            "adminOpValue": {}
+            "adminOpValue": {"featuredType": 0}
         }
 
         if userId:
-            data["adminOpValue"] = {"featuredType": 0}
             url = f"{api}/x{self.comId}/s/user-profile/{userId}/admin"
 
         elif blogId:
-            data["adminOpValue"] = {"featuredType": 0}
             url = f"{api}/x{self.comId}/s/blog/{blogId}/admin"
 
         elif wikiId:
-            data["adminOpValue"] = {"featuredType": 0}
             url = f"{api}/x{self.comId}/s/item/{wikiId}/admin"
 
         elif chatId:
-            data["adminOpValue"] = {"featuredType": 0}
             url = f"{api}/x{self.comId}/s/chat/thread/{chatId}/admin"
 
         else: raise exceptions.SpecifyType
 
-        response = self.session.post(url, json=data)
-
-        return response.json()
+        return self.session.post(url, json=data).json()
 
     def hide(self, userId: str = None, chatId: str = None, blogId: str = None, wikiId: str = None, quizId: str = None, fileId: str = None, reason: str = None):
         data = {
@@ -1763,8 +1717,7 @@ class SubClient():
 
         else: raise exceptions.SpecifyType
 
-        response = self.session.post(url, json=data)
-        return response.json()
+        return self.session.post(url, json=data).json()
 
     def unhide(self, userId: str = None, chatId: str = None, blogId: str = None, wikiId: str = None, quizId: str = None, fileId: str = None, reason: str = None):
         data = {
@@ -1775,7 +1728,6 @@ class SubClient():
 
         if userId:
             data["adminOpName"] = 19
-
             url = f"{api}/x{self.comId}/s/user-profile/{userId}/admin"
 
         elif blogId:
@@ -1810,8 +1762,7 @@ class SubClient():
 
         else: raise exceptions.SpecifyType
 
-        response = self.session.post(url, json=data)
-        return response.json()
+        return self.session.post(url, json=data).json()
 
     def edit_titles(self, userId: str, tlt: list):
 
@@ -1845,17 +1796,8 @@ class SubClient():
 
     # TODO : List all strike texts
     def strike(self, userId: str, time: int, title: str = None, reason: str = None):
-        if time == 1:
-            time = 86400
-        elif time == 2:
-            time = 10800
-        elif time == 3:
-            time = 21600
-        elif time == 4:
-            time = 43200
-        elif time == 5:
-            time = 86400
-        else:
+        time_map = {1: 86400, 2: 10800, 3: 21600, 4: 43200, 5: 86400}
+        if time not in time_map:
             raise exceptions.WrongType(time)
 
         data = {
@@ -1867,7 +1809,7 @@ class SubClient():
                 "objectType": 0
             },
             "penaltyType": 1,
-            "penaltyValue": time,
+            "penaltyValue": time_map[time],
             "adminOpNote": {},
             "noticeType": 4
         }
@@ -1945,10 +1887,7 @@ class SubClient():
             "v": 1,
         }
 
-        if aminoPlus:
-            data['paymentContext'] = {'discountStatus': 1, 'discountValue': 1, 'isAutoRenew': autoRenew}
-        else:
-            data['paymentContext'] = {'discountStatus': 0, 'discountValue': 1, 'isAutoRenew': autoRenew}
+        data['paymentContext'] = {'discountStatus': int(aminoPlus), 'discountValue': 1, 'isAutoRenew': autoRenew}
 
         response = self.session.post(f"{api}/x{self.comId}/s/store/purchase", json=data)
         return response.status_code
@@ -1971,10 +1910,8 @@ class SubClient():
 
         data = {
             "frameId": avatarId,
-            "applyToAll": 0,
+            "applyToAll": int(applyToAll),
         }
-
-        if applyToAll: data["applyToAll"] = 1
 
         response = self.session.post(f"{api}/x{self.comId}/s/avatar-frame/apply", json=data)
         return response.status_code
@@ -1993,7 +1930,7 @@ class SubClient():
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
 
-        data = { "uid": userId }
+        data = {"uid": userId}
 
         response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/vvchat-presenter/invite/", json=data)
         return response.status_code
@@ -2020,7 +1957,7 @@ class SubClient():
         return response.status_code
 
     def create_shared_folder(self,title: str):
-        data = { "title": title }
+        data = {"title": title}
         
         response = self.session.post(f"{api}/x{self.comId}/s/shared-folder/folders", json=data)
         return response.status_code
@@ -2044,9 +1981,7 @@ class SubClient():
         return response.status_code
 
     def reject_wiki_request(self, requestId: str):
-        data = {}
-
-        response = self.session.post(f"{api}/x{self.comId}/s/knowledge-base-request/{requestId}/reject", json=data)
+        response = self.session.post(f"{api}/x{self.comId}/s/knowledge-base-request/{requestId}/reject", json={})
         return response.status_code
 
     def get_wiki_submissions(self, start: int = 0, size: int = 25):
@@ -2059,13 +1994,10 @@ class SubClient():
 
     def apply_bubble(self, bubbleId: str, chatId: str, applyToAll: bool = False):
         data = {
-            "applyToAll": 0,
+            "applyToAll": int(applyToAll),
             "bubbleId": bubbleId,
             "threadId": chatId,
         }
-
-        if applyToAll is True:
-            data["applyToAll"] = 1
 
         response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/apply-bubble", json=data)
         return response.status_code
