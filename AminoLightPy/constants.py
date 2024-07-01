@@ -6,7 +6,6 @@ from collections import OrderedDict
 from requests import Session
 from mimetypes import guess_type
 
-from .lib.util.exceptions import SpecifyType
 from .lib.util import signature, gen_deviceId
 from .lib.util.exceptions import CheckException
 
@@ -48,6 +47,9 @@ class AminoSession(Session):
         if data is not None:
             kwargs["data"] = data
 
+        if not api in url:
+            url = api+url
+            
         response = super().request(method, url, *args, **kwargs)
 
         if response.status_code != 200:
@@ -80,7 +82,7 @@ def upload_media(self, file: BinaryIO) -> str:
     custom_headers["Content-Type"] = fileType
 
     response = self.session.post(
-        url=f"{api}/g/s/media/upload",
+        url="/g/s/media/upload",
         data=data,
         headers=custom_headers,
         stream=True

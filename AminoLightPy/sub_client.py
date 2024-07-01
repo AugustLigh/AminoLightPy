@@ -8,9 +8,8 @@ from typing import BinaryIO
 from base64 import b64encode
 from requests import Session
 
-from .constants import api, upload_media
+from .constants import upload_media
 from .lib.util import exceptions, objects
-
 
 class SubClient():
     "Module for work with community"
@@ -39,7 +38,7 @@ class SubClient():
             "start": start,
             "size": size
         }
-        response = self.session.get(f"{api}/g/s-x{self.comId}/community/invitation", params=params)
+        response = self.session.get(f"/g/s-x{self.comId}/community/invitation", params=params)
         return objects.InviteCodeList(response.json()["communityInvitationList"]).InviteCodeList
 
     def generate_invite_code(self, duration: int = 0, force: bool = True):
@@ -60,7 +59,7 @@ class SubClient():
             "duration": duration,
             "force": force
         }
-        response = self.session.post(f"{api}/g/s-x{self.comId}/community/invitation", json=data)
+        response = self.session.post(f"/g/s-x{self.comId}/community/invitation", json=data)
         return objects.InviteCode(response.json()["communityInvitation"]).InviteCode
 
     def delete_invite_code(self, inviteId: str):
@@ -77,7 +76,7 @@ class SubClient():
         **Raises**
             - **Exceptions** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.delete(f"{api}/g/s-x{self.comId}/community/invitation/{inviteId}")
+        response = self.session.delete(f"/g/s-x{self.comId}/community/invitation/{inviteId}")
         return response.status_code
 
     def post_blog(self, title: str, content: str, imageList: list = None, captionList: list = None,
@@ -105,17 +104,16 @@ class SubClient():
         """
         mediaList = []
 
-        if captionList is not None:
+        if captionList:
             for image, caption in zip(imageList, captionList):
                 mediaList.append([100, upload_media(self, image), caption])
 
         else:
-            if imageList is not None:
+            if imageList:
                 for image in imageList:
                     mediaList.append([100, upload_media(self, image), None])
 
         data = {
-            "address": None,
             "content": content,
             "title": title,
             "mediaList": mediaList,
@@ -131,7 +129,7 @@ class SubClient():
             data["extensions"] = {"style": {"backgroundColor": backgroundColor}}
         if categoriesList:
             data["taggedBlogCategoryIdList"] = categoriesList
-        response = self.session.post(f"{api}/x{self.comId}/s/blog", json=data)
+        response = self.session.post(f"/x{self.comId}/s/blog", json=data)
 
         return response.status_code
 
@@ -163,7 +161,7 @@ class SubClient():
         if backgroundColor:
             data["extensions"].update({"style": {"backgroundColor": backgroundColor}})
 
-        response = self.session.post(f"{api}/x{self.comId}/s/item", json=data)
+        response = self.session.post(f"/x{self.comId}/s/item", json=data)
         return response.status_code
 
     def edit_blog(self, blogId: str, title: str = None, content: str = None,
@@ -182,25 +180,30 @@ class SubClient():
             "eventSource": "PostDetailView",
         }
 
-        if title: data["title"] = title
-        if content: data["content"] = content
-        if fansOnly: data["extensions"] = {"fansOnly": fansOnly}
-        if backgroundColor: data["extensions"] = {"style": {"backgroundColor": backgroundColor}}
-        if categoriesList: data["taggedBlogCategoryIdList"] = categoriesList
-        response = self.session.post(f"{api}/x{self.comId}/s/blog/{blogId}", json=data)
-        return response.status_code
+        if title:
+            data["title"] = title
+        if content:
+            data["content"] = content
+        if fansOnly:
+            data["extensions"] = {"fansOnly": fansOnly}
+        if backgroundColor:
+            data["extensions"] = {"style": {"backgroundColor": backgroundColor}}
+        if categoriesList:
+            data["taggedBlogCategoryIdList"] = categoriesList
+
+        return self.session.post(f"/x{self.comId}/s/blog/{blogId}", json=data).status_code
 
     def delete_blog(self, blogId: str):
-        response = self.session.delete(f"{api}/x{self.comId}/s/blog/{blogId}")
-        return response.status_code
+        return self.session.delete(f"/x{self.comId}/s/blog/{blogId}").status_code
 
     def delete_wiki(self, wikiId: str):
-        response = self.session.delete(f"{api}/x{self.comId}/s/item/{wikiId}")
-        return response.status_code
+        return self.session.delete(f"/x{self.comId}/s/item/{wikiId}").status_code
 
     def repost_blog(self, content: str = None, blogId: str = None, wikiId: str = None):
-        if blogId is not None: refObjectId, refObjectType = blogId, 1
-        elif wikiId is not None: refObjectId, refObjectType = wikiId, 2
+        if blogId:
+            refObjectId, refObjectType = blogId, 1
+        elif wikiId:
+            refObjectId, refObjectType = wikiId, 2
         else: raise exceptions.SpecifyType
 
         data = {
@@ -209,24 +212,24 @@ class SubClient():
             "refObjectType": refObjectType,
             "type": 2,
         }
-        response = self.session.post(f"{api}/x{self.comId}/s/blog", json=data)
+        response = self.session.post(f"/x{self.comId}/s/blog", json=data)
         return response.status_code
 
     def check_in(self, tz: int = -timezone // 1000):
         data = { "timezone": tz }
-        response = self.session.post(f"{api}/x{self.comId}/s/check-in", json=data)
+        response = self.session.post(f"/x{self.comId}/s/check-in", json=data)
         return response.status_code
 
     def repair_check_in(self, method: int = 0):
         data = {
             "repairMethod": str(method+1)
         }
-        response = self.session.post(f"{api}/x{self.comId}/s/check-in/repair", json=data)
+        response = self.session.post(f"/x{self.comId}/s/check-in/repair", json=data)
         return response.status_code
 
     def lottery(self, tz: int = -timezone // 1000):
         data = { "timezone": tz }
-        response = self.session.post(f"{api}/x{self.comId}/s/check-in/lottery", json=data)
+        response = self.session.post(f"/x{self.comId}/s/check-in/lottery", json=data)
         return objects.LotteryLog(response.json()["lotteryLog"]).LotteryLog
 
     def edit_profile(self, nickname: str = None, content: str = None, icon: BinaryIO = None,
@@ -236,16 +239,16 @@ class SubClient():
                             defaultBubbleId: str = None):
         mediaList = []
         data = {}
-        if captionList is not None:
+        if captionList:
             for image, caption in zip(imageList, captionList):
                 mediaList.append([100, upload_media(self, image), caption])
 
         else:
-            if imageList is not None:
+            if imageList:
                 for image in imageList:
                     mediaList.append([100, upload_media(self, image), None])
 
-        if imageList is not None or captionList is not None:
+        if imageList or captionList:
             data["mediaList"] = mediaList
 
         if nickname:
@@ -274,7 +277,7 @@ class SubClient():
             data["extensions"] = {"customTitles": tlt}
 
         return self.session.post(
-            url=f"{api}/x{self.comId}/s/user-profile/{self.profile.userId}",
+            url=f"/x{self.comId}/s/user-profile/{self.profile.userId}",
             json=data
         ).status_code
 
@@ -285,7 +288,7 @@ class SubClient():
         }
 
         return self.session.post(
-            url=f"{api}/x{self.comId}/s/blog/{blogId}/poll/option/{optionId}/vote",
+            url=f"/x{self.comId}/s/blog/{blogId}/poll/option/{optionId}/vote",
             json=data
         ).status_code
 
@@ -297,22 +300,25 @@ class SubClient():
             "type": 0
         }
 
-        if replyTo: data["respondTo"] = replyTo
+        if replyTo:
+            data["respondTo"] = replyTo
 
-        if isGuest: comType = "g-comment"
-        else: comType = "comment"
+        if isGuest:
+            comType = "g-comment"
+        else:
+            comType = "comment"
 
         if userId:
             data["eventSource"] = "UserProfileView"
-            url = f"{api}/x{self.comId}/s/user-profile/{userId}/{comType}"
+            url = f"/x{self.comId}/s/user-profile/{userId}/{comType}"
 
         elif blogId:
             data["eventSource"] = "PostDetailView"
-            url = f"{api}/x{self.comId}/s/blog/{blogId}/{comType}"
+            url = f"/x{self.comId}/s/blog/{blogId}/{comType}"
 
         elif wikiId:
             data["eventSource"] = "PostDetailView"
-            url = f"{api}/x{self.comId}/s/item/{wikiId}/{comType}"
+            url = f"/x{self.comId}/s/item/{wikiId}/{comType}"
 
         else: raise exceptions.SpecifyType
 
@@ -321,11 +327,11 @@ class SubClient():
     def delete_comment(self, commentId: str, userId: str = None, blogId: str = None,
                         wikiId: str = None):
         if userId:
-            url = f"{api}/x{self.comId}/s/user-profile/{userId}/comment/{commentId}"
+            url = f"/x{self.comId}/s/user-profile/{userId}/comment/{commentId}"
         elif blogId:
-            url = f"{api}/x{self.comId}/s/blog/{blogId}/comment/{commentId}"
+            url = f"/x{self.comId}/s/blog/{blogId}/comment/{commentId}"
         elif wikiId:
-            url = f"{api}/x{self.comId}/s/item/{wikiId}/comment/{commentId}"
+            url = f"/x{self.comId}/s/item/{wikiId}/comment/{commentId}"
         else:
             raise exceptions.SpecifyType
 
@@ -351,26 +357,29 @@ class SubClient():
         if blogId:
             if isinstance(blogId, str):
                 data["eventSource"] = "UserProfileView"
-                url = f"{api}/x{self.comId}/s/blog/{blogId}/vote?cv=1.2"
+                url = f"/x{self.comId}/s/blog/{blogId}/vote?cv=1.2"
 
             elif isinstance(blogId, list):
                 data["targetIdList"] = blogId
-                url = f"{api}/x{self.comId}/s/feed/vote"
+                url = f"/x{self.comId}/s/feed/vote"
 
             else: raise exceptions.WrongType
 
         elif wikiId:
             data["eventSource"] = "PostDetailView"
-            url = f"{api}/x{self. comId}/s/item/{wikiId}/vote?cv=1.2"
+            url = f"/x{self. comId}/s/item/{wikiId}/vote?cv=1.2"
 
         else: raise exceptions.SpecifyType()
 
         return self.session.post(url, json=data).status_code
 
     def unlike_blog(self, blogId: str = None, wikiId: str = None):
-        if blogId: url = f"{api}/x{self.comId}/s/blog/{blogId}/vote?eventSource=UserProfileView"
-        elif wikiId: url = f"{api}/x{self.comId}/s/item/{wikiId}/vote?eventSource=PostDetailView"
-        else: raise exceptions.SpecifyType()
+        if blogId:
+            url = f"/x{self.comId}/s/blog/{blogId}/vote?eventSource=UserProfileView"
+        elif wikiId:
+            url = f"/x{self.comId}/s/item/{wikiId}/vote?eventSource=PostDetailView"
+        else:
+            raise exceptions.SpecifyType()
 
         return self.session.delete(url).status_code
 
@@ -386,15 +395,15 @@ class SubClient():
 
         if userId:
             data["eventSource"] = "UserProfileView"
-            url = f"{api}/x{self.comId}/s/user-profile/{userId}/comment/{commentId}/vote"
+            url = f"/x{self.comId}/s/user-profile/{userId}/comment/{commentId}/vote"
 
         elif blogId:
             data["eventSource"] = "PostDetailView"
-            url = f"{api}/x{self.comId}/s/blog/{blogId}/comment/{commentId}/vote"
+            url = f"/x{self.comId}/s/blog/{blogId}/comment/{commentId}/vote"
 
         elif wikiId:
             data["eventSource"] = "PostDetailView"
-            url = f"{api}/x{self.comId}/s/item/{wikiId}/comment/{commentId}/g-vote"
+            url = f"/x{self.comId}/s/item/{wikiId}/comment/{commentId}/g-vote"
 
         else: raise exceptions.SpecifyType()
 
@@ -402,11 +411,11 @@ class SubClient():
 
     def unlike_comment(self, commentId: str, userId: str = None, blogId: str = None, wikiId: str = None):
         if userId:
-            url = f"{api}/x{self.comId}/s/user-profile/{userId}/comment/{commentId}/g-vote?eventSource=UserProfileView"
+            url = f"/x{self.comId}/s/user-profile/{userId}/comment/{commentId}/g-vote?eventSource=UserProfileView"
         elif blogId:
-            url = f"{api}/x{self.comId}/s/blog/{blogId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
+            url = f"/x{self.comId}/s/blog/{blogId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
         elif wikiId:
-            url = f"{api}/x{self.comId}/s/item/{wikiId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
+            url = f"/x{self.comId}/s/item/{wikiId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
         else:
             raise exceptions.SpecifyType()
 
@@ -422,7 +431,7 @@ class SubClient():
             "value": "1"
         }
         return self.session.post(
-            url=f"{api}/x{self.comId}/s/blog/{blogId}/comment/{commentId}/vote",
+            url=f"/x{self.comId}/s/blog/{blogId}/comment/{commentId}/vote",
             params=params,
             json=data
         ).status_code
@@ -438,13 +447,13 @@ class SubClient():
         }
 
         return self.session.post(
-            url=f"{api}/x{self.comId}/s/blog/{blogId}/comment/{commentId}/vote",
+            url=f"/x{self.comId}/s/blog/{blogId}/comment/{commentId}/vote",
             json=data,
             params=params
         ).status_code
 
     def unvote_comment(self, blogId: str, commentId: str):
-        response = self.session.delete(f"{api}/x{self.comId}/s/blog/{blogId}/comment/{commentId}/vote?eventSource=PostDetailView")
+        response = self.session.delete(f"/x{self.comId}/s/blog/{blogId}/comment/{commentId}/vote?eventSource=PostDetailView")
         return response.status_code
 
     def reply_wall(self, userId: str, commentId: str, message: str):
@@ -456,7 +465,7 @@ class SubClient():
             "eventSource": "UserProfileView"
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/user-profile/{userId}/comment", json=data)
+        response = self.session.post(f"/x{self.comId}/s/user-profile/{userId}/comment", json=data)
         return response.status_code
 
     def send_active_obj(self, startTime: int = None, endTime: int = None,
@@ -471,7 +480,7 @@ class SubClient():
         }
         if timers: data["userActiveTimeChunkList"] = timers
 
-        response = self.session.post(f"{api}/x{self.comId}/s/community/stats/user-active-time", json=data)
+        response = self.session.post(f"/x{self.comId}/s/community/stats/user-active-time", json=data)
         return response.status_code
 
     def activity_status(self, status: str):
@@ -495,20 +504,18 @@ class SubClient():
             "duration": 86400
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/user-profile/{self.profile.userId}/online-status", json=data)
+        response = self.session.post(f"/x{self.comId}/s/user-profile/{self.profile.userId}/online-status", json=data)
         return response.status_code
 
     def check_notifications(self):
-        response = self.session.post(f"{api}/x{self.comId}/s/notification/checked")
-        return response.status_code
+        return self.session.post(f"/x{self.comId}/s/notification/checked").status_code
 
     def delete_notification(self, notificationId: str):
-        response = self.session.delete(f"{api}/x{self.comId}/s/notification/{notificationId}")
+        response = self.session.delete(f"/x{self.comId}/s/notification/{notificationId}")
         return response.status_code
 
     def clear_notifications(self):
-        response = self.session.delete(f"{api}/x{self.comId}/s/notification")
-        return response.status_code
+        return self.session.delete(f"/x{self.comId}/s/notification").status_code
 
     def start_chat(self, userId: Union[str, list, tuple], message: str, title: str = None,
                     content: str = None, isGlobal: bool = False, publishToGlobal: bool = False):
@@ -525,13 +532,13 @@ class SubClient():
             "publishToGlobal": int(publishToGlobal)
         }
 
-        if isGlobal is True:
+        if isGlobal:
             data["type"] = 2
             data["eventSource"] = "GlobalComposeMenu"
         else:
             data["type"] = 0
 
-        response = self.session.post(f"{api}/x{self.comId}/s/chat/thread", json=data)
+        response = self.session.post(f"/x{self.comId}/s/chat/thread", json=data)
         return objects.Thread(response.json()["thread"]).Thread
 
     def invite_to_chat(self, userId: Union[str, list], chatId: str):
@@ -542,12 +549,11 @@ class SubClient():
 
         data = { "uids": userIds }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/member/invite", json=data)
+        response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}/member/invite", json=data)
         return response.status_code
 
     def add_to_favorites(self, userId: str):
-        response = self.session.post(f"{api}/x{self.comId}/s/user-group/quick-access/{userId}")
-        return response.status_code
+        return self.session.post(f"/x{self.comId}/s/user-group/quick-access/{userId}").status_code
 
     def send_coins(self, coins: int, blogId: str = None, chatId: str = None, objectId: str = None, transactionId: str = None):
         if not transactionId: transactionId = str(uuid4())
@@ -557,12 +563,12 @@ class SubClient():
             "tippingContext": {"transactionId": transactionId}
         }
 
-        if blogId: url = f"{api}/x{self.comId}/s/blog/{blogId}/tipping"
-        elif chatId: url = f"{api}/x{self.comId}/s/chat/thread/{chatId}/tipping"
+        if blogId: url = f"/x{self.comId}/s/blog/{blogId}/tipping"
+        elif chatId: url = f"/x{self.comId}/s/chat/thread/{chatId}/tipping"
         elif objectId:
             data["objectId"] = objectId
             data["objectType"] = 2
-            url = f"{api}/x{self.comId}/s/tipping"
+            url = f"/x{self.comId}/s/tipping"
 
         else: raise exceptions.SpecifyType
 
@@ -570,7 +576,7 @@ class SubClient():
 
     def thank_tip(self, chatId: str, userId: str):
         return self.session.post(
-            url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/tipping/tipped-users/{userId}/thank"
+            url=f"/x{self.comId}/s/chat/thread/{chatId}/tipping/tipped-users/{userId}/thank"
         ).status_code
 
     def follow(self, userId: Union[str, list]):
@@ -586,11 +592,11 @@ class SubClient():
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         if isinstance(userId, str):
-            response = self.session.post(f"{api}/x{self.comId}/s/user-profile/{userId}/member")
+            response = self.session.post(f"/x{self.comId}/s/user-profile/{userId}/member")
 
         elif isinstance(userId, list):
             response = self.session.post(
-                url=f"{api}/x{self.comId}/s/user-profile/{self.profile.userId}/joined",
+                url=f"/x{self.comId}/s/user-profile/{self.profile.userId}/joined",
                 json={"targetUidList": userId}
             )
 
@@ -610,7 +616,7 @@ class SubClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.delete(f"{api}/x{self.comId}/s/user-profile/{self.profile.userId}/joined/{userId}")
+        response = self.session.delete(f"/x{self.comId}/s/user-profile/{self.profile.userId}/joined/{userId}")
         return response.status_code
 
     def block(self, userId: str):
@@ -625,8 +631,7 @@ class SubClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.post(f"{api}/x{self.comId}/s/block/{userId}")
-        return response.status_code
+        return self.session.post(f"/x{self.comId}/s/block/{userId}").status_code
 
     def unblock(self, userId: str):
         """
@@ -640,8 +645,7 @@ class SubClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.delete(f"{api}/x{self.comId}/s/block/{userId}")
-        return response.status_code
+        return self.session.delete(f"/x{self.comId}/s/block/{userId}").status_code
 
     def flag(self, reason: str, flagType: int,
             userId: str = None, blogId: str = None, wikiId: str = None,
@@ -662,8 +666,8 @@ class SubClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if reason is None: raise exceptions.ReasonNeeded
-        if flagType is None: raise exceptions.FlagTypeNeeded
+        if not reason: raise exceptions.ReasonNeeded
+        if not flagType: raise exceptions.FlagTypeNeeded
 
         data = {
             "flagType": flagType,
@@ -687,8 +691,7 @@ class SubClient():
         if asGuest: flg = "g-flag"
         else: flg = "flag"
 
-        response = self.session.post(f"{api}/x{self.comId}/s/{flg}", json=data)
-        return response.status_code
+        return self.session.post(f"/x{self.comId}/s/{flg}", json=data).status_code
 
     def check_values(self, *args):
         return any(arg is None for arg in args)
@@ -775,7 +778,7 @@ class SubClient():
                 data["mediaValue"] = url
 
         return self.session.post(
-            url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/message",
+            url=f"/x{self.comId}/s/chat/thread/{chatId}/message",
             json=data
         ).status_code
 
@@ -793,7 +796,7 @@ class SubClient():
             "attachedObject": None
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/message", json=data)
+        response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}/message", json=data)
         return response.status_code
 
     def delete_message(self, chatId: str, messageId: str, asStaff: bool = False, reason: str = None):
@@ -819,9 +822,9 @@ class SubClient():
             data["adminOpNote"] = {"content": reason}
 
         if not asStaff:
-            response = self.session.delete(f"{api}/x{self.comId}/s/chat/thread/{chatId}/message/{messageId}")
+            response = self.session.delete(f"/x{self.comId}/s/chat/thread/{chatId}/message/{messageId}")
         else:
-            response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/message/{messageId}/admin", json=data)
+            response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}/message/{messageId}/admin", json=data)
 
         return response.status_code
 
@@ -842,7 +845,7 @@ class SubClient():
             "messageId": messageId
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/mark-as-read", json=data)
+        response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}/mark-as-read", json=data)
         return response.status_code
 
     def edit_chat(self, chatId: str, doNotDisturb: bool = None, pinChat: bool = None,
@@ -852,7 +855,7 @@ class SubClient():
                 canTip: bool = None, viewOnly: bool = None, canInvite: bool = None,
                 fansOnly: bool = None):
         """
-        Send a Message to a Chat.
+        Edit a Chat.
 
         **Parameters**
             - **chatId** : ID of the Chat.
@@ -874,127 +877,112 @@ class SubClient():
 
         **Returns**
             - **Success** : 200 (int)
-
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        data = {}
-
-        if title: data["title"] = title
-        if content: data["content"] = content
-        if icon: data["icon"] = icon
-        if keywords: data["keywords"] = keywords
-        if announcement: data["extensions"] = {"announcement": announcement}
-        if pinAnnouncement: data["extensions"] = {"pinAnnouncement": pinAnnouncement}
-        if fansOnly: data["extensions"] = {"fansOnly": fansOnly}
-
-        if publishToGlobal: data["publishToGlobal"] = 0
-        if not publishToGlobal: data["publishToGlobal"] = 1
-
+        data = self._prepare_data(title, content, icon, keywords, announcement, pinAnnouncement, fansOnly, publishToGlobal)
         res = []
 
-        if doNotDisturb is not None:
-            if doNotDisturb:
-                data = {"alertOption": 2 }
+        res.extend(self._set_do_not_disturb(chatId, doNotDisturb))
+        res.extend(self._pin_chat(chatId, pinChat))
+        res.extend(self._set_background_image(chatId, backgroundImage))
+        res.extend(self._set_co_hosts(chatId, coHosts))
+        res.extend(self._set_view_only(chatId, viewOnly))
+        res.extend(self._set_can_invite(chatId, canInvite))
+        res.extend(self._set_can_tip(chatId, canTip))
 
-                response = self.session.post(
-                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}/alert",
-                    json=data
-                )
-                res.append(response.status_code)
-
-            else:
-                data = {"alertOption": 1 }
-
-                response = self.session.post(
-                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}/alert",
-                    json=data
-                )
-                res.append(response.status_code)
-
-        if pinChat is not None:
-            if pinChat:
-                response = self.session.post(
-                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/pin",
-                    json=data
-                )
-                res.append(response.status_code)
-
-            else:
-                response = self.session.post(
-                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/unpin",
-                    json=data
-                )
-                res.append(response.status_code)
-
-        if backgroundImage is not None:
-            data = {"media": [100, backgroundImage, None] }
-
-            response = self.session.post(
-                url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}/background",
-                json=data
-            )
-            res.append(response.status_code)
-
-        if coHosts is not None:
-            data = {"uidList": coHosts }
-
-            response = self.session.post(
-                url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/co-host",
-                json=data
-            )
-            res.append(response.status_code)
-
-        if viewOnly is not None:
-            if viewOnly:
-                response = self.session.post(
-                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/view-only/enable"
-                )
-                res.append(response.status_code)
-
-            else:
-                response = self.session.post(
-                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/view-only/disable"
-                )
-                res.append(response.status_code)
-
-        if canInvite is not None:
-            if canInvite:
-                response = self.session.post(
-                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/members-can-invite/enable",
-                    json=data
-                )
-                res.append(response.status_code)
-
-            else:
-                response = self.session.post(
-                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/members-can-invite/disable",
-                    json=data
-                )
-                res.append(response.status_code)
-
-        if canTip is not None:
-            if canTip:
-                response = self.session.post(
-                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/tipping-perm-status/enable",
-                    json=data
-                )
-                res.append(response.status_code)
-
-            else:
-                response = self.session.post(
-                    url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/tipping-perm-status/disable",
-                    json=data
-                )
-                res.append(response.status_code)
-
-        response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}", json=data)
+        response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}", json=data)
         res.append(response.status_code)
 
         return res
 
+    def _prepare_data(self, title, content, icon, keywords, announcement, pinAnnouncement, fansOnly, publishToGlobal):
+        data = {}
+        if title: data["title"] = title
+        if content: data["content"] = content
+        if icon: data["icon"] = icon
+        if keywords: data["keywords"] = keywords
+        extensions = {}
+        if announcement: extensions["announcement"] = announcement
+        if pinAnnouncement: extensions["pinAnnouncement"] = pinAnnouncement
+        if fansOnly: extensions["fansOnly"] = fansOnly
+        if extensions: data["extensions"] = extensions
+        if publishToGlobal is not None:
+            data["publishToGlobal"] = 0 if publishToGlobal else 1
+        return data
+
+    def _set_do_not_disturb(self, chatId, doNotDisturb):
+        if doNotDisturb is None:
+            return []
+        alertOption = 2 if doNotDisturb else 1
+        data = {"alertOption": alertOption}
+        response = self.session.post(
+            url=f"/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}/alert",
+            json=data
+        )
+        return [response.status_code]
+
+    def _pin_chat(self, chatId, pinChat):
+        if pinChat is None:
+            return []
+        url_suffix = "pin" if pinChat else "unpin"
+        response = self.session.post(
+            url=f"/x{self.comId}/s/chat/thread/{chatId}/{url_suffix}",
+            json={}
+        )
+        return [response.status_code]
+
+    def _set_background_image(self, chatId, backgroundImage):
+        if not backgroundImage:
+            return []
+        data = {"media": [100, backgroundImage, None]}
+        response = self.session.post(
+            url=f"/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}/background",
+            json=data
+        )
+        return [response.status_code]
+
+    def _set_co_hosts(self, chatId, coHosts):
+        if coHosts is None:
+            return []
+        data = {"uidList": coHosts}
+        response = self.session.post(
+            url=f"/x{self.comId}/s/chat/thread/{chatId}/co-host",
+            json=data
+        )
+        return [response.status_code]
+
+    def _set_view_only(self, chatId, viewOnly):
+        if viewOnly is None:
+            return []
+        url_suffix = "enable" if viewOnly else "disable"
+        response = self.session.post(
+            url=f"/x{self.comId}/s/chat/thread/{chatId}/view-only/{url_suffix}"
+        )
+        return [response.status_code]
+
+    def _set_can_invite(self, chatId, canInvite):
+        if canInvite is None:
+            return []
+        url_suffix = "enable" if canInvite else "disable"
+        response = self.session.post(
+            url=f"/x{self.comId}/s/chat/thread/{chatId}/members-can-invite/{url_suffix}",
+            json={}
+        )
+        return [response.status_code]
+
+    def _set_can_tip(self, chatId, canTip):
+        if canTip is None:
+            return []
+        url_suffix = "enable" if canTip else "disable"
+        response = self.session.post(
+            url=f"/x{self.comId}/s/chat/thread/{chatId}/tipping-perm-status/{url_suffix}",
+            json={}
+        )
+        return [response.status_code]
+
     def transfer_host(self, chatId: str, userIds: list):
         return self.session.post(
-            url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/transfer-organizer",
+            url=f"/x{self.comId}/s/chat/thread/{chatId}/transfer-organizer",
             json={"uidList": userIds}
         ).status_code
 
@@ -1014,7 +1002,7 @@ class SubClient():
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         return self.session.post(
-            url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/transfer-organizer/{requestId}/accept"
+            url=f"/x{self.comId}/s/chat/thread/{chatId}/transfer-organizer/{requestId}/accept"
         ).status_code
 
     def accept_organizer(self, chatId: str, requestId: str):
@@ -1048,7 +1036,7 @@ class SubClient():
         params = {"allowRejoin": int(allowRejoin)}
 
         return self.session.delete(
-            url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/member/{userId}",
+            url=f"/x{self.comId}/s/chat/thread/{chatId}/member/{userId}",
             params=params
         ).status_code
 
@@ -1064,7 +1052,7 @@ class SubClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}")
+        response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}")
         return response.status_code
 
     def leave_chat(self, chatId: str):
@@ -1079,7 +1067,7 @@ class SubClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.delete(f"{api}/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}")
+        response = self.session.delete(f"/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}")
         return response.status_code
 
     def delete_chat(self, chatId: str):
@@ -1094,8 +1082,7 @@ class SubClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.delete(f"{api}/x{self.comId}/s/chat/thread/{chatId}")
-        return response.status_code
+        return self.session.delete(f"/x{self.comId}/s/chat/thread/{chatId}").status_code
 
     def subscribe(self, userId: str, autoRenew: str = False, transactionId: str = None):
         if transactionId is None: transactionId = str(uuid4())
@@ -1107,12 +1094,11 @@ class SubClient():
             }
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/influencer/{userId}/subscribe", json=data)
+        response = self.session.post(f"/x{self.comId}/s/influencer/{userId}/subscribe", json=data)
         return response.status_code
 
     def promotion(self, noticeId: str, type: str = "accept"):
-        response = self.session.post(f"{api}/x{self.comId}/s/notice/{noticeId}/{type}")
-        return response.status_code
+        return self.session.post(f"/x{self.comId}/s/notice/{noticeId}/{type}").status_code
 
     def play_quiz_raw(self, quizId: str, quizAnswerList: list, quizMode: int = 0):
         data = {
@@ -1120,7 +1106,7 @@ class SubClient():
             "quizAnswerList": quizAnswerList
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/blog/{quizId}/quiz/result", json=data)
+        response = self.session.post(f"/x{self.comId}/s/blog/{quizId}/quiz/result", json=data)
         return response.status_code
 
     def play_quiz(self, quizId: str, questionIdsList: list, answerIdsList: list, quizMode: int = 0):
@@ -1139,7 +1125,7 @@ class SubClient():
             "mode": quizMode,
             "quizAnswerList": quizAnswerList
         }
-        response = self.session.post(f"{api}/x{self.comId}/s/blog/{quizId}/quiz/result", json=data)
+        response = self.session.post(f"/x{self.comId}/s/blog/{quizId}/quiz/result", json=data)
         return response.status_code
 
     def vc_permission(self, chatId: str, permission: int):
@@ -1150,16 +1136,16 @@ class SubClient():
         """
         data = { "vvChatJoinType": permission }
         return self.session.post(
-            url=f"{api}/x{self.comId}/s/chat/thread/{chatId}/vvchat-permission",
+            url=f"/x{self.comId}/s/chat/thread/{chatId}/vvchat-permission",
             json=data
         ).status_code
 
     def get_vc_reputation_info(self, chatId: str):
-        response = self.session.get(f"{api}/x{self.comId}/s/chat/thread/{chatId}/avchat-reputation")
+        response = self.session.get(f"/x{self.comId}/s/chat/thread/{chatId}/avchat-reputation")
         return objects.VcReputation(response.json()).VcReputation
 
     def claim_vc_reputation(self, chatId: str):
-        response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/avchat-reputation")
+        response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}/avchat-reputation")
         return objects.VcReputation(response.json()).VcReputation
 
     def get_all_users(self, type: str = "recent", start: int = 0, size: int = 25):
@@ -1168,15 +1154,15 @@ class SubClient():
         if type not in types:
             raise exceptions.WrongType(type)
 
-        response = self.session.get(f"{api}/x{self.comId}/s/user-profile?type={type}&start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/user-profile?type={type}&start={start}&size={size}")
         return objects.UserProfileCountList(response.json()).UserProfileCountList
 
     def get_online_users(self, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/live-layer?topic=ndtopic:x{self.comId}:online-members&start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/live-layer?topic=ndtopic:x{self.comId}:online-members&start={start}&size={size}")
         return objects.UserProfileCountList(response.json()).UserProfileCountList
 
     def get_online_favorite_users(self, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/user-group/quick-access?type=online&start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/user-group/quick-access?type=online&start={start}&size={size}")
         return objects.UserProfileCountList(response.json()).UserProfileCountList
 
     def get_user_info(self, userId: str):
@@ -1191,7 +1177,7 @@ class SubClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/x{self.comId}/s/user-profile/{userId}")
+        response = self.session.get(f"/x{self.comId}/s/user-profile/{userId}")
         return objects.UserProfile(response.json()["userProfile"]).UserProfile
 
     def get_user_following(self, userId: str, start: int = 0, size: int = 25):
@@ -1208,7 +1194,7 @@ class SubClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/x{self.comId}/s/user-profile/{userId}/joined?start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/user-profile/{userId}/joined?start={start}&size={size}")
         return objects.UserProfileList(response.json()["userProfileList"]).UserProfileList
 
     def get_user_followers(self, userId: str, start: int = 0, size: int = 25):
@@ -1225,27 +1211,27 @@ class SubClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/x{self.comId}/s/user-profile/{userId}/member?start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/user-profile/{userId}/member?start={start}&size={size}")
         return objects.UserProfileList(response.json()["userProfileList"]).UserProfileList
 
     def get_user_checkins(self, userId: str):
-        response = self.session.get(f"{api}/x{self.comId}/s/check-in/stats/{userId}?timezone={timezone // 1000}")
+        response = self.session.get(f"/x{self.comId}/s/check-in/stats/{userId}?timezone={timezone // 1000}")
         return objects.UserCheckIns(response.json()).UserCheckIns
 
     def get_user_blogs(self, userId: str, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/blog?type=user&q={userId}&start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/blog?type=user&q={userId}&start={start}&size={size}")
         return objects.BlogList(response.json()["blogList"]).BlogList
 
     def get_user_wikis(self, userId: str, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/item?type=user-all&start={start}&size={size}&cv=1.2&uid={userId}")
+        response = self.session.get(f"/x{self.comId}/s/item?type=user-all&start={start}&size={size}&cv=1.2&uid={userId}")
         return objects.WikiList(response.json()["itemList"]).WikiList
 
     def get_user_achievements(self, userId: str):
-        response = self.session.get(f"{api}/x{self.comId}/s/user-profile/{userId}/achievements")
+        response = self.session.get(f"/x{self.comId}/s/user-profile/{userId}/achievements")
         return objects.UserAchievements(response.json()["achievements"]).UserAchievements
 
     def get_influencer_fans(self, userId: str, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/influencer/{userId}/fans?start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/influencer/{userId}/fans?start={start}&size={size}")
         return objects.InfluencerFans(response.json()).InfluencerFans
 
     def get_blocked_users(self, start: int = 0, size: int = 25):
@@ -1261,7 +1247,7 @@ class SubClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/x{self.comId}/s/block?start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/block?start={start}&size={size}")
         return objects.UserProfileList(response.json()["userProfileList"]).UserProfileList
 
     def get_blocker_users(self, start: int = 0, size: int = 25):
@@ -1278,15 +1264,15 @@ class SubClient():
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
 
-        response = self.session.get(f"{api}/x{self.comId}/s/block?start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/block?start={start}&size={size}")
         return response.json()["blockerUidList"]
 
     def search_users(self, nickname: str, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/user-profile?type=name&q={nickname}&start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/user-profile?type=name&q={nickname}&start={start}&size={size}")
         return objects.UserProfileList(response.json()["userProfileList"]).UserProfileList
 
     def get_saved_blogs(self, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/bookmark?start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/bookmark?start={start}&size={size}")
         return objects.UserSavedBlogs(response.json()["bookmarkList"]).UserSavedBlogs
 
     def get_leaderboard_info(self, type: str, start: int = 0, size: int = 25):
@@ -1304,36 +1290,35 @@ class SubClient():
             raise exceptions.WrongType(type)
 
         ranking_type = ranking_types[type]
-        url = f"{api}/g/s-x{self.comId}/community/leaderboard?rankingType={ranking_type}&start={start}"
+        url = f"/g/s-x{self.comId}/community/leaderboard?rankingType={ranking_type}&start={start}"
         if ranking_type != 4:
             url += f"&size={size}"
 
         response = self.session.get(url)
         return objects.UserProfileList(response.json()["userProfileList"]).UserProfileList
 
-
     def get_wiki_info(self, wikiId: str):
-        response = self.session.get(f"{api}/x{self.comId}/s/item/{wikiId}")
+        response = self.session.get(f"/x{self.comId}/s/item/{wikiId}")
         return objects.GetWikiInfo(response.json()).GetWikiInfo
 
     def get_recent_wiki_items(self, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/item?type=catalog-all&start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/item?type=catalog-all&start={start}&size={size}")
         return objects.WikiList(response.json()["itemList"]).WikiList
 
     def get_wiki_categories(self, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/item-category?start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/item-category?start={start}&size={size}")
         return objects.WikiCategoryList(response.json()["itemCategoryList"]).WikiCategoryList
 
     def get_wiki_category(self, categoryId: str, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/item-category/{categoryId}?pagingType=t&start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/item-category/{categoryId}?pagingType=t&start={start}&size={size}")
         return objects.WikiCategory(response.json()).WikiCategory
 
     def get_tipped_users(self, blogId: str = None, wikiId: str = None, quizId: str = None, fileId: str = None, chatId: str = None, start: int = 0, size: int = 25):
         object_types = {
-            'blogId': {'id': blogId or quizId, 'url': f"{api}/x{self.comId}/s/blog/{blogId or quizId}/tipping/tipped-users-summary"},
-            'wikiId': {'id': wikiId, 'url': f"{api}/x{self.comId}/s/item/{wikiId}/tipping/tipped-users-summary"},
-            'chatId': {'id': chatId, 'url': f"{api}/x{self.comId}/s/chat/thread/{chatId}/tipping/tipped-users-summary"},
-            'fileId': {'id': fileId, 'url': f"{api}/x{self.comId}/s/shared-folder/files/{fileId}/tipping/tipped-users-summary"}
+            'blogId': {'id': blogId or quizId, 'url': f"/x{self.comId}/s/blog/{blogId or quizId}/tipping/tipped-users-summary"},
+            'wikiId': {'id': wikiId, 'url': f"/x{self.comId}/s/item/{wikiId}/tipping/tipped-users-summary"},
+            'chatId': {'id': chatId, 'url': f"/x{self.comId}/s/chat/thread/{chatId}/tipping/tipped-users-summary"},
+            'fileId': {'id': fileId, 'url': f"/x{self.comId}/s/shared-folder/files/{fileId}/tipping/tipped-users-summary"}
         }
 
         for key, value in object_types.items():
@@ -1359,7 +1344,7 @@ class SubClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/x{self.comId}/s/chat/thread?type=joined-me&start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/chat/thread?type=joined-me&start={start}&size={size}")
         return objects.ThreadList(response.json()["threadList"]).ThreadList
 
     def get_public_chat_threads(self, type: str = "recommended", start: int = 0, size: int = 25):
@@ -1375,7 +1360,7 @@ class SubClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/x{self.comId}/s/chat/thread?type=public-all&filterType={type}&start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/chat/thread?type=public-all&filterType={type}&start={start}&size={size}")
         return objects.ThreadList(response.json()["threadList"]).ThreadList
 
     def get_chat_thread(self, chatId: str):
@@ -1390,7 +1375,7 @@ class SubClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/x{self.comId}/s/chat/thread/{chatId}")
+        response = self.session.get(f"/x{self.comId}/s/chat/thread/{chatId}")
         return objects.Thread(response.json()["thread"]).Thread
 
     def get_chat_messages(self, chatId: str, size: int = 25, pageToken: str = None):
@@ -1408,11 +1393,10 @@ class SubClient():
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
 
-        if pageToken: url = f"{api}/x{self.comId}/s/chat/thread/{chatId}/message?v=2&pagingType=t&pageToken={pageToken}&size={size}"
-        else: url = f"{api}/x{self.comId}/s/chat/thread/{chatId}/message?v=2&pagingType=t&size={size}"
+        if pageToken: url = f"/x{self.comId}/s/chat/thread/{chatId}/message?v=2&pagingType=t&pageToken={pageToken}&size={size}"
+        else: url = f"/x{self.comId}/s/chat/thread/{chatId}/message?v=2&pagingType=t&size={size}"
 
-        response = self.session.get(url)
-        return objects.GetMessages(response.json()).GetMessages
+        return objects.GetMessages(self.session.get(url).json()).GetMessages
 
     def get_message_info(self, chatId: str, messageId: str):
         """
@@ -1427,21 +1411,21 @@ class SubClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/x{self.comId}/s/chat/thread/{chatId}/message/{messageId}")
+        response = self.session.get(f"/x{self.comId}/s/chat/thread/{chatId}/message/{messageId}")
         return objects.Message(response.json()["message"]).Message
 
     def get_blog_info(self, blogId: str = None, wikiId: str = None, quizId: str = None, fileId: str = None):
         if blogId or quizId:
             if quizId is not None: blogId = quizId
-            response = self.session.get(f"{api}/x{self.comId}/s/blog/{blogId}")
+            response = self.session.get(f"/x{self.comId}/s/blog/{blogId}")
             return objects.GetBlogInfo(response.json()).GetBlogInfo
 
         elif wikiId:
-            response = self.session.get(f"{api}/x{self.comId}/s/item/{wikiId}")
+            response = self.session.get(f"/x{self.comId}/s/item/{wikiId}")
             return objects.GetWikiInfo(response.json()).GetWikiInfo
 
         elif fileId:
-            response = self.session.get(f"{api}/x{self.comId}/s/shared-folder/files/{fileId}")
+            response = self.session.get(f"/x{self.comId}/s/shared-folder/files/{fileId}")
             return objects.SharedFolderFile(response.json()["file"]).SharedFolderFile
 
         else: raise exceptions.SpecifyType
@@ -1453,9 +1437,9 @@ class SubClient():
         sorting = "vote" if sorting == "top" else sorting
 
         object_types = {
-            'blogId': {'id': blogId or quizId, 'url': f"{api}/x{self.comId}/s/blog/{blogId or quizId}/comment"},
-            'wikiId': {'id': wikiId, 'url': f"{api}/x{self.comId}/s/item/{wikiId}/comment"},
-            'fileId': {'id': fileId, 'url': f"{api}/x{self.comId}/s/shared-folder/files/{fileId}/comment"}
+            'blogId': {'id': blogId or quizId, 'url': f"/x{self.comId}/s/blog/{blogId or quizId}/comment"},
+            'wikiId': {'id': wikiId, 'url': f"/x{self.comId}/s/item/{wikiId}/comment"},
+            'fileId': {'id': fileId, 'url': f"/x{self.comId}/s/shared-folder/files/{fileId}/comment"}
         }
 
         for key, value in object_types.items():
@@ -1469,15 +1453,15 @@ class SubClient():
 
 
     def get_blog_categories(self, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/blog-category?size={size}")
+        response = self.session.get(f"/x{self.comId}/s/blog-category?size={size}")
         return objects.BlogCategoryList(response.json()["blogCategoryList"]).BlogCategoryList
 
     def get_blogs_by_category(self, categoryId: str,start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/blog-category/{categoryId}/blog-list?start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/blog-category/{categoryId}/blog-list?start={start}&size={size}")
         return objects.BlogList(response.json()["blogList"]).BlogList
 
     def get_quiz_rankings(self, quizId: str, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/blog/{quizId}/quiz/result?start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/blog/{quizId}/quiz/result?start={start}&size={size}")
         return objects.QuizRankings(response.json()).QuizRankings
 
     def get_wall_comments(self, userId: str, sorting: str, start: int = 0, size: int = 25):
@@ -1501,7 +1485,7 @@ class SubClient():
         elif sorting == "top": sorting = "vote"
         else: raise exceptions.WrongType(sorting)
 
-        response = self.session.get(f"{api}/x{self.comId}/s/user-profile/{userId}/comment?sort={sorting}&start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/user-profile/{userId}/comment?sort={sorting}&start={start}&size={size}")
         return objects.CommentList(response.json()["commentList"]).CommentList
 
     def get_recent_blogs(self, pageToken: str = None, start: int = 0, size: int = 25):
@@ -1513,7 +1497,7 @@ class SubClient():
         if pageToken:
             params["pageToken"] = pageToken
 
-        response = self.session.get(f"{api}/x{self.comId}/s/feed/blog-all", params=params)
+        response = self.session.get(f"/x{self.comId}/s/feed/blog-all", params=params)
         return objects.RecentBlogs(response.json()).RecentBlogs
 
     def get_chat_users(self, chatId: str, start: int = 0, size: int = 25):
@@ -1535,11 +1519,11 @@ class SubClient():
             "type": "default",
             "cv": "1.2"
         }
-        response = self.session.get(f"{api}/x{self.comId}/s/chat/thread/{chatId}/member", params=params)
+        response = self.session.get(f"/x{self.comId}/s/chat/thread/{chatId}/member", params=params)
         return objects.UserProfileList(response.json()["memberList"]).UserProfileList
 
     def get_notifications(self, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/notification?pagingType=t&start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/notification?pagingType=t&start={start}&size={size}")
         return objects.NotificationList(response.json()["notificationList"]).NotificationList
 
     def get_notices(self, start: int = 0, size: int = 25):
@@ -1548,15 +1532,15 @@ class SubClient():
         :param size: Amount of Notices to Show
         :return: Notices List
         """
-        response = self.session.get(f"{api}/x{self.comId}/s/notice?type=usersV2&status=1&start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/notice?type=usersV2&status=1&start={start}&size={size}")
         return objects.NoticeList(response.json()["noticeList"]).NoticeList
 
     def get_sticker_pack_info(self, sticker_pack_id: str):
-        response = self.session.get(f"{api}/x{self.comId}/s/sticker-collection/{sticker_pack_id}?includeStickers=true")
+        response = self.session.get(f"/x{self.comId}/s/sticker-collection/{sticker_pack_id}?includeStickers=true")
         return objects.StickerCollection(response.json()["stickerCollection"]).StickerCollection
 
     def get_sticker_packs(self):
-        response = self.session.get(f"{api}/x{self.comId}/s/sticker-collection?includeStickers=false&type=my-active-collection")
+        response = self.session.get(f"/x{self.comId}/s/sticker-collection?includeStickers=false&type=my-active-collection")
         return objects.StickerCollection(response.json()["stickerCollection"]).StickerCollection
 
     def get_store_chat_bubbles(self, start: int = 0, size: int = 25):
@@ -1565,9 +1549,8 @@ class SubClient():
             "start": start,
             "size": size
         }
-        response = self.session.get(f"{api}/x{self.comId}/s/store/items", params=params)
+        response = self.session.get(f"/x{self.comId}/s/store/items", params=params)
         return objects.StoreChatBubble(response.json()).StoreChatBubble
-        # return response.text
 
     # TODO : Finish this
     def get_store_stickers(self, start: int = 0, size: int = 25):
@@ -1576,31 +1559,25 @@ class SubClient():
             "start": start,
             "size": size
         }
-        response = self.session.get(f"{api}/x{self.comId}/s/store/items", params=params)
-        return response.json()
+
+        return self.session.get(f"/x{self.comId}/s/store/items", params=params).json()
 
     def get_community_stickers(self):
-        params = {
-            "type": "community-shared"
-        }
         response = self.session.get(
-            url=f"{api}/x{self.comId}/s/sticker-collection",
-            paams=params
+            url=f"/x{self.comId}/s/sticker-collection",
+            paams={ "type": "community-shared" }
         )
         return objects.CommunityStickerCollection(response.json()).CommunityStickerCollection
 
     def get_sticker_collection(self, collectionId: str):
-        params = {
-            "includeStickers": True
-        }
         response = self.session.get(
-            url=f"{api}/x{self.comId}/s/sticker-collection/{collectionId}",
-            parmas=params
+            url=f"/x{self.comId}/s/sticker-collection/{collectionId}",
+            parmas={ "includeStickers": True }
         )
         return objects.StickerCollection(response.json()["stickerCollection"]).StickerCollection
 
     def get_shared_folder_info(self):
-        response = self.session.get(f"{api}/x{self.comId}/s/shared-folder/stats")
+        response = self.session.get(f"/x{self.comId}/s/shared-folder/stats")
         return objects.GetSharedFolderInfo(response.json()["stats"]).GetSharedFolderInfo
 
     def get_shared_folder_files(self, type: str = "latest", start: int = 0, size: int = 25):
@@ -1609,7 +1586,7 @@ class SubClient():
             "start": start,
             "size": size
         }
-        response = self.session.get(f"{api}/x{self.comId}/s/shared-folder/files", params=params)
+        response = self.session.get(f"/x{self.comId}/s/shared-folder/files", params=params)
         return objects.SharedFolderFileList(response.json()["fileList"]).SharedFolderFileList
 
     #
@@ -1617,14 +1594,14 @@ class SubClient():
     #
 
     def moderation_history(self, userId: str = None, blogId: str = None, wikiId: str = None, quizId: str = None, fileId: str = None, size: int = 25):
-        types = {'userId': 0, 'blogId': 1, 'wikiId': 2, 'quizId': 1, 'fileId': 109}
+        types = {"userId": 0, "blogId": 1, "wikiId": 2, "quizId": 1, "fileId": 109}
         ids = (userId, blogId, wikiId, quizId, fileId)
         for id, type in zip(ids, types.values()):
             if id:
-                url = f"{api}/x{self.comId}/s/admin/operation?objectId={id}&objectType={type}&pagingType=t&size={size}"
+                url = f"/x{self.comId}/s/admin/operation?objectId={id}&objectType={type}&pagingType=t&size={size}"
                 break
         else:
-            url = f"{api}/x{self.comId}/s/admin/operation?pagingType=t&size={size}"
+            url = f"/x{self.comId}/s/admin/operation?pagingType=t&size={size}"
         return objects.AdminLogList(self.session.get(url).json()["adminLogList"]).AdminLogList
 
     def feature(self, time: int, userId: str = None, chatId: str = None, blogId: str = None, wikiId: str = None):
@@ -1640,7 +1617,7 @@ class SubClient():
             }
         }
 
-        url = f"{api}/x{self.comId}/s/"
+        url = f"/x{self.comId}/s/"
         if userId:
             url += f"user-profile/{userId}/admin"
         elif blogId:
@@ -1649,7 +1626,7 @@ class SubClient():
             url += f"item/{wikiId}/admin"
         elif chatId:
             url += f"chat/thread/{chatId}/admin"
-        else: 
+        else:
             raise exceptions.SpecifyType
 
         return self.session.post(url, json=data).json()
@@ -1661,16 +1638,16 @@ class SubClient():
         }
 
         if userId:
-            url = f"{api}/x{self.comId}/s/user-profile/{userId}/admin"
+            url = f"/x{self.comId}/s/user-profile/{userId}/admin"
 
         elif blogId:
-            url = f"{api}/x{self.comId}/s/blog/{blogId}/admin"
+            url = f"/x{self.comId}/s/blog/{blogId}/admin"
 
         elif wikiId:
-            url = f"{api}/x{self.comId}/s/item/{wikiId}/admin"
+            url = f"/x{self.comId}/s/item/{wikiId}/admin"
 
         elif chatId:
-            url = f"{api}/x{self.comId}/s/chat/thread/{chatId}/admin"
+            url = f"/x{self.comId}/s/chat/thread/{chatId}/admin"
 
         else: raise exceptions.SpecifyType
 
@@ -1686,34 +1663,34 @@ class SubClient():
         if userId:
             data["adminOpName"] = 18
 
-            url = f"{api}/x{self.comId}/s/user-profile/{userId}/admin"
+            url = f"/x{self.comId}/s/user-profile/{userId}/admin"
 
         elif blogId:
             data["adminOpName"] = 110
             data["adminOpValue"] = 9
-            url = f"{api}/x{self.comId}/s/blog/{blogId}/admin"
+            url = f"/x{self.comId}/s/blog/{blogId}/admin"
 
         elif quizId:
             data["adminOpName"] = 110
             data["adminOpValue"] = 9
 
-            url = f"{api}/x{self.comId}/s/blog/{quizId}/admin"
+            url = f"/x{self.comId}/s/blog/{quizId}/admin"
 
         elif wikiId:
             data["adminOpName"] = 110
             data["adminOpValue"] = 9
-            url = f"{api}/x{self.comId}/s/item/{wikiId}/admin"
+            url = f"/x{self.comId}/s/item/{wikiId}/admin"
 
         elif chatId:
             data["adminOpName"] = 110
             data["adminOpValue"] = 9
-            url = f"{api}/x{self.comId}/s/chat/thread/{chatId}/admin"
+            url = f"/x{self.comId}/s/chat/thread/{chatId}/admin"
 
         elif fileId:
             data["adminOpName"] = 110
             data["adminOpValue"] = 9
 
-            url = f"{api}/x{self.comId}/s/shared-folder/files/{fileId}/admin"
+            url = f"/x{self.comId}/s/shared-folder/files/{fileId}/admin"
 
         else: raise exceptions.SpecifyType
 
@@ -1728,37 +1705,37 @@ class SubClient():
 
         if userId:
             data["adminOpName"] = 19
-            url = f"{api}/x{self.comId}/s/user-profile/{userId}/admin"
+            url = f"/x{self.comId}/s/user-profile/{userId}/admin"
 
         elif blogId:
             data["adminOpName"] = 110
             data["adminOpValue"] = 0
 
-            url = f"{api}/x{self.comId}/s/blog/{blogId}/admin"
+            url = f"/x{self.comId}/s/blog/{blogId}/admin"
 
         elif quizId:
             data["adminOpName"] = 110
             data["adminOpValue"] = 0
 
-            url = f"{api}/x{self.comId}/s/blog/{quizId}/admin"
+            url = f"/x{self.comId}/s/blog/{quizId}/admin"
 
         elif wikiId:
             data["adminOpName"] = 110
             data["adminOpValue"] = 0
 
-            url = f"{api}/x{self.comId}/s/item/{wikiId}/admin"
+            url = f"/x{self.comId}/s/item/{wikiId}/admin"
 
         elif chatId:
             data["adminOpName"] = 110
             data["adminOpValue"] = 0
 
-            url = f"{api}/x{self.comId}/s/chat/thread/{chatId}/admin"
+            url = f"/x{self.comId}/s/chat/thread/{chatId}/admin"
 
         elif fileId:
             data["adminOpName"] = 110
             data["adminOpValue"] = 0
 
-            url = f"{api}/x{self.comId}/s/shared-folder/files/{fileId}/admin"
+            url = f"/x{self.comId}/s/shared-folder/files/{fileId}/admin"
 
         else: raise exceptions.SpecifyType
 
@@ -1773,8 +1750,7 @@ class SubClient():
             }
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/user-profile/{userId}/admin", json=data)
-        return response.json()
+        return self.session.post(f"/x{self.comId}/s/user-profile/{userId}/admin", json=data).json()
 
     # TODO : List all warning texts
     def warn(self, userId: str, reason: str = None):
@@ -1791,8 +1767,7 @@ class SubClient():
             "noticeType": 7
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/notice", json=data)
-        return response.json()
+        return self.session.post(f"/x{self.comId}/s/notice", json=data).json()
 
     # TODO : List all strike texts
     def strike(self, userId: str, time: int, title: str = None, reason: str = None):
@@ -1814,8 +1789,7 @@ class SubClient():
             "noticeType": 4
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/notice", json=data)
-        return response.json()
+        return self.session.post(f"/x{self.comId}/s/notice", json=data).json()
 
     def ban(self, userId: str, reason: str, banType: int = None):
         data = {
@@ -1825,8 +1799,7 @@ class SubClient():
             }
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/user-profile/{userId}/ban", json=data)
-        return response.json()
+        return self.session.post(f"/x{self.comId}/s/user-profile/{userId}/ban", json=data).json()
 
     def unban(self, userId: str, reason: str):
         data = {
@@ -1835,37 +1808,36 @@ class SubClient():
             }
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/user-profile/{userId}/unban", json=data)
-        return response.json()
+        return self.session.post(f"/x{self.comId}/s/user-profile/{userId}/unban", json=data).json()
 
     def reorder_featured_users(self, userIds: list):
         data = { "uidList": userIds }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/user-profile/featured/reorder", json=data)
+        response = self.session.post(f"/x{self.comId}/s/user-profile/featured/reorder", json=data)
         return response.json()
 
     def get_hidden_blogs(self, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/feed/blog-disabled?start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/feed/blog-disabled?start={start}&size={size}")
         return objects.BlogList(response.json()["blogList"]).BlogList
 
     def get_featured_users(self, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/user-profile?type=featured&start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/user-profile?type=featured&start={start}&size={size}")
         return objects.UserProfileCountList(response.json()).UserProfileCountList
 
     def review_quiz_questions(self, quizId: str):
-        response = self.session.get(f"{api}/x{self.comId}/s/blog/{quizId}?action=review")
+        response = self.session.get(f"/x{self.comId}/s/blog/{quizId}?action=review")
         return objects.QuizQuestionList(response.json()["blog"]["quizQuestionList"]).QuizQuestionList
 
     def get_recent_quiz(self, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/blog?type=quizzes-recent&start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/blog?type=quizzes-recent&start={start}&size={size}")
         return objects.BlogList(response.json()["blogList"]).BlogList
 
     def get_trending_quiz(self, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/feed/quiz-trending?start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/feed/quiz-trending?start={start}&size={size}")
         return objects.BlogList(response.json()["blogList"]).BlogList
 
     def get_best_quiz(self, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/feed/quiz-best-quizzes?start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/feed/quiz-best-quizzes?start={start}&size={size}")
         return objects.BlogList(response.json()["blogList"]).BlogList
 
     # Provided by "spectrum#4691"
@@ -1889,8 +1861,7 @@ class SubClient():
 
         data['paymentContext'] = {'discountStatus': int(aminoPlus), 'discountValue': 1, 'isAutoRenew': autoRenew}
 
-        response = self.session.post(f"{api}/x{self.comId}/s/store/purchase", json=data)
-        return response.status_code
+        return self.session.post(f"/x{self.comId}/s/store/purchase", json=data).status_code
 
     # Provided by "spectrum#4691"
     def apply_avatar_frame(self, avatarId: str, applyToAll: bool = True):
@@ -1913,8 +1884,7 @@ class SubClient():
             "applyToAll": int(applyToAll),
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/avatar-frame/apply", json=data)
-        return response.status_code
+        return self.session.post(f"/x{self.comId}/s/avatar-frame/apply", json=data).status_code
 
     def invite_to_vc(self, chatId: str, userId: str):
         """
@@ -1932,7 +1902,7 @@ class SubClient():
 
         data = {"uid": userId}
 
-        response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/{chatId}/vvchat-presenter/invite/", json=data)
+        response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}/vvchat-presenter/invite/", json=data)
         return response.status_code
 
     def add_poll_option(self, blogId: str, question: str):
@@ -1942,7 +1912,7 @@ class SubClient():
             "type": 0
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/blog/{blogId}/poll/option", json=data)
+        response = self.session.post(f"/x{self.comId}/s/blog/{blogId}/poll/option", json=data)
         return response.status_code
 
     def create_wiki_category(self, title: str, parentCategoryId: str, media: list = None):
@@ -1953,14 +1923,11 @@ class SubClient():
             "parentCategoryId": parentCategoryId,
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/item-category", json=data)
-        return response.status_code
+        return self.session.post(f"/x{self.comId}/s/item-category", json=data).status_code
 
     def create_shared_folder(self,title: str):
         data = {"title": title}
-        
-        response = self.session.post(f"{api}/x{self.comId}/s/shared-folder/folders", json=data)
-        return response.status_code
+        return self.session.post(f"/x{self.comId}/s/shared-folder/folders", json=data).status_code
 
     def submit_to_wiki(self, wikiId: str, message: str):
         data = {
@@ -1968,8 +1935,7 @@ class SubClient():
             "itemId": wikiId
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/knowledge-base-request", json=data)
-        return response.status_code
+        return self.session.post(f"/x{self.comId}/s/knowledge-base-request", json=data).status_code
 
     def accept_wiki_request(self, requestId: str, destinationCategoryIdList: list):
         data = {
@@ -1977,19 +1943,19 @@ class SubClient():
             "actionType": "create"
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/knowledge-base-request/{requestId}/approve", json=data)
+        response = self.session.post(f"/x{self.comId}/s/knowledge-base-request/{requestId}/approve", json=data)
         return response.status_code
 
     def reject_wiki_request(self, requestId: str):
-        response = self.session.post(f"{api}/x{self.comId}/s/knowledge-base-request/{requestId}/reject", json={})
+        response = self.session.post(f"/x{self.comId}/s/knowledge-base-request/{requestId}/reject", json={})
         return response.status_code
 
     def get_wiki_submissions(self, start: int = 0, size: int = 25):
-        response = self.session.get(f"{api}/x{self.comId}/s/knowledge-base-request?type=all&start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/knowledge-base-request?type=all&start={start}&size={size}")
         return objects.WikiRequestList(response.json()["knowledgeBaseRequestList"]).WikiRequestList
 
     def get_live_layer(self):
-        response = self.session.get(f"{api}/x{self.comId}/s/live-layer/homepage?v=2")
+        response = self.session.get(f"/x{self.comId}/s/live-layer/homepage?v=2")
         return objects.LiveLayer(response.json()["liveLayerList"]).LiveLayer
 
     def apply_bubble(self, bubbleId: str, chatId: str, applyToAll: bool = False):
@@ -1999,5 +1965,5 @@ class SubClient():
             "threadId": chatId,
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/chat/thread/apply-bubble", json=data)
+        response = self.session.post(f"/x{self.comId}/s/chat/thread/apply-bubble", json=data)
         return response.status_code

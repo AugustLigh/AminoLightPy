@@ -93,7 +93,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "v": 2,
         }
 
-        response = self.session.post(f"{api}/g/s/auth/login", json=data)
+        response = self.session.post("/g/s/auth/login", json=data)
         self.authenticated = True
         json = response.json()
         self.sid = json["sid"]
@@ -136,7 +136,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "action": "normal",
         }
 
-        response = self.session.post(f"{api}/g/s/auth/login", json=data)
+        response = self.session.post("/g/s/auth/login", json=data)
         self.authenticated = True
         json = response.json()
         self.sid = json["sid"]
@@ -178,7 +178,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "action": "normal",
         }
 
-        response = self.session.post(f"{api}/g/s/auth/login", json=data)
+        response = self.session.post("/g/s/auth/login", json=data)
         self.authenticated = True
         json = response.json()
         self.sid = json["sid"]
@@ -234,7 +234,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "type": 1,
             "identity": email}     
 
-        response = self.session.post(f"{api}/g/s/auth/register", json=data)
+        response = self.session.post("/g/s/auth/register", json=data)
         return response.json()
 
     def restore(self, email: str, password: str):
@@ -256,7 +256,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "email": email
         }
 
-        response = self.session.post(f"{api}/g/s/account/delete-request/cancel", json=data)
+        response = self.session.post("/g/s/account/delete-request/cancel", json=data)
         return response.status_code
 
     def logout(self):
@@ -276,7 +276,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "clientType": 100
         }
 
-        response = self.session.post(f"{api}/g/s/auth/logout", json=data)
+        response = self.session.post("/g/s/auth/logout", json=data)
         self.authenticated = False
         self.sid = None
         self.profile = None
@@ -316,7 +316,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "gender": gender_mapping[gender],
         }
 
-        response = self.session.post(f"{api}/g/s/persona/profile/basic", json=data)
+        response = self.session.post("/g/s/persona/profile/basic", json=data)
         return response.status_code
 
     def verify(self, email: str, code: str):
@@ -340,7 +340,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "deviceID": self.device_id,
         }
 
-        response = self.session.post(f"{api}/g/s/auth/check-security-validation", json=data)
+        response = self.session.post("/g/s/auth/check-security-validation", json=data)
         return response.status_code
 
     def request_verify_code(self, email: str, resetPassword: bool = False):
@@ -366,7 +366,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             data["level"] = 2
             data["purpose"] = "reset-password"
 
-        response = self.session.post(f"{api}/g/s/auth/request-security-validation", json=data)
+        response = self.session.post("/g/s/auth/request-security-validation", json=data)
         return response.status_code
 
     def activate_account(self, email: str, code: str):
@@ -390,7 +390,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "deviceID": self.device_id
         }
 
-        response = self.session.post(f"{api}/g/s/auth/activate-email", json=data)
+        response = self.session.post("/g/s/auth/activate-email", json=data)
         return response.status_code
 
     # Provided by "𝑰 𝑵 𝑻 𝑬 𝑹 𝑳 𝑼 𝑫 𝑬#4082"
@@ -412,7 +412,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "secret": f"0 {password}"
         }
 
-        response = self.session.post(f"{api}/g/s/account/delete-request", json=data)
+        response = self.session.post("/g/s/account/delete-request", json=data)
         return response.status_code
 
     def change_password(self, email: str, password: str, code: str):
@@ -445,7 +445,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "deviceID": self.device_id
         }
 
-        response = self.session.post(f"{api}/g/s/auth/reset-password", json=data)
+        response = self.session.post("/g/s/auth/reset-password", json=data)
         return response.status_code
 
 
@@ -458,7 +458,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/account")
+        response = self.session.get("/g/s/account")
         return objects.UserProfile(response.json()["account"]).UserProfile
 
     def handle_socket_message(self, data):
@@ -475,7 +475,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         params = {"language": "en"}
-        response = self.session.get(f"{api}/g/s/eventlog/profile", params=params)
+        response = self.session.get("/g/s/eventlog/profile", params=params)
         return response.json()
 
     def sub_clients(self, start: int = 0, size: int = 25):
@@ -493,7 +493,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         """
         if not self.authenticated:
             raise exceptions.NotLoggedIn
-        response = self.session.get(f"{api}/g/s/community/joined?v=1&start={start}&size={size}")
+        response = self.session.get(f"/g/s/community/joined?v=1&start={start}&size={size}")
         return objects.CommunityList(response.json()["communityList"]).CommunityList
 
     def sub_clients_profile(self, start: int = 0, size: int = 25):
@@ -511,7 +511,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         """
         if not self.authenticated:
             raise exceptions.NotLoggedIn
-        response = self.session.get(f"{api}/g/s/community/joined?v=1&start={start}&size={size}")
+        response = self.session.get(f"/g/s/community/joined?v=1&start={start}&size={size}")
         return response.json()["userInfoInCommunities"]
 
     def get_user_info(self, userId: str):
@@ -526,7 +526,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/user-profile/{userId}")
+        response = self.session.get(f"/g/s/user-profile/{userId}")
         return objects.UserProfile(response.json()["userProfile"]).UserProfile
 
     def get_chat_threads(self, start: int = 0, size: int = 25):
@@ -547,7 +547,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "size": size,
             "type": "joined-me"
         }
-        response = self.session.get(f"{api}/g/s/chat/thread", params=params)
+        response = self.session.get("/g/s/chat/thread", params=params)
         return objects.ThreadList(response.json()["threadList"]).ThreadList
 
     def get_chat_thread(self, chatId: str):
@@ -562,7 +562,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/chat/thread/{chatId}")
+        response = self.session.get(f"/g/s/chat/thread/{chatId}")
         return objects.Thread(response.json()["thread"]).Thread
 
     def get_chat_users(self, chatId: str, start: int = 0, size: int = 25):
@@ -585,7 +585,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "cv": "1.2"
         }
 
-        response = self.session.get(f"{api}/g/s/chat/thread/{chatId}/member", params=params)
+        response = self.session.get(f"/g/s/chat/thread/{chatId}/member", params=params)
         return objects.UserProfileList(response.json()["memberList"]).UserProfileList
 
     def join_chat(self, chatId: str):
@@ -601,7 +601,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         userId = self.session.headers["AUID"]
-        response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/member/{userId}")
+        response = self.session.post(f"/g/s/chat/thread/{chatId}/member/{userId}")
         return response.status_code
 
     def leave_chat(self, chatId: str):
@@ -617,7 +617,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         userId = self.session.headers["AUID"]
-        response = self.session.delete(f"{api}/g/s/chat/thread/{chatId}/member/{userId}")
+        response = self.session.delete(f"/g/s/chat/thread/{chatId}/member/{userId}")
         return response.status_code
 
     def start_chat(self, userId: Union[str, list], message: str,
@@ -656,7 +656,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         if isGlobal:
             data["eventSource"] = "GlobalComposeMenu"
 
-        response = self.session.post(f"{api}/g/s/chat/thread", json=data)
+        response = self.session.post("/g/s/chat/thread", json=data)
         return objects.Thread(response.json()["thread"]).Thread
 
 
@@ -682,7 +682,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "uids": userIds
         }
 
-        response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/member/invite", json=data)
+        response = self.session.post(f"/g/s/chat/thread/{chatId}/member/invite", json=data)
         return response.status_code
 
 
@@ -703,7 +703,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         params = {"allowRejoin": int(allowRejoin)}
 
         return self.session.delete(
-            url=f"{api}/g/s/chat/thread/{chatId}/member/{userId}",
+            url=f"/g/s/chat/thread/{chatId}/member/{userId}",
             params=params
         ).status_code
 
@@ -729,7 +729,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         if pageToken:
             params["pageToken"] = pageToken
 
-        response = self.session.get(f"{api}/g/s/chat/thread/{chatId}/message", params=params)
+        response = self.session.get(f"/g/s/chat/thread/{chatId}/message", params=params)
         return objects.GetMessages(response.json()).GetMessages
 
     def get_message_info(self, chatId: str, messageId: str):
@@ -745,7 +745,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/chat/thread/{chatId}/message/{messageId}")
+        response = self.session.get(f"/g/s/chat/thread/{chatId}/message/{messageId}")
         return objects.Message(response.json()["message"]).Message
 
     def get_community_info(self, comId: int):
@@ -760,7 +760,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s-x{comId}/community/info?withInfluencerList=1&withTopicList=true&influencerListOrderStrategy=fansCount")
+        response = self.session.get(f"/g/s-x{comId}/community/info?withInfluencerList=1&withTopicList=true&influencerListOrderStrategy=fansCount")
         return objects.Community(response.json()["community"]).Community
 
     def search_community(self, aminoId: str):
@@ -775,7 +775,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/search/amino-id-and-link?q={aminoId}")
+        response = self.session.get(f"/g/s/search/amino-id-and-link?q={aminoId}")
         result = response.json()["resultList"]
         if not result:
             raise exceptions.CommunityNotFound(aminoId)
@@ -795,7 +795,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/user-profile/{userId}/joined?start={start}&size={size}")
+        response = self.session.get(f"/g/s/user-profile/{userId}/joined?start={start}&size={size}")
         return objects.UserProfileList(response.json()["userProfileList"]).UserProfileList
 
     def get_user_followers(self, userId: str, start: int = 0, size: int = 25):
@@ -812,7 +812,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/user-profile/{userId}/member?start={start}&size={size}")
+        response = self.session.get(f"/g/s/user-profile/{userId}/member?start={start}&size={size}")
         return objects.UserProfileList(response.json()["userProfileList"]).UserProfileList
 
     def get_blocked_users(self, start: int = 0, size: int = 25):
@@ -828,7 +828,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/block?start={start}&size={size}")
+        response = self.session.get(f"/g/s/block?start={start}&size={size}")
         return objects.UserProfileList(response.json()["userProfileList"]).UserProfileList
 
     def get_blog_info(self, blogId: str = None, wikiId: str = None, quizId: str = None, fileId: str = None):
@@ -846,15 +846,15 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         """
         if blogId or quizId:
             blogId = quizId if quizId is not None else blogId
-            response = self.session.get(f"{api}/g/s/blog/{blogId}")
+            response = self.session.get(f"/g/s/blog/{blogId}")
             return objects.GetBlogInfo(response.json()).GetBlogInfo
 
         if wikiId:
-            response = self.session.get(f"{api}/g/s/item/{wikiId}")
+            response = self.session.get(f"/g/s/item/{wikiId}")
             return objects.GetWikiInfo(response.json()).GetWikiInfo
 
         if fileId:
-            response = self.session.get(f"{api}/g/s/shared-folder/files/{fileId}")
+            response = self.session.get(f"/g/s/shared-folder/files/{fileId}")
             return objects.SharedFolderFile(response.json()["file"]).SharedFolderFile
 
         raise exceptions.SpecifyType()
@@ -884,11 +884,11 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
         if blogId or quizId:
             blogId = quizId if not blogId else blogId
-            url = f"{api}/g/s/blog/{blogId}/comment"
+            url = f"/g/s/blog/{blogId}/comment"
         elif wikiId:
-            url = f"{api}/g/s/item/{wikiId}/comment"
+            url = f"/g/s/item/{wikiId}/comment"
         elif fileId:
-            url = f"{api}/g/s/shared-folder/files/{fileId}/comment"
+            url = f"/g/s/shared-folder/files/{fileId}/comment"
         else:
             raise exceptions.SpecifyType
 
@@ -909,7 +909,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/block/full-list?start={start}&size={size}")
+        response = self.session.get(f"/g/s/block/full-list?start={start}&size={size}")
         return response.json()["blockerUidList"]
 
     def get_wall_comments(self, userId: str, sorting: str = "newest", start: int = 0, size: int = 25):
@@ -937,7 +937,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         else:
             raise exceptions.WrongType(sorting)
 
-        response = self.session.get(f"{api}/g/s/user-profile/{userId}/g-comment?sort={sorting}&start={start}&size={size}")
+        response = self.session.get(f"/g/s/user-profile/{userId}/g-comment?sort={sorting}&start={start}&size={size}")
         return objects.CommentList(response.json()["commentList"]).CommentList
 
     def flag(self, reason: str, flagType: int, userId: str = None, blogId: str = None, wikiId: str = None, asGuest: bool = False):
@@ -987,7 +987,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         else:
             flg = "flag"
 
-        response = self.session.post(f"{api}/g/s/{flg}", json=data)
+        response = self.session.post(f"/g/s/{flg}", json=data)
         return response.status_code
 
     def check_values(self, *args):
@@ -1071,7 +1071,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
                 url = upload_media(self, file)
                 data["mediaValue"] = url
 
-        response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/message", json=data)
+        response = self.session.post(f"/g/s/chat/thread/{chatId}/message", json=data)
         return response.status_code
 
     def delete_message(self, chatId: str, messageId: str, asStaff: bool = False, reason: str = None):
@@ -1096,9 +1096,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         if asStaff and reason:
             data["adminOpNote"] = {"content": reason}
         if not asStaff:
-            response = self.session.delete(f"{api}/g/s/chat/thread/{chatId}/message/{messageId}")
+            response = self.session.delete(f"/g/s/chat/thread/{chatId}/message/{messageId}")
         else:
-            response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/message/{messageId}/admin", json=data)
+            response = self.session.post(f"/g/s/chat/thread/{chatId}/message/{messageId}/admin", json=data)
         return response.status_code
 
     def mark_as_read(self, chatId: str, messageId: str):
@@ -1117,7 +1117,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         data = {
             "messageId": messageId,
         }
-        response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/mark-as-read", json=data)
+        response = self.session.post(f"/g/s/chat/thread/{chatId}/mark-as-read", json=data)
         return response.status_code
 
     def edit_chat(self, chatId: str, doNotDisturb: bool = None, pinChat: bool = None,
@@ -1180,27 +1180,27 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             if doNotDisturb:
                 data = {"alertOption": 2}
                 res.append(self.session.post(
-                        url=f"{api}/g/s/chat/thread/{chatId}/member/{userId}/alert",
+                        url=f"/g/s/chat/thread/{chatId}/member/{userId}/alert",
                         json=data
                     ).status_code
                 )
             else:
                 data = {"alertOption": 1}
                 response = self.session.post(
-                    url=f"{api}/g/s/chat/thread/{chatId}/member/{userId}/alert",
+                    url=f"/g/s/chat/thread/{chatId}/member/{userId}/alert",
                     json=data
                 )
                 res.append(response.status_code)
         if pinChat is not None:
             if pinChat:
                 response = self.session.post(
-                    url=f"{api}/g/s/chat/thread/{chatId}/pin",
+                    url=f"/g/s/chat/thread/{chatId}/pin",
                     json=data
                 )
                 res.append(response.status_code)
             else:
                 response = self.session.post(
-                    url=f"{api}/g/s/chat/thread/{chatId}/unpin",
+                    url=f"/g/s/chat/thread/{chatId}/unpin",
                     json=data
                 )
                 res.append(response.status_code)
@@ -1208,58 +1208,58 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             userId = self.session.headers["AUID"]
             data = {"media": [100, backgroundImage, None]}
             response = self.session.post(
-                url=f"{api}/g/s/chat/thread/{chatId}/member/{userId}/background",
+                url=f"/g/s/chat/thread/{chatId}/member/{userId}/background",
                 json=data
             )
             res.append(response.status_code)
         if coHosts is not None:
             data = {"uidList": coHosts}
             response = self.session.post(
-                url=f"{api}/g/s/chat/thread/{chatId}/co-host",
+                url=f"/g/s/chat/thread/{chatId}/co-host",
                 son=data
             )
             res.append(response.status_code)
         if viewOnly is not None:
             if viewOnly:
                 response = self.session.post(
-                    url=f"{api}/g/s/chat/thread/{chatId}/view-only/enable"
+                    url=f"/g/s/chat/thread/{chatId}/view-only/enable"
                 )
                 res.append(response.status_code)
 
             else:
                 response = self.session.post(
-                    url=f"{api}/g/s/chat/thread/{chatId}/view-only/disable"
+                    url=f"/g/s/chat/thread/{chatId}/view-only/disable"
                 )
                 res.append(response.status_code)
         if canInvite is not None:
             if canInvite:
                 response = self.session.post(
-                    url=f"{api}/g/s/chat/thread/{chatId}/members-can-invite/enable",
+                    url=f"/g/s/chat/thread/{chatId}/members-can-invite/enable",
                     json=data
                 )
                 res.append(response.status_code)
             else:
                 response = self.session.post(
-                    url=f"{api}/g/s/chat/thread/{chatId}/members-can-invite/disable",
+                    url=f"/g/s/chat/thread/{chatId}/members-can-invite/disable",
                     json=data
                 )
                 res.append(response.status_code)
         if canTip is not None:
             if canTip:
                 response = self.session.post(
-                    url=f"{api}/g/s/chat/thread/{chatId}/tipping-perm-status/enable",
+                    url=f"/g/s/chat/thread/{chatId}/tipping-perm-status/enable",
                     json=data
                 )
                 res.append(response.status_code)
             else:
                 response = self.session.post(
-                    url=f"{api}/g/s/chat/thread/{chatId}/tipping-perm-status/disable",
+                    url=f"/g/s/chat/thread/{chatId}/tipping-perm-status/disable",
                     json=data
                 )
                 res.append(response.status_code)
 
         response = self.session.post(
-            url=f"{api}/g/s/chat/thread/{chatId}",
+            url=f"/g/s/chat/thread/{chatId}",
             json=data
         )
         res.append(response.status_code)
@@ -1282,7 +1282,8 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if not transactionId: transactionId = str(uuid4())
+        if not transactionId:
+            transactionId = str(uuid4())
 
         data = {
             "coins": coins,
@@ -1290,13 +1291,13 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         }
 
         if blogId:
-            url = f"{api}/g/s/blog/{blogId}/tipping"
+            url = f"/g/s/blog/{blogId}/tipping"
         elif chatId:
-            url = f"{api}/g/s/chat/thread/{chatId}/tipping"
+            url = f"/g/s/chat/thread/{chatId}/tipping"
         elif objectId:
             data["objectId"] = objectId
             data["objectType"] = 2
-            url = f"{api}/g/s/tipping"
+            url = "/g/s/tipping"
 
         else:
             raise exceptions.SpecifyType
@@ -1316,12 +1317,12 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         if isinstance(userId, str):
-            response = self.session.post(f"{api}/g/s/user-profile/{userId}/member")
+            response = self.session.post(f"/g/s/user-profile/{userId}/member")
 
         elif isinstance(userId, list):
             userId = self.session.headers["AUID"]
             data = {"targetUidList": userId}
-            response = self.session.post(f"{api}/g/s/user-profile/{userId}/joined", json=data)
+            response = self.session.post(f"/g/s/user-profile/{userId}/joined", json=data)
 
         else: raise exceptions.WrongType
 
@@ -1340,7 +1341,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         userId = self.session.headers["AUID"]
-        response = self.session.delete(f"{api}/g/s/user-profile/{userId}/member/{userId}")
+        response = self.session.delete(f"/g/s/user-profile/{userId}/member/{userId}")
         return response.status_code
 
     def block(self, userId: str):
@@ -1355,7 +1356,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.post(f"{api}/g/s/block/{userId}")
+        response = self.session.post(f"/g/s/block/{userId}")
         return response.status_code
 
     def unblock(self, userId: str):
@@ -1370,7 +1371,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.delete(f"{api}/g/s/block/{userId}")
+        response = self.session.delete(f"/g/s/block/{userId}")
         return response.status_code
 
     def join_community(self, comId: int, invitationId: str = None):
@@ -1390,7 +1391,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         if invitationId:
             data["invitationId"] = invitationId
 
-        response = self.session.post(f"{api}/x{comId}/s/community/join", json=data)
+        response = self.session.post(f"/x{comId}/s/community/join", json=data)
         return response.status_code
 
     def request_join_community(self, comId: int, message: str = None):
@@ -1408,7 +1409,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         """
         data = {"message": message}
 
-        response = self.session.post(f"{api}/x{comId}/s/community/membership-request", jaon=data)
+        response = self.session.post(f"/x{comId}/s/community/membership-request", jaon=data)
         return response.status_code
 
     def leave_community(self, comId: int):
@@ -1423,7 +1424,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.post(f"{api}/x{comId}/s/community/leave")
+        response = self.session.post(f"/x{comId}/s/community/leave")
         return response.status_code
 
     def flag_community(self, comId: int, reason: str, flagType: int, isGuest: bool = False):
@@ -1456,7 +1457,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             flg = "g-flag"
         else:
             flg = "flag"
-        response = self.session.post(f"{api}/x{comId}/s/{flg}", json=data)
+        response = self.session.post(f"/x{comId}/s/{flg}", json=data)
         return response.status_code
 
     def edit_profile(self, nickname: str = None, content: str = None, icon: BinaryIO = None, backgroundColor: str = None, backgroundImage: str = None, defaultBubbleId: str = None):
@@ -1498,7 +1499,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             data["extensions"] = {"defaultBubbleId": defaultBubbleId}
 
         userId = self.session.headers["AUID"]
-        response = self.session.post(f"{api}/g/s/user-profile/{userId}", json=data)
+        response = self.session.post(f"/g/s/user-profile/{userId}", json=data)
         return response.status_code
 
     def set_amino_id(self, aminoId: str):
@@ -1515,7 +1516,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         """
         data = {"aminoId": aminoId}
 
-        response = self.session.post(f"{api}/g/s/account/change-amino-id", json=data)
+        response = self.session.post("/g/s/account/change-amino-id", json=data)
         return response.status_code
 
     def get_linked_communities(self, userId: str):
@@ -1530,7 +1531,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/user-profile/{userId}/linked-community")
+        response = self.session.get(f"/g/s/user-profile/{userId}/linked-community")
         return objects.CommunityList(response.json()["linkedCommunityList"]).CommunityList
 
     def get_unlinked_communities(self, userId: str):
@@ -1545,7 +1546,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/user-profile/{userId}/linked-community")
+        response = self.session.get(f"/g/s/user-profile/{userId}/linked-community")
         return objects.CommunityList(response.json()["unlinkedCommunityList"]).CommunityList
 
     def reorder_linked_communities(self, comIds: list):
@@ -1563,7 +1564,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         data = {"ndcIds": comIds}
         userId = self.session.headers["AUID"]
         return self.session.post(
-            url=f"{api}/g/s/user-profile/{userId}/linked-community/reorder",
+            url=f"/g/s/user-profile/{userId}/linked-community/reorder",
             json=data
         ).status_code
 
@@ -1581,7 +1582,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         """
         userId = self.session.headers["AUID"]
         return self.session.post(
-            url=f"{api}/g/s/user-profile/{userId}/linked-community/{comId}"
+            url=f"/g/s/user-profile/{userId}/linked-community/{comId}"
         ).status_code
 
 
@@ -1599,7 +1600,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         """
         userId = self.session.headers["AUID"]
         return self.session.delete(
-            url=f"{api}/g/s/user-profile/{userId}/linked-community/{comId}"
+            url=f"/g/s/user-profile/{userId}/linked-community/{comId}"
         ).status_code
 
     def comment(self, message: str, userId: str = None, blogId: str = None, wikiId: str = None, replyTo: str = None):
@@ -1632,15 +1633,15 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
         if userId:
             data["eventSource"] = "UserProfileView"
-            url = f"{api}/g/s/user-profile/{userId}/g-comment"
+            url = f"/g/s/user-profile/{userId}/g-comment"
 
         elif blogId:
             data["eventSource"] = "PostDetailView"
-            url = f"{api}/g/s/blog/{blogId}/g-comment"
+            url = f"/g/s/blog/{blogId}/g-comment"
 
         elif wikiId:
             data["eventSource"] = "PostDetailView"
-            url = f"{api}/g/s/item/{wikiId}/g-comment"
+            url = f"/g/s/item/{wikiId}/g-comment"
 
         else: raise exceptions.SpecifyType
 
@@ -1663,11 +1664,11 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         if userId:
-            url = f"{api}/g/s/user-profile/{userId}/g-comment/{commentId}"
+            url = f"/g/s/user-profile/{userId}/g-comment/{commentId}"
         elif blogId:
-            url = f"{api}/g/s/blog/{blogId}/g-comment/{commentId}"
+            url = f"/g/s/blog/{blogId}/g-comment/{commentId}"
         elif wikiId:
-            url = f"{api}/g/s/item/{wikiId}/g-comment/{commentId}"
+            url = f"/g/s/item/{wikiId}/g-comment/{commentId}"
         else:
             raise exceptions.SpecifyType
 
@@ -1693,17 +1694,17 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         if blogId:
             if isinstance(blogId, str):
                 data["eventSource"] = "UserProfileView"
-                url = f"{api}/g/s/blog/{blogId}/g-vote?cv=1.2"
+                url = f"/g/s/blog/{blogId}/g-vote?cv=1.2"
 
             elif isinstance(blogId, list):
                 data["targetIdList"] = blogId
-                url = f"{api}/g/s/feed/g-vote"
+                url = "/g/s/feed/g-vote"
 
             else: raise exceptions.WrongType(type(blogId))
 
         elif wikiId:
             data["eventSource"] = "PostDetailView"
-            url = f"{api}/g/s/item/{wikiId}/g-vote?cv=1.2"
+            url = f"/g/s/item/{wikiId}/g-vote?cv=1.2"
 
         else: raise exceptions.SpecifyType
 
@@ -1723,9 +1724,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         if blogId:
-            url = f"{api}/g/s/blog/{blogId}/g-vote?eventSource=UserProfileView"
+            url = f"/g/s/blog/{blogId}/g-vote?eventSource=UserProfileView"
         elif wikiId:
-            url = f"{api}/g/s/item/{wikiId}/g-vote?eventSource=PostDetailView"
+            url = f"/g/s/item/{wikiId}/g-vote?eventSource=PostDetailView"
         else:
             raise exceptions.SpecifyType
 
@@ -1752,15 +1753,15 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
         if userId:
             data["eventSource"] = "UserProfileView"
-            url = f"{api}/g/s/user-profile/{userId}/comment/{commentId}/g-vote?cv=1.2&value=1"
+            url = f"/g/s/user-profile/{userId}/comment/{commentId}/g-vote?cv=1.2&value=1"
 
         elif blogId:
             data["eventSource"] = "PostDetailView"
-            url = f"{api}/g/s/blog/{blogId}/comment/{commentId}/g-vote?cv=1.2&value=1"
+            url = f"/g/s/blog/{blogId}/comment/{commentId}/g-vote?cv=1.2&value=1"
 
         elif wikiId:
             data["eventSource"] = "PostDetailView"
-            url = f"{api}/g/s/item/{wikiId}/comment/{commentId}/g-vote?cv=1.2&value=1"
+            url = f"/g/s/item/{wikiId}/comment/{commentId}/g-vote?cv=1.2&value=1"
 
         else: raise exceptions.SpecifyType
 
@@ -1782,11 +1783,11 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         if userId:
-            url = f"{api}/g/s/user-profile/{userId}/comment/{commentId}/g-vote?eventSource=UserProfileView"
+            url = f"/g/s/user-profile/{userId}/comment/{commentId}/g-vote?eventSource=UserProfileView"
         elif blogId:
-            url = f"{api}/g/s/blog/{blogId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
+            url = f"/g/s/blog/{blogId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
         elif wikiId:
-            url = f"{api}/g/s/item/{wikiId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
+            url = f"/g/s/item/{wikiId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
         else:
             raise exceptions.SpecifyType
 
@@ -1804,7 +1805,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/membership?force=true")
+        response = self.session.get("/g/s/membership?force=true")
         return objects.Membership(response.json()).Membership
 
     def get_ta_announcements(self, language: str = "en", start: int = 0, size: int = 25):
@@ -1829,7 +1830,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "start": start,
             "size": size
         }
-        response = self.session.get(f"{api}/g/s/announcement", params=params)
+        response = self.session.get("/g/s/announcement", params=params)
         return objects.BlogList(response.json()["blogList"]).BlogList
 
     def get_wallet_info(self):
@@ -1844,7 +1845,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/wallet")
+        response = self.session.get("/g/s/wallet")
         return objects.WalletInfo(response.json()["wallet"]).WalletInfo
 
     def get_wallet_history(self, start: int = 0, size: int = 25):
@@ -1860,7 +1861,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/wallet/coin/history?start={start}&size={size}")
+        response = self.session.get(f"/g/s/wallet/coin/history?start={start}&size={size}")
         return objects.WalletHistory(response.json()["coinHistoryList"]).WalletHistory
 
     def get_from_deviceid(self, deviceId: str):
@@ -1875,7 +1876,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/auid?deviceId={deviceId}")
+        response = self.session.get(f"/g/s/auid?deviceId={deviceId}")
         return response.json()["auid"]
 
     def get_from_code(self, code: str):
@@ -1891,7 +1892,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/link-resolution?q={code}")
+        response = self.session.get(f"/g/s/link-resolution?q={code}")
         return objects.FromCode(response.json()["linkInfoV2"]).FromCode
 
     def get_from_id(self, objectId: str, objectType: int, comId: int = None):
@@ -1914,9 +1915,9 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "objectType": objectType,
         }
         if comId:
-            url = f"{api}/g/s-x{comId}/link-resolution"
+            url = f"/g/s-x{comId}/link-resolution"
         else:
-            url = f"{api}/g/s/link-resolution"
+            url = "/g/s/link-resolution"
 
         response = self.session.post(url, json=data)
         return objects.FromCode(response.json()["linkInfoV2"]).FromCode
@@ -1933,7 +1934,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/community-collection/supported-languages?start=0&size=100")
+        response = self.session.get("/g/s/community-collection/supported-languages")
         return response.json()["supportedLanguages"]
 
     def claim_new_user_coupon(self):
@@ -1948,7 +1949,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        return self.session.post(f"{api}/g/s/coupon/new-user-coupon/claim").status_code
+        return self.session.post("/g/s/coupon/new-user-coupon/claim").status_code
 
     def get_subscriptions(self, start: int = 0, size: int = 25, objectType: int = 122):
         """
@@ -1963,7 +1964,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/store/subscription?objectType={objectType}&start={start}&size={size}")
+        response = self.session.get(f"/g/s/store/subscription?objectType={objectType}&start={start}&size={size}")
         return response.json()["storeSubscriptionItemList"]
 
     def get_all_users(self, start: int = 0, size: int = 25, type: str = "recent"):
@@ -1979,7 +1980,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/user-profile?type={type}&start={start}&size={size}")
+        response = self.session.get(f"/g/s/user-profile?type={type}&start={start}&size={size}")
         return objects.UserProfileCountList(response.json()).UserProfileCountList
 
     def accept_host(self, chatId: str, requestId: str):
@@ -1995,7 +1996,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         return self.session.post(
-                url=f"{api}/g/s/chat/thread/{chatId}/transfer-organizer/{requestId}/accept"
+                url=f"/g/s/chat/thread/{chatId}/transfer-organizer/{requestId}/accept"
             ).status_code
 
     def accept_organizer(self, chatId: str, requestId: str):
@@ -2024,7 +2025,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             - **Success** : A JSON object with the community link information.
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/community/link-identify?q=http%3A%2F%2Faminoapps.com%2Finvite%2F{code}")
+        response = self.session.get(f"/g/s/community/link-identify?q=http%3A%2F%2Faminoapps.com%2Finvite%2F{code}")
         return response.json()
 
     def invite_to_vc(self, chatId: str, userId: str):
@@ -2045,7 +2046,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "uid": userId
         }
 
-        response = self.session.post(f"{api}/g/s/chat/thread/{chatId}/vvchat-presenter/invite", json=data)
+        response = self.session.post(f"/g/s/chat/thread/{chatId}/vvchat-presenter/invite", json=data)
         return response.status_code
 
     def wallet_config(self, level: int):
@@ -2066,7 +2067,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "adsLevel": level,
         }
 
-        response = self.session.post(f"{api}/g/s/wallet/ads/config", json=data)
+        response = self.session.post("/g/s/wallet/ads/config", json=data)
         return response.status_code
 
     def purchase(self, objectId: str, objectType: int = 114, isAutoRenew: bool = False):
@@ -2093,7 +2094,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             },
         }
 
-        return self.session.post(f"{api}/g/s/store/purchase", json=data).status_code
+        return self.session.post("/g/s/store/purchase", json=data).status_code
 
     def get_public_communities(self, language: str = "en", size: int = 25):
         """
@@ -2115,7 +2116,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
             "pagingType": "t"
         }
 
-        response = self.session.get(f"{api}/g/s/topic/0/feed/community", params=params)
+        response = self.session.get("/g/s/topic/0/feed/community", params=params)
         return objects.CommunityList(response.json()["communityList"]).CommunityList
 
     def get_blockers(self) -> list[str]:
@@ -2127,7 +2128,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/g/s/block/full-list")
+        response = self.session.get("/g/s/block/full-list")
         return response.json()["blockerUidList"]
 
     def set_privacy_status(self, isAnonymous: bool = False, getNotifications: bool = False):
@@ -2147,7 +2148,7 @@ class Client(Callbacks, SocketHandler, SocketRequests):
         else:
             data["privacyMode"] = 1
 
-        response = self.session.post(f"{api}/g/s/account/visit-settings", json=data)
+        response = self.session.post("/g/s/account/visit-settings", json=data)
         return response.json()
 
     def typing(self, chatId: str, comId: int = None) -> Typing:
