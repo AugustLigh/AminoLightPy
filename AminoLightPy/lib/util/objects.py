@@ -154,7 +154,7 @@ class UserProfileList:
 
             return
 
-        _userObjects = tuple(UserProfile(x).UserProfile for x in data)
+        _userObjects = [UserProfile(x).UserProfile for x in data]
 
         set_attributes(self, _userObjects)
 
@@ -180,7 +180,7 @@ class BlogList:
         self.json = data
         self.nextPageToken = nextPageToken
         self.prevPageToken = prevPageToken
-        _userObjects = tuple(Blog(x).Blog for x in data)
+        _userObjects = [Blog(x).Blog for x in data]
 
         set_attributes(self, _userObjects)
 
@@ -389,9 +389,9 @@ class WikiList:
 
     def __init__(self, data: Dict):
         self.json = data
-        self.author = UserProfileList(tuple(y.get("author") for y in data)).UserProfileList
+        self.author = UserProfileList([y.get("author") for y in data]).UserProfileList
         self.labels = self._get_labels(data)
-        _wikiObjects = tuple(Wiki(x).Wiki for x in data)
+        _wikiObjects = [Wiki(x).Wiki for x in data]
         set_attributes(self, _wikiObjects)
 
     def _get_labels(self, data):
@@ -427,7 +427,6 @@ class WikiLabelList:
 class RankingTableList:
     __slots__ = ("json", "title", "level", "reputation", "id")
     def __init__(self, data: list[dict]):
-
         self.json = data
         self.title = []
         self.level = []
@@ -480,7 +479,7 @@ class Community:
         style: Dict = leftSidePanel.get("style") or {}
         page: Dict = configuration.get("page") or {}
         advancedSettings: Dict = data.get("advancedSettings") or {}
-        self.rankingTable = RankingTableList(advancedSettings.get("rankingTable")).RankingTableList
+        self.rankingTable = RankingTableList(advancedSettings.get("rankingTable", [])).RankingTableList
         extensions: Dict = data.get("extensions") or {}
 
         self.name: Optional[str] = data.get("name")
@@ -560,7 +559,7 @@ class CommunityList:
 
     def __init__(self, data: dict):
         self.json = data
-        _communtyObjects = tuple(Community(x).Community for x in data)
+        _communtyObjects = [Community(x).Community for x in data]
 
         set_attributes(self, _communtyObjects)
 
@@ -581,39 +580,16 @@ class CommentList:
         _author = [x.get("author") for x in data]
 
         self.author = UserProfileList(_author).UserProfileList
-        self.votesSum = []
-        self.votedValue = []
-        self.mediaList = []
-        self.parentComId = []
-        self.parentId = []
-        self.parentType = []
-        self.content = []
-        self.extensions = []
-        self.comId = []
-        self.modifiedTime = []
-        self.createdTime = []
-        self.commentId = []
-        self.subcommentsCount = []
-        self.type = []
+
+        for attr in self.__slots__[2:]:
+            setattr(self, attr, [])
+        
+        for x in data:
+            for attr in self.__slots__[2:]:
+                getattr(self, attr).append(x.get(attr.replace("comId", "ndcId")))
 
     @property
     def CommentList(self):
-        for x in self.json:
-            self.votesSum.append(x.get("votesSum"))
-            self.votedValue.append(x.get("votedValue"))
-            self.mediaList.append(x.get("mediaList"))
-            self.parentComId.append(x.get("parentNdcId"))
-            self.parentId.append(x.get("parentId"))
-            self.parentType.append(x.get("parentType"))
-            self.content.append(x.get("content"))
-            self.extensions.append(x.get("extensions"))
-            self.comId.append(x.get("ndcId"))
-            self.modifiedTime.append(x.get("modifiedTime"))
-            self.createdTime.append(x.get("createdTime"))
-            self.commentId.append(x.get("commentId"))
-            self.subcommentsCount.append(x.get("subcommentsCount"))
-            self.type.append(x.get("type"))
-
         return self
 
 class Membership:
@@ -1088,7 +1064,7 @@ class ThreadList:
     )
     def __init__(self, data):
         self.json = data
-        _threadObjects = tuple(Thread(x).Thread for x in data)
+        _threadObjects = [Thread(x).Thread for x in data]
 
         set_attributes(self, _threadObjects)
 
@@ -1142,7 +1118,7 @@ class StickerList:
     def __init__(self, data: dict):
         self.json = data
 
-        _stickerObjects = tuple(Sticker(x).Sticker for x in data)
+        _stickerObjects = [Sticker(x).Sticker for x in data]
         set_attributes(self, _stickerObjects)
 
     @property
@@ -1328,7 +1304,7 @@ class Message:
         self.videoWidth = self.videoExtensions.get("width")
         self.videoCoverImage = self.videoExtensions.get("coverImage")
         self.originalStickerId = extensions.get("originalStickerId")
-        self.mentionUserIds = tuple(m.get("uid") for m in extensions.get("mentionedArray", {}))
+        self.mentionUserIds = [m.get("uid") for m in extensions.get("mentionedArray", {})]
         self.tippingCoins = extensions.get("tippingCoins")
 
 
@@ -1349,7 +1325,7 @@ class MessageList:
         self.json = data
         self.nextPageToken = nextPageToken
         self.prevPageToken = prevPageToken
-        _messageyObjects = tuple(Message(x).Message for x in data)
+        _messageyObjects = [Message(x).Message for x in data]
 
         self.author = UserProfileList([x.author.json for x in _messageyObjects]).UserProfileList
         self.sticker = StickerList([x.sticker.json for x in _messageyObjects]).StickerList
@@ -1826,7 +1802,7 @@ class Event:
 
 class JoinRequest:
     def __init__(self, data):
-        _author = tuple(x for x in data["communityMembershipRequestList"])
+        _author = [x for x in data["communityMembershipRequestList"]]
 
         self.json = data
 
@@ -2058,8 +2034,8 @@ class AvatarFrameList:
                 setattr(self, attr, None)
             return
 
-        _author = tuple(x.get("operator") for x in data)
-        _targetUser = tuple(x.get("targetUser") for x in data)
+        _author = [x.get("operator") for x in data]
+        _targetUser = [x.get("targetUser") for x in data]
 
         self.json = data
 

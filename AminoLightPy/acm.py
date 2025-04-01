@@ -1,11 +1,10 @@
 # pylint: disable=invalid-name
 
-from time import time as timestamp
 from typing import BinaryIO
 from requests import Session
 
+from .constants import upload_media
 from .lib.util import exceptions, objects
-from .constants import api, device_id, upload_media
 
 class ACM():
     "Module for work with ACM requests."
@@ -50,7 +49,7 @@ class ACM():
             "themeColor": themeColor
         }
 
-        response = self.session.post(f"{api}/g/s/community", json=data)
+        response = self.session.post(f"/g/s/community", json=data)
         return response.status_code
 
     def delete_community(self, email: str, password: str, verificationCode: str):
@@ -76,10 +75,10 @@ class ACM():
                 "type": 1,
                 "identity": email
             },
-            "deviceID": device_id
+            "deviceID": self.session.headers.get("NDCDEVICEID")
         }
 
-        response = self.session.post(f"{api}/g/s-x{self.comId}/community/delete-request", json=data)
+        response = self.session.post(f"/g/s-x{self.comId}/community/delete-request", json=data)
         return response.status_code
 
     def list_communities(self, start: int = 0, size: int = 25):
@@ -96,7 +95,7 @@ class ACM():
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
 
-        response = self.session.get(f"{api}/g/s/community/managed?start={start}&size={size}")
+        response = self.session.get(f"/g/s/community/managed?start={start}&size={size}")
         return objects.CommunityList(response.json()["communityList"]).CommunityList
 
     def get_categories(self, start: int = 0, size: int = 25):
@@ -113,7 +112,7 @@ class ACM():
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
 
-        response = self.session.get(f"{api}/x{self.comId}/s/blog-category?start={start}&size={size}")
+        response = self.session.get(f"/x{self.comId}/s/blog-category?start={start}&size={size}")
         return response.json()
 
     def change_sidepanel_color(self, color: str):
@@ -134,7 +133,7 @@ class ACM():
             "value": color
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/community/configuration", json=data)
+        response = self.session.post(f"/x{self.comId}/s/community/configuration", json=data)
         return response.json()
 
     def promote(self, userId: str, rank: str):
@@ -152,10 +151,10 @@ class ACM():
         """
         rank = rank.lower().replace("agent", "transfer-agent")
 
-        if rank.lower() not in ["transfer-agent", "leader", "curator"]:
+        if rank.lower() not in ("transfer-agent", "leader", "curator"):
             raise exceptions.WrongType(rank)
 
-        response = self.session.post(f"{api}/x{self.comId}/s/user-profile/{userId}/{rank}")
+        response = self.session.post(f"/x{self.comId}/s/user-profile/{userId}/{rank}")
         return response.status_code
 
     def get_join_requests(self, start: int = 0, size: int = 25):
@@ -177,7 +176,7 @@ class ACM():
             "size": size
         }
 
-        response = self.session.get(f"{api}/x{self.comId}/s/community/membership-request", params=data)
+        response = self.session.get(f"/x{self.comId}/s/community/membership-request", params=data)
         return objects.JoinRequest(response.json()).JoinRequest
 
     def accept_join_request(self, userId: str):
@@ -193,7 +192,7 @@ class ACM():
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {}
-        response = self.session.post(f"{api}/x{self.comId}/s/community/membership-request/{userId}/accept", json=data)
+        response = self.session.post(f"/x{self.comId}/s/community/membership-request/{userId}/accept", json=data)
         return response.status_code
 
     def reject_join_request(self, userId: str):
@@ -209,7 +208,7 @@ class ACM():
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {}
-        response = self.session.post(f"{api}/x{self.comId}/s/community/membership-request/{userId}/reject", json=data)
+        response = self.session.post(f"/x{self.comId}/s/community/membership-request/{userId}/reject", json=data)
         return response.status_code
 
     def get_community_stats(self):
@@ -221,9 +220,7 @@ class ACM():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"{api}/x{self.comId}/s/community/stats")
-        if response.status_code != 200:
-            return exceptions.CheckException(response.text)
+        response = self.session.get(f"/x{self.comId}/s/community/stats")
         return objects.CommunityStats(response.json()["communityStats"]).CommunityStats
 
     def get_community_user_stats(self, type: str, start: int = 0, size: int = 25):
@@ -250,7 +247,7 @@ class ACM():
         }
 
         response = self.session.get(
-            url=f"{api}/x{self.comId}/s/community/stats/moderation",
+            url=f"/x{self.comId}/s/community/stats/moderation",
             params=data
         )
         return objects.UserProfileList(response.json()["userProfileList"]).UserProfileList
@@ -276,7 +273,7 @@ class ACM():
             }
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/community/configuration", json=data)
+        response = self.session.post(f"/x{self.comId}/s/community/configuration", json=data)
         return response.status_code
 
     def change_guidelines(self, message: str):
@@ -293,7 +290,7 @@ class ACM():
         """
         data = { "content": message }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/community/guideline", json=data)
+        response = self.session.post(f"/x{self.comId}/s/community/guideline", json=data)
         return response.status_code
 
     def edit_community(self, name: str = None, description: str = None, aminoId: str = None, primaryLanguage: str = None, themePackUrl: str = None):
@@ -312,7 +309,7 @@ class ACM():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        data = {"timestamp": int(timestamp() * 1000)}
+        data = {}
 
         if name is not None:
             data["name"] = name
@@ -325,7 +322,7 @@ class ACM():
         if themePackUrl is not None:
             data["themePackUrl"] = themePackUrl
 
-        response = self.session.post(f"{api}/x{self.comId}/s/community/settings", json=data)
+        response = self.session.post(f"/x{self.comId}/s/community/settings", json=data)
         return response.status_code
 
     def change_module(self, module: str, isEnabled: bool):
@@ -381,7 +378,7 @@ class ACM():
             "value": isEnabled
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/community/configuration", json=data)
+        response = self.session.post(f"/x{self.comId}/s/community/configuration", json=data)
         return response.status_code
 
     def add_influencer(self, userId: str, monthlyFee: int):
@@ -401,7 +398,7 @@ class ACM():
             "monthlyFee": monthlyFee
         }
 
-        response = self.session.post(f"{api}/x{self.comId}/s/influencer/{userId}", json=data)
+        response = self.session.post(f"/x{self.comId}/s/influencer/{userId}", json=data)
         return response.status_code
 
     def remove_influencer(self, userId: str):
@@ -416,8 +413,15 @@ class ACM():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.delete(f"{api}/x{self.comId}/s/influencer/{userId}")
+        response = self.session.delete(f"/x{self.comId}/s/influencer/{userId}")
         return response.status_code
+    
+    def delete_admin(self, userId: str, type: str):
+        response = self.session.delete(f"/x{self.comId}/s/user-profile/{userId}/{type}")
+        return response.status_code
+    
+    def get_admin_list(self):
+        pass #TODO
 
     def get_notice_list(self, start: int = 0, size: int = 25):
         """
@@ -438,7 +442,7 @@ class ACM():
             "start": start,
             "size": size
         }
-        response = self.session.get(f"{api}/x{self.comId}/s/notice", params=params)
+        response = self.session.get(f"/x{self.comId}/s/notice", params=params)
         return objects.NoticeList(response.json()["noticeList"]).NoticeList
 
     def delete_pending_role(self, noticeId: str):
@@ -453,5 +457,5 @@ class ACM():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.delete(f"{api}/x{self.comId}/s/notice/{noticeId}")
+        response = self.session.delete(f"/x{self.comId}/s/notice/{noticeId}")
         return response.status_code

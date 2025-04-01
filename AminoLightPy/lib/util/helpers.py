@@ -1,7 +1,6 @@
 from hmac import new
 from json import loads
 from os import urandom
-from typing import Union
 from hashlib import sha1
 from base64 import b64decode, b64encode
 
@@ -14,12 +13,12 @@ def gen_deviceId(data: bytes = None) -> str:
     Generate a device ID using the provided data or random bytes.
     """
     if isinstance(data, str):
-        data = bytes(data, 'utf-8')
+        data = bytes(data, "utf-8")
     identifier = PREFIX + (data or urandom(20))
     mac = new(DEVICE_KEY, identifier, sha1)
     return f"{identifier.hex()}{mac.hexdigest()}".upper()
 
-def signature(data: Union[str, bytes]) -> str:
+def signature(data: str | bytes) -> str:
     """
     Generate a signature for the given data.
     """

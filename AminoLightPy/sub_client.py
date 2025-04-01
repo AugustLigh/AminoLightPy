@@ -2,20 +2,20 @@
 # pylint: disable=too-many-lines
 
 from uuid import uuid4
-from time import timezone
-from typing import Union
 from typing import BinaryIO
-from base64 import b64encode
 from requests import Session
 
 from .constants import upload_media
+from .abstract_client import AbstractClient
 from .lib.util import exceptions, objects
 
-class SubClient():
+class SubClient(AbstractClient):
     "Module for work with community"
     def __init__(self, comId: int = None, *, profile: objects.UserProfile):
         self.profile = profile
         self.session: Session = self.profile.session
+    
+        super().__init__(self.session, f"/x{comId}")
 
         self.comId = comId
 
@@ -215,7 +215,7 @@ class SubClient():
         response = self.session.post(f"/x{self.comId}/s/blog", json=data)
         return response.status_code
 
-    def check_in(self, tz: int = -timezone // 1000):
+    def check_in(self, tz: int = 180):
         data = { "timezone": tz }
         response = self.session.post(f"/x{self.comId}/s/check-in", json=data)
         return response.status_code
@@ -227,60 +227,11 @@ class SubClient():
         response = self.session.post(f"/x{self.comId}/s/check-in/repair", json=data)
         return response.status_code
 
-    def lottery(self, tz: int = -timezone // 1000):
+    def lottery(self, tz: int = 180):
         data = { "timezone": tz }
         response = self.session.post(f"/x{self.comId}/s/check-in/lottery", json=data)
         return objects.LotteryLog(response.json()["lotteryLog"]).LotteryLog
-
-    def edit_profile(self, nickname: str = None, content: str = None, icon: BinaryIO = None,
-                            chatRequestPrivilege: str = None, imageList: list = None,
-                            captionList: list = None, backgroundImage: str = None,
-                            backgroundColor: str = None, titles: list = None, colors: list = None,
-                            defaultBubbleId: str = None):
-        mediaList = []
-        data = {}
-        if captionList:
-            for image, caption in zip(imageList, captionList):
-                mediaList.append([100, upload_media(self, image), caption])
-
-        else:
-            if imageList:
-                for image in imageList:
-                    mediaList.append([100, upload_media(self, image), None])
-
-        if imageList or captionList:
-            data["mediaList"] = mediaList
-
-        if nickname:
-            data["nickname"] = nickname
-        if icon:
-            data["icon"] = upload_media(self, icon)
-        if content:
-            data["content"] = content
-
-        if chatRequestPrivilege:
-            data["extensions"] = {"privilegeOfChatInviteRequest": chatRequestPrivilege}
-        if backgroundImage:
-            data["extensions"] = {"style": {
-                "backgroundMediaList": [[100, backgroundImage, None, None, None]]
-                }}
-        if backgroundColor:
-            data["extensions"] = {"style": {"backgroundColor": backgroundColor}}
-        if defaultBubbleId:
-            data["extensions"] = {"defaultBubbleId": defaultBubbleId}
-
-        if titles or colors:
-            tlt = []
-            for titles, colors in zip(titles, colors):
-                tlt.append({"title": titles, "color": colors})
-
-            data["extensions"] = {"customTitles": tlt}
-
-        return self.session.post(
-            url=f"/x{self.comId}/s/user-profile/{self.profile.userId}",
-            json=data
-        ).status_code
-
+    
     def vote_poll(self, blogId: str, optionId: str):
         data = {
             "value": 1,
@@ -292,134 +243,6 @@ class SubClient():
             json=data
         ).status_code
 
-    def comment(self, message: str, userId: str = None, blogId: str = None, wikiId: str = None,
-                replyTo: str = None, isGuest: bool = False):
-        data = {
-            "content": message,
-            "stickerId": None,
-            "type": 0
-        }
-
-        if replyTo:
-            data["respondTo"] = replyTo
-
-        if isGuest:
-            comType = "g-comment"
-        else:
-            comType = "comment"
-
-        if userId:
-            data["eventSource"] = "UserProfileView"
-            url = f"/x{self.comId}/s/user-profile/{userId}/{comType}"
-
-        elif blogId:
-            data["eventSource"] = "PostDetailView"
-            url = f"/x{self.comId}/s/blog/{blogId}/{comType}"
-
-        elif wikiId:
-            data["eventSource"] = "PostDetailView"
-            url = f"/x{self.comId}/s/item/{wikiId}/{comType}"
-
-        else: raise exceptions.SpecifyType
-
-        return self.session.post(url, json=data).status_code
-
-    def delete_comment(self, commentId: str, userId: str = None, blogId: str = None,
-                        wikiId: str = None):
-        if userId:
-            url = f"/x{self.comId}/s/user-profile/{userId}/comment/{commentId}"
-        elif blogId:
-            url = f"/x{self.comId}/s/blog/{blogId}/comment/{commentId}"
-        elif wikiId:
-            url = f"/x{self.comId}/s/item/{wikiId}/comment/{commentId}"
-        else:
-            raise exceptions.SpecifyType
-
-        return self.session.delete(url).status_code
-
-    def like_blog(self, blogId: Union[str, list] = None, wikiId: str = None):
-        """
-        Like a Blog, Multiple Blogs or a Wiki.
-
-        **Parameters**
-            - **blogId** : ID of the Blog or List of IDs of the Blogs. (for Blogs)
-            - **wikiId** : ID of the Wiki. (for Wikis)
-
-        **Returns**
-            - **Success** : 200 (int)
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        data = {
-            "value": 4
-        }
-
-        if blogId:
-            if isinstance(blogId, str):
-                data["eventSource"] = "UserProfileView"
-                url = f"/x{self.comId}/s/blog/{blogId}/vote?cv=1.2"
-
-            elif isinstance(blogId, list):
-                data["targetIdList"] = blogId
-                url = f"/x{self.comId}/s/feed/vote"
-
-            else: raise exceptions.WrongType
-
-        elif wikiId:
-            data["eventSource"] = "PostDetailView"
-            url = f"/x{self. comId}/s/item/{wikiId}/vote?cv=1.2"
-
-        else: raise exceptions.SpecifyType()
-
-        return self.session.post(url, json=data).status_code
-
-    def unlike_blog(self, blogId: str = None, wikiId: str = None):
-        if blogId:
-            url = f"/x{self.comId}/s/blog/{blogId}/vote?eventSource=UserProfileView"
-        elif wikiId:
-            url = f"/x{self.comId}/s/item/{wikiId}/vote?eventSource=PostDetailView"
-        else:
-            raise exceptions.SpecifyType()
-
-        return self.session.delete(url).status_code
-
-    def like_comment(self, commentId: str, userId: str = None, blogId: str = None,
-                    wikiId: str = None):
-        data = {
-            "value": 1
-        }
-        params = {
-            "cv": "1.2",
-            "value": "1"
-        }
-
-        if userId:
-            data["eventSource"] = "UserProfileView"
-            url = f"/x{self.comId}/s/user-profile/{userId}/comment/{commentId}/vote"
-
-        elif blogId:
-            data["eventSource"] = "PostDetailView"
-            url = f"/x{self.comId}/s/blog/{blogId}/comment/{commentId}/vote"
-
-        elif wikiId:
-            data["eventSource"] = "PostDetailView"
-            url = f"/x{self.comId}/s/item/{wikiId}/comment/{commentId}/g-vote"
-
-        else: raise exceptions.SpecifyType()
-
-        return self.session.post(url, json=data, params=params).status_code
-
-    def unlike_comment(self, commentId: str, userId: str = None, blogId: str = None, wikiId: str = None):
-        if userId:
-            url = f"/x{self.comId}/s/user-profile/{userId}/comment/{commentId}/g-vote?eventSource=UserProfileView"
-        elif blogId:
-            url = f"/x{self.comId}/s/blog/{blogId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
-        elif wikiId:
-            url = f"/x{self.comId}/s/item/{wikiId}/comment/{commentId}/g-vote?eventSource=PostDetailView"
-        else:
-            raise exceptions.SpecifyType()
-
-        return self.session.delete(url).status_code
 
     def upvote_comment(self, blogId: str, commentId: str):
         data = {
@@ -469,7 +292,7 @@ class SubClient():
         return response.status_code
 
     def send_active_obj(self, startTime: int = None, endTime: int = None,
-                        tz: int = -timezone // 1000, timers: list = None):
+                        tz: int = 180, timers: list = None):
         data = {
             "userActiveTimeChunkList": [{
                 "start": startTime,
@@ -517,270 +340,16 @@ class SubClient():
     def clear_notifications(self):
         return self.session.delete(f"/x{self.comId}/s/notification").status_code
 
-    def start_chat(self, userId: Union[str, list, tuple], message: str, title: str = None,
-                    content: str = None, isGlobal: bool = False, publishToGlobal: bool = False):
-        if isinstance(userId, str): userIds = [userId]
-        elif isinstance(userId, list): userIds = userId
-        elif isinstance(userId, tuple): userIds = userId
-        else: raise exceptions.WrongType(type(userId))
-
-        data = {
-            "title": title,
-            "inviteeUids": userIds,
-            "initialMessageContent": message,
-            "content": content,
-            "publishToGlobal": int(publishToGlobal)
-        }
-
-        if isGlobal:
-            data["type"] = 2
-            data["eventSource"] = "GlobalComposeMenu"
-        else:
-            data["type"] = 0
-
-        response = self.session.post(f"/x{self.comId}/s/chat/thread", json=data)
-        return objects.Thread(response.json()["thread"]).Thread
-
-    def invite_to_chat(self, userId: Union[str, list], chatId: str):
-        if isinstance(userId, str): userIds = [userId]
-        elif isinstance(userId, list): userIds = userId
-        elif isinstance(userId, tuple): userIds = userId
-        else: raise exceptions.WrongType(type(userId))
-
-        data = { "uids": userIds }
-
-        response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}/member/invite", json=data)
-        return response.status_code
-
     def add_to_favorites(self, userId: str):
         return self.session.post(f"/x{self.comId}/s/user-group/quick-access/{userId}").status_code
 
-    def send_coins(self, coins: int, blogId: str = None, chatId: str = None, objectId: str = None, transactionId: str = None):
-        if not transactionId: transactionId = str(uuid4())
-
-        data = {
-            "coins": coins,
-            "tippingContext": {"transactionId": transactionId}
-        }
-
-        if blogId: url = f"/x{self.comId}/s/blog/{blogId}/tipping"
-        elif chatId: url = f"/x{self.comId}/s/chat/thread/{chatId}/tipping"
-        elif objectId:
-            data["objectId"] = objectId
-            data["objectType"] = 2
-            url = f"/x{self.comId}/s/tipping"
-
-        else: raise exceptions.SpecifyType
-
-        return self.session.post(url, json=data).status_code
+    
 
     def thank_tip(self, chatId: str, userId: str):
         return self.session.post(
             url=f"/x{self.comId}/s/chat/thread/{chatId}/tipping/tipped-users/{userId}/thank"
         ).status_code
 
-    def follow(self, userId: Union[str, list]):
-        """
-        Follow an User or Multiple Users.
-
-        **Parameters**
-            - **userId** : ID of the User or List of IDs of the Users.
-
-        **Returns**
-            - **Success** : 200 (int)
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        if isinstance(userId, str):
-            response = self.session.post(f"/x{self.comId}/s/user-profile/{userId}/member")
-
-        elif isinstance(userId, list):
-            response = self.session.post(
-                url=f"/x{self.comId}/s/user-profile/{self.profile.userId}/joined",
-                json={"targetUidList": userId}
-            )
-
-        else: raise exceptions.WrongType(type(userId))
-
-        return response.status_code
-
-    def unfollow(self, userId: str):
-        """
-        Unfollow an User.
-
-        **Parameters**
-            - **userId** : ID of the User.
-
-        **Returns**
-            - **Success** : 200 (int)
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        response = self.session.delete(f"/x{self.comId}/s/user-profile/{self.profile.userId}/joined/{userId}")
-        return response.status_code
-
-    def block(self, userId: str):
-        """
-        Block an User.
-
-        **Parameters**
-            - **userId** : ID of the User.
-
-        **Returns**
-            - **Success** : 200 (int)
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        return self.session.post(f"/x{self.comId}/s/block/{userId}").status_code
-
-    def unblock(self, userId: str):
-        """
-        Unblock an User.
-
-        **Parameters**
-            - **userId** : ID of the User.
-
-        **Returns**
-            - **Success** : 200 (int)
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        return self.session.delete(f"/x{self.comId}/s/block/{userId}").status_code
-
-    def flag(self, reason: str, flagType: int,
-            userId: str = None, blogId: str = None, wikiId: str = None,
-            asGuest: bool = False):
-        """
-        Flag a User, Blog or Wiki.
-
-        **Parameters**
-            - **reason** : Reason of the Flag.
-            - **flagType** : Type of the Flag.
-            - **userId** : ID of the User.
-            - **blogId** : ID of the Blog.
-            - **wikiId** : ID of the Wiki.
-            - *asGuest* : Execute as a Guest.
-
-        **Returns**
-            - **Success** : 200 (int)
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        if not reason: raise exceptions.ReasonNeeded
-        if not flagType: raise exceptions.FlagTypeNeeded
-
-        data = {
-            "flagType": flagType,
-            "message": reason
-        }
-
-        if userId:
-            data["objectId"] = userId
-            data["objectType"] = 0
-
-        elif blogId:
-            data["objectId"] = blogId
-            data["objectType"] = 1
-
-        elif wikiId:
-            data["objectId"] = wikiId
-            data["objectType"] = 2
-
-        else: raise exceptions.SpecifyType
-
-        if asGuest: flg = "g-flag"
-        else: flg = "flag"
-
-        return self.session.post(f"/x{self.comId}/s/{flg}", json=data).status_code
-
-    def check_values(self, *args):
-        return any(arg is None for arg in args)
-
-    def send_message(self, chatId: str, message: str = None, messageType: int = 0,
-                        file: BinaryIO = None, fileType: str = None, replyTo: str = None,
-                        mentionUserIds: list = None, stickerId: str = None, embedId: str = None,
-                        embedType: int = None, embedLink: str = None, embedTitle: str = None,
-                        embedContent: str = None, embedImage: BinaryIO = None):
-        """
-        Send a Message to a Chat.
-
-        **Parameters**
-            - **message** : Message to be sent
-            - **chatId** : ID of the Chat.
-            - **file** : File to be sent.
-            - **fileType** : Type of the file.
-                - It's deprecated
-            - **messageType** : Type of the Message.
-            - **mentionUserIds** : List of User IDS to mention. '@' needed in the Message.
-            - **replyTo** : Message ID to reply to.
-            - **stickerId** : Sticker ID to be sent.
-            - **embedTitle** : Title of the Embed.
-            - **embedContent** : Content of the Embed.
-            - **embedLink** : Link of the Embed.
-            - **embedImage** : Image of the Embed.
-            - **embedId** : ID of the Embed.
-
-        **Returns**
-            - **Success** : 200 (int)
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-
-        data = {
-            "type": messageType,
-            "content": message
-        }
-
-        if self.check_values(embedId, embedType, embedLink, embedTitle, embedContent, embedImage):
-            attachedObject = {}
-
-            if embedId:
-                attachedObject["objectId"] = embedId
-
-            if embedType:
-                attachedObject["objectType"] = embedType
-
-            if embedLink:
-                attachedObject["link"] = embedLink
-
-            if embedTitle:
-                attachedObject["title"] = embedTitle
-
-            if embedContent:
-                attachedObject["content"] = embedContent
-
-            if embedImage:
-                attachedObject["mediaList"] = [[100, upload_media(self, embedImage), None]]
-
-            data["attachedObject"] = attachedObject
-
-        if mentionUserIds:
-            mentions = [{"uid": mention_uid} for mention_uid in mentionUserIds]
-            data["extensions"] = {"mentionedArray": mentions}
-
-        if replyTo: data["replyMessageId"] = replyTo
-
-        if stickerId:
-            data["content"] = None
-            data["stickerId"] = stickerId
-            data["type"] = 3
-
-        if file:
-            data["content"] = None
-
-            if fileType == "audio":
-                data["type"] = 2
-                data["mediaType"] = 110
-                data["mediaUploadValue"] = b64encode(file.read()).decode()
-
-            else:
-                url = upload_media(self, file)
-                data["mediaValue"] = url
-
-        return self.session.post(
-            url=f"/x{self.comId}/s/chat/thread/{chatId}/message",
-            json=data
-        ).status_code
 
     def full_embed(self, link: str, image: BinaryIO, message: str, chatId: str):
         url = upload_media(self, image)
@@ -798,291 +367,6 @@ class SubClient():
 
         response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}/message", json=data)
         return response.status_code
-
-    def delete_message(self, chatId: str, messageId: str, asStaff: bool = False, reason: str = None):
-        """
-        Delete a Message from a Chat.
-
-        **Parameters**
-            - **messageId** : ID of the Message.
-            - **chatId** : ID of the Chat.
-            - **asStaff** : If execute as a Staff member (Leader or Curator).
-            - **reason** : Reason of the action to show on the Moderation History.
-
-        **Returns**
-            - **Success** : 200 (int)
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        data = {
-            "adminOpName": 102,
-        }
-
-        if asStaff and reason:
-            data["adminOpNote"] = {"content": reason}
-
-        if not asStaff:
-            response = self.session.delete(f"/x{self.comId}/s/chat/thread/{chatId}/message/{messageId}")
-        else:
-            response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}/message/{messageId}/admin", json=data)
-
-        return response.status_code
-
-    def mark_as_read(self, chatId: str, messageId: str):
-        """
-        Mark a Message from a Chat as Read.
-
-        **Parameters**
-            - **messageId** : ID of the Message.
-            - **chatId** : ID of the Chat.
-
-        **Returns**
-            - **Success** : 200 (int)
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        data = {
-            "messageId": messageId
-        }
-
-        response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}/mark-as-read", json=data)
-        return response.status_code
-
-    def edit_chat(self, chatId: str, doNotDisturb: bool = None, pinChat: bool = None,
-                title: str = None, icon: str = None, backgroundImage: str = None,
-                content: str = None, announcement: str = None, coHosts: list = None,
-                keywords: list = None, pinAnnouncement: bool = None, publishToGlobal: bool = None,
-                canTip: bool = None, viewOnly: bool = None, canInvite: bool = None,
-                fansOnly: bool = None):
-        """
-        Edit a Chat.
-
-        **Parameters**
-            - **chatId** : ID of the Chat.
-            - **title** : Title of the Chat.
-            - **content** : Content of the Chat.
-            - **icon** : Icon of the Chat.
-            - **backgroundImage** : Url of the Background Image of the Chat.
-            - **announcement** : Announcement of the Chat.
-            - **pinAnnouncement** : If the Chat Announcement should Pinned or not.
-            - **coHosts** : List of User IDS to be Co-Host.
-            - **keywords** : List of Keywords of the Chat.
-            - **viewOnly** : If the Chat should be on View Only or not.
-            - **canTip** : If the Chat should be Tippable or not.
-            - **canInvite** : If the Chat should be Invitable or not.
-            - **fansOnly** : If the Chat should be Fans Only or not.
-            - **publishToGlobal** : If the Chat should show on Public Chats or not.
-            - **doNotDisturb** : If the Chat should Do Not Disturb or not.
-            - **pinChat** : If the Chat should Pinned or not.
-
-        **Returns**
-            - **Success** : 200 (int)
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        data = self._prepare_data(title, content, icon, keywords, announcement, pinAnnouncement, fansOnly, publishToGlobal)
-        res = []
-
-        res.extend(self._set_do_not_disturb(chatId, doNotDisturb))
-        res.extend(self._pin_chat(chatId, pinChat))
-        res.extend(self._set_background_image(chatId, backgroundImage))
-        res.extend(self._set_co_hosts(chatId, coHosts))
-        res.extend(self._set_view_only(chatId, viewOnly))
-        res.extend(self._set_can_invite(chatId, canInvite))
-        res.extend(self._set_can_tip(chatId, canTip))
-
-        response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}", json=data)
-        res.append(response.status_code)
-
-        return res
-
-    def _prepare_data(self, title, content, icon, keywords, announcement, pinAnnouncement, fansOnly, publishToGlobal):
-        data = {}
-        if title: data["title"] = title
-        if content: data["content"] = content
-        if icon: data["icon"] = icon
-        if keywords: data["keywords"] = keywords
-        extensions = {}
-        if announcement: extensions["announcement"] = announcement
-        if pinAnnouncement: extensions["pinAnnouncement"] = pinAnnouncement
-        if fansOnly: extensions["fansOnly"] = fansOnly
-        if extensions: data["extensions"] = extensions
-        if publishToGlobal is not None:
-            data["publishToGlobal"] = 0 if publishToGlobal else 1
-        return data
-
-    def _set_do_not_disturb(self, chatId, doNotDisturb):
-        if doNotDisturb is None:
-            return []
-        alertOption = 2 if doNotDisturb else 1
-        data = {"alertOption": alertOption}
-        response = self.session.post(
-            url=f"/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}/alert",
-            json=data
-        )
-        return [response.status_code]
-
-    def _pin_chat(self, chatId, pinChat):
-        if pinChat is None:
-            return []
-        url_suffix = "pin" if pinChat else "unpin"
-        response = self.session.post(
-            url=f"/x{self.comId}/s/chat/thread/{chatId}/{url_suffix}",
-            json={}
-        )
-        return [response.status_code]
-
-    def _set_background_image(self, chatId, backgroundImage):
-        if not backgroundImage:
-            return []
-        data = {"media": [100, backgroundImage, None]}
-        response = self.session.post(
-            url=f"/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}/background",
-            json=data
-        )
-        return [response.status_code]
-
-    def _set_co_hosts(self, chatId, coHosts):
-        if coHosts is None:
-            return []
-        data = {"uidList": coHosts}
-        response = self.session.post(
-            url=f"/x{self.comId}/s/chat/thread/{chatId}/co-host",
-            json=data
-        )
-        return [response.status_code]
-
-    def _set_view_only(self, chatId, viewOnly):
-        if viewOnly is None:
-            return []
-        url_suffix = "enable" if viewOnly else "disable"
-        response = self.session.post(
-            url=f"/x{self.comId}/s/chat/thread/{chatId}/view-only/{url_suffix}"
-        )
-        return [response.status_code]
-
-    def _set_can_invite(self, chatId, canInvite):
-        if canInvite is None:
-            return []
-        url_suffix = "enable" if canInvite else "disable"
-        response = self.session.post(
-            url=f"/x{self.comId}/s/chat/thread/{chatId}/members-can-invite/{url_suffix}",
-            json={}
-        )
-        return [response.status_code]
-
-    def _set_can_tip(self, chatId, canTip):
-        if canTip is None:
-            return []
-        url_suffix = "enable" if canTip else "disable"
-        response = self.session.post(
-            url=f"/x{self.comId}/s/chat/thread/{chatId}/tipping-perm-status/{url_suffix}",
-            json={}
-        )
-        return [response.status_code]
-
-    def transfer_host(self, chatId: str, userIds: list):
-        return self.session.post(
-            url=f"/x{self.comId}/s/chat/thread/{chatId}/transfer-organizer",
-            json={"uidList": userIds}
-        ).status_code
-
-    def transfer_organizer(self, chatId: str, userIds: list):
-        self.transfer_host(chatId, userIds)
-
-    def accept_host(self, chatId: str, requestId: str):
-        """
-        Accepts a host request for a chat.
-
-        **Parameters**
-            - **chatId** (str): ID of the chat.
-            - **requestId** (str): ID of the host request.
-
-        **Returns**
-            - **Success** : 200 (int)
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        return self.session.post(
-            url=f"/x{self.comId}/s/chat/thread/{chatId}/transfer-organizer/{requestId}/accept"
-        ).status_code
-
-    def accept_organizer(self, chatId: str, requestId: str):
-        """
-        Accepts a host request for a chat.
-
-        **Parameters**
-            - **chatId** (str): ID of the chat.
-            - **requestId** (str): ID of the host request.
-
-        **Returns**
-            - **Success** : 200 (int)
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        self.accept_host(chatId, requestId)
-
-    def kick(self, userId: str, chatId: str, allowRejoin: bool = True):
-        """
-        Kicks a user from a chat.
-
-        **Parameters**
-            - **userId** (str): ID of the user to be kicked.
-            - **chatId** (str): ID of the chat from which the user is to be kicked.
-            - *allowRejoin* (bool, optional): Whether the user is allowed to rejoin the chat. Defaults to True.
-
-        **Returns**
-            - **Success** : 200 (int)
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-
-        params = {"allowRejoin": int(allowRejoin)}
-
-        return self.session.delete(
-            url=f"/x{self.comId}/s/chat/thread/{chatId}/member/{userId}",
-            params=params
-        ).status_code
-
-    def join_chat(self, chatId: str):
-        """
-        Join an Chat.
-
-        **Parameters**
-            - **chatId** : ID of the Chat.
-
-        **Returns**
-            - **Success** : 200 (int)
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}")
-        return response.status_code
-
-    def leave_chat(self, chatId: str):
-        """
-        Leave an Chat.
-
-        **Parameters**
-            - **chatId** : ID of the Chat.
-
-        **Returns**
-            - **Success** : 200 (int)
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        response = self.session.delete(f"/x{self.comId}/s/chat/thread/{chatId}/member/{self.profile.userId}")
-        return response.status_code
-
-    def delete_chat(self, chatId: str):
-        """
-        Delete a Chat.
-
-        **Parameters**
-            - **chatId** : ID of the Chat.
-
-        **Returns**
-            - **Success** : 200 (int)
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        return self.session.delete(f"/x{self.comId}/s/chat/thread/{chatId}").status_code
 
     def subscribe(self, userId: str, autoRenew: str = False, transactionId: str = None):
         if transactionId is None: transactionId = str(uuid4())
@@ -1148,15 +432,6 @@ class SubClient():
         response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}/avchat-reputation")
         return objects.VcReputation(response.json()).VcReputation
 
-    def get_all_users(self, type: str = "recent", start: int = 0, size: int = 25):
-        types = ("recent", "banned", "featured", "leaders", "curators")
-
-        if type not in types:
-            raise exceptions.WrongType(type)
-
-        response = self.session.get(f"/x{self.comId}/s/user-profile?type={type}&start={start}&size={size}")
-        return objects.UserProfileCountList(response.json()).UserProfileCountList
-
     def get_online_users(self, start: int = 0, size: int = 25):
         response = self.session.get(f"/x{self.comId}/s/live-layer?topic=ndtopic:x{self.comId}:online-members&start={start}&size={size}")
         return objects.UserProfileCountList(response.json()).UserProfileCountList
@@ -1165,57 +440,8 @@ class SubClient():
         response = self.session.get(f"/x{self.comId}/s/user-group/quick-access?type=online&start={start}&size={size}")
         return objects.UserProfileCountList(response.json()).UserProfileCountList
 
-    def get_user_info(self, userId: str):
-        """
-        Information of an User.
-
-        **Parameters**
-            - **userId** : ID of the User.
-
-        **Returns**
-            - **Success** : :meth:`User Object <AminoLightPy.lib.util.objects.UserProfile>`
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        response = self.session.get(f"/x{self.comId}/s/user-profile/{userId}")
-        return objects.UserProfile(response.json()["userProfile"]).UserProfile
-
-    def get_user_following(self, userId: str, start: int = 0, size: int = 25):
-        """
-        List of Users that the User is Following.
-
-        **Parameters**
-            - **userId** : ID of the User.
-            - *start* : Where to start the list.
-            - *size* : Size of the list.
-
-        **Returns**
-            - **Success** : :meth:`User List <AminoLightPy.lib.util.objects.UserProfileList>`
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        response = self.session.get(f"/x{self.comId}/s/user-profile/{userId}/joined?start={start}&size={size}")
-        return objects.UserProfileList(response.json()["userProfileList"]).UserProfileList
-
-    def get_user_followers(self, userId: str, start: int = 0, size: int = 25):
-        """
-        List of Users that are Following the User.
-
-        **Parameters**
-            - **userId** : ID of the User.
-            - *start* : Where to start the list.
-            - *size* : Size of the list.
-
-        **Returns**
-            - **Success** : :meth:`User List <AminoLightPy.lib.util.objects.UserProfileList>`
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        response = self.session.get(f"/x{self.comId}/s/user-profile/{userId}/member?start={start}&size={size}")
-        return objects.UserProfileList(response.json()["userProfileList"]).UserProfileList
-
     def get_user_checkins(self, userId: str):
-        response = self.session.get(f"/x{self.comId}/s/check-in/stats/{userId}?timezone={timezone // 1000}")
+        response = self.session.get(f"/x{self.comId}/s/check-in/stats/{userId}?timezone=180")
         return objects.UserCheckIns(response.json()).UserCheckIns
 
     def get_user_blogs(self, userId: str, start: int = 0, size: int = 25):
@@ -1233,39 +459,6 @@ class SubClient():
     def get_influencer_fans(self, userId: str, start: int = 0, size: int = 25):
         response = self.session.get(f"/x{self.comId}/s/influencer/{userId}/fans?start={start}&size={size}")
         return objects.InfluencerFans(response.json()).InfluencerFans
-
-    def get_blocked_users(self, start: int = 0, size: int = 25):
-        """
-        List of Users that the User Blocked.
-
-        **Parameters**
-            - *start* : Where to start the list.
-            - *size* : Size of the list.
-
-        **Returns**
-            - **Success** : :meth:`Users List <AminoLightPy.lib.util.objects.UserProfileList>`
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        response = self.session.get(f"/x{self.comId}/s/block?start={start}&size={size}")
-        return objects.UserProfileList(response.json()["userProfileList"]).UserProfileList
-
-    def get_blocker_users(self, start: int = 0, size: int = 25):
-        """
-        List of Users that are Blocking the User.
-
-        **Parameters**
-            - *start* : Where to start the list.
-            - *size* : Size of the list.
-
-        **Returns**
-            - **Success** : :meth:`List of User IDs <List>`
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-
-        response = self.session.get(f"/x{self.comId}/s/block?start={start}&size={size}")
-        return response.json()["blockerUidList"]
 
     def search_users(self, nickname: str, start: int = 0, size: int = 25):
         response = self.session.get(f"/x{self.comId}/s/user-profile?type=name&q={nickname}&start={start}&size={size}")
@@ -1330,23 +523,6 @@ class SubClient():
 
         return objects.TippedUsersSummary(response.json()).TippedUsersSummary
 
-
-    def get_chat_threads(self, start: int = 0, size: int = 25):
-        """
-        List of Chats the account is in.
-
-        **Parameters**
-            - *start* : Where to start the list.
-            - *size* : Size of the list.
-
-        **Returns**
-            - **Success** : :meth:`Chat List <AminoLightPy.lib.util.objects.ThreadList>`
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        response = self.session.get(f"/x{self.comId}/s/chat/thread?type=joined-me&start={start}&size={size}")
-        return objects.ThreadList(response.json()["threadList"]).ThreadList
-
     def get_public_chat_threads(self, type: str = "recommended", start: int = 0, size: int = 25):
         """
         List of Public Chats of the Community.
@@ -1363,94 +539,6 @@ class SubClient():
         response = self.session.get(f"/x{self.comId}/s/chat/thread?type=public-all&filterType={type}&start={start}&size={size}")
         return objects.ThreadList(response.json()["threadList"]).ThreadList
 
-    def get_chat_thread(self, chatId: str):
-        """
-        Get the Chat Object from an Chat ID.
-
-        **Parameters**
-            - **chatId** : ID of the Chat.
-
-        **Returns**
-            - **Success** : :meth:`Chat Object <AminoLightPy.lib.util.objects.Thread>`
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        response = self.session.get(f"/x{self.comId}/s/chat/thread/{chatId}")
-        return objects.Thread(response.json()["thread"]).Thread
-
-    def get_chat_messages(self, chatId: str, size: int = 25, pageToken: str = None):
-        """
-        List of Messages from an Chat.
-
-        **Parameters**
-            - **chatId** : ID of the Chat.
-            - *size* : Size of the list.
-            - *pageToken* : Next Page Token.
-
-        **Returns**
-            - **Success** : :meth:`Message List <AminoLightPy.lib.util.objects.MessageList>`
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-
-        if pageToken: url = f"/x{self.comId}/s/chat/thread/{chatId}/message?v=2&pagingType=t&pageToken={pageToken}&size={size}"
-        else: url = f"/x{self.comId}/s/chat/thread/{chatId}/message?v=2&pagingType=t&size={size}"
-
-        return objects.GetMessages(self.session.get(url).json()).GetMessages
-
-    def get_message_info(self, chatId: str, messageId: str):
-        """
-        Information of an Message from an Chat.
-
-        **Parameters**
-            - **chatId** : ID of the Chat.
-            - **message** : ID of the Message.
-
-        **Returns**
-            - **Success** : :meth:`Message Object <AminoLightPy.lib.util.objects.Message>`
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        response = self.session.get(f"/x{self.comId}/s/chat/thread/{chatId}/message/{messageId}")
-        return objects.Message(response.json()["message"]).Message
-
-    def get_blog_info(self, blogId: str = None, wikiId: str = None, quizId: str = None, fileId: str = None):
-        if blogId or quizId:
-            if quizId is not None: blogId = quizId
-            response = self.session.get(f"/x{self.comId}/s/blog/{blogId}")
-            return objects.GetBlogInfo(response.json()).GetBlogInfo
-
-        elif wikiId:
-            response = self.session.get(f"/x{self.comId}/s/item/{wikiId}")
-            return objects.GetWikiInfo(response.json()).GetWikiInfo
-
-        elif fileId:
-            response = self.session.get(f"/x{self.comId}/s/shared-folder/files/{fileId}")
-            return objects.SharedFolderFile(response.json()["file"]).SharedFolderFile
-
-        else: raise exceptions.SpecifyType
-
-    def get_blog_comments(self, blogId: str = None, wikiId: str = None, quizId: str = None, fileId: str = None, sorting: str = "newest", start: int = 0, size: int = 25):
-        if sorting not in ["newest", "oldest", "top"]:
-            raise ValueError("Invalid sorting type. Must be 'newest', 'oldest' or 'top'.")
-
-        sorting = "vote" if sorting == "top" else sorting
-
-        object_types = {
-            'blogId': {'id': blogId or quizId, 'url': f"/x{self.comId}/s/blog/{blogId or quizId}/comment"},
-            'wikiId': {'id': wikiId, 'url': f"/x{self.comId}/s/item/{wikiId}/comment"},
-            'fileId': {'id': fileId, 'url': f"/x{self.comId}/s/shared-folder/files/{fileId}/comment"}
-        }
-
-        for key, value in object_types.items():
-            if value['id']:
-                response = self.session.get(f"{value['url']}?sort={sorting}&start={start}&size={size}")
-                break
-        else:
-            raise exceptions.SpecifyType
-
-        return objects.CommentList(response.json()["commentList"]).CommentList
-
 
     def get_blog_categories(self, size: int = 25):
         response = self.session.get(f"/x{self.comId}/s/blog-category?size={size}")
@@ -1464,30 +552,6 @@ class SubClient():
         response = self.session.get(f"/x{self.comId}/s/blog/{quizId}/quiz/result?start={start}&size={size}")
         return objects.QuizRankings(response.json()).QuizRankings
 
-    def get_wall_comments(self, userId: str, sorting: str, start: int = 0, size: int = 25):
-        """
-        List of Wall Comments of an User.
-
-        **Parameters**
-            - **userId** : ID of the User.
-            - **sorting** : Order of the Comments.
-                - ``newest``, ``oldest``, ``top``
-            - *start* : Where to start the list.
-            - *size* : Size of the list.
-
-        **Returns**
-            - **Success** : :meth:`Comments List <AminoLightPy.lib.util.objects.CommentList>`
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        if sorting == "newest": sorting = "newest"
-        elif sorting == "oldest": sorting = "oldest"
-        elif sorting == "top": sorting = "vote"
-        else: raise exceptions.WrongType(sorting)
-
-        response = self.session.get(f"/x{self.comId}/s/user-profile/{userId}/comment?sort={sorting}&start={start}&size={size}")
-        return objects.CommentList(response.json()["commentList"]).CommentList
-
     def get_recent_blogs(self, pageToken: str = None, start: int = 0, size: int = 25):
         params = {
             "pagingType": "t",
@@ -1499,28 +563,6 @@ class SubClient():
 
         response = self.session.get(f"/x{self.comId}/s/feed/blog-all", params=params)
         return objects.RecentBlogs(response.json()).RecentBlogs
-
-    def get_chat_users(self, chatId: str, start: int = 0, size: int = 25):
-        """
-        List of users in a chat.
-
-        **Parameters**
-            - **chatId** (str): ID of the chat.
-            - *start* (int, optional): The index from which to start the list. Defaults to 0.
-            - *size* (int, optional): The size of the list. Defaults to 25.
-
-        **Returns**
-            - **Success** : :meth:`User List <AminoLightPy.lib.util.objects.UserProfileList>`
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        params = {
-            "start": start,
-            "size": size,
-            "type": "default",
-            "cv": "1.2"
-        }
-        response = self.session.get(f"/x{self.comId}/s/chat/thread/{chatId}/member", params=params)
-        return objects.UserProfileList(response.json()["memberList"]).UserProfileList
 
     def get_notifications(self, start: int = 0, size: int = 25):
         response = self.session.get(f"/x{self.comId}/s/notification?pagingType=t&start={start}&size={size}")
@@ -1750,7 +792,7 @@ class SubClient():
             }
         }
 
-        return self.session.post(f"/x{self.comId}/s/user-profile/{userId}/admin", json=data).json()
+        return self.session.post(f"/x{self.comId}/s/user-profile/{userId}/admin", json=data)
 
     # TODO : List all warning texts
     def warn(self, userId: str, reason: str = None):
@@ -1841,29 +883,6 @@ class SubClient():
         return objects.BlogList(response.json()["blogList"]).BlogList
 
     # Provided by "spectrum#4691"
-    def purchase(self, objectId: str, objectType: int, aminoPlus: bool = True, autoRenew: bool = False):
-        """
-        Makes a purchase in the store.
-
-        **Parameters**
-            - **objectId** (str): ID of the object to be purchased.
-            - *isAutoRenew* (bool, optional): Whether the purchase should be auto-renewed. Defaults to False.
-
-        **Returns**
-            - **Success** : 200 (int)
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        data = {
-            "objectId": objectId,
-            "objectType": objectType,
-            "v": 1,
-        }
-
-        data['paymentContext'] = {'discountStatus': int(aminoPlus), 'discountValue': 1, 'isAutoRenew': autoRenew}
-
-        return self.session.post(f"/x{self.comId}/s/store/purchase", json=data).status_code
-
-    # Provided by "spectrum#4691"
     def apply_avatar_frame(self, avatarId: str, applyToAll: bool = True):
         """
         Apply avatar frame.
@@ -1885,25 +904,6 @@ class SubClient():
         }
 
         return self.session.post(f"/x{self.comId}/s/avatar-frame/apply", json=data).status_code
-
-    def invite_to_vc(self, chatId: str, userId: str):
-        """
-        Invite a User to a Voice Chat
-
-        **Parameters**
-            - **chatId** - ID of the Chat
-            - **userId** - ID of the User
-
-        **Returns**
-            - **Success** : 200 (int)
-
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-
-        data = {"uid": userId}
-
-        response = self.session.post(f"/x{self.comId}/s/chat/thread/{chatId}/vvchat-presenter/invite/", json=data)
-        return response.status_code
 
     def add_poll_option(self, blogId: str, question: str):
         data = {

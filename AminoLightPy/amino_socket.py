@@ -1,17 +1,13 @@
 # pylint: disable=invalid-name
 # pylint: disable=no-member
-
 import ssl
 import traceback
 import threading
-
 from json import loads, dumps
 from time import time, sleep
 from websocket import WebSocketApp
-
-from .lib.util import objects
-from .lib.util.helpers import gen_deviceId, signature
-
+from .lib import Event
+from .lib import gen_deviceId, signature
 
 class SocketHandler:
     def __init__(self, client, debug=False):
@@ -20,21 +16,77 @@ class SocketHandler:
         self.debug = debug
         self.socket = None
         self.thread_event = threading.Event()
+        self.reconnect_attempts = 0
+        self.max_reconnect_attempts = 5
+        self.reconnect_delay = 5
+        self._socket_lock = threading.Lock()
+        self._is_connecting = False
 
     def on_message(self, ws, data):
         self.client.handle_socket_message(data)
 
     def is_connected(self):
-        return self.socket.sock and self.socket.sock.connected
+        return self.socket and self.socket.sock and self.socket.sock.connected
+
+    def safe_reconnect(self):
+        """Safely reconnects the socket with retry logic"""
+        with self._socket_lock:
+            if self._is_connecting:
+                self.debug_print("[socket][reconnect] Connection already in progress")
+                return False
+                
+            if self.reconnect_attempts >= self.max_reconnect_attempts:
+                self.debug_print("[socket][reconnect] Max reconnection attempts reached")
+                self.reconnect_attempts = 0
+                return False
+
+            try:
+                self._is_connecting = True
+                self.debug_print(f"[socket][reconnect] Attempt {self.reconnect_attempts + 1}")
+                
+                if self.socket:
+                    try:
+                        self.socket.close()
+                    except:
+                        pass
+                    self.socket = None
+                    
+                self.run_amino_socket()
+                sleep(self.reconnect_delay)
+                
+                if self.is_connected():
+                    self.reconnect_attempts = 0
+                    return True
+                    
+                self.reconnect_attempts += 1
+                return False
+            except:
+                self.reconnect_attempts += 1
+                sleep(self.reconnect_delay)
+                return False
+            finally:
+                self._is_connecting = False
 
     def send(self, data):
         self.debug_print(f"[socket][send] Sending Data : {data}")
-
-        if not self.is_connected():
-            self.run_amino_socket()
-            sleep(5)
-
-        self.socket.send(data)
+        
+        retry_count = 0
+        while retry_count < 3:
+            if not self.is_connected():
+                if not self.safe_reconnect():
+                    retry_count += 1
+                    continue
+                    
+            try:
+                self.socket.send(data)
+                return True
+            except Exception as e:
+                self.debug_print(f"[socket][send] Error: {str(e)}")
+                retry_count += 1
+                sleep(1)
+                
+        self.debug_print("[socket][send] Failed to send message after retries")
+        return False
 
     def on_close(self, ws, data, status):
         self.debug_print("[socket][reconnect_handler] Reconnecting Socket")
@@ -95,7 +147,6 @@ class SocketHandler:
         if self.debug:
             print(message)
 
-
 class SocketRequests:
     def __init__(self, client) -> None:
         self.client = client
@@ -144,12 +195,6 @@ class SocketRequests:
         data = dumps(data)
         self.client.send(data)
 
-
-    # Fixed by vedansh#4039
-    def leave_from_live_chat(self, chatId: str):
-        if chatId in self.active_live_chats:
-            self.active_live_chats.remove(chatId)
-
  
     def run_vc(self, comId: int, chatId: str, joinType: str):
         while chatId in self.active_live_chats:
@@ -185,12 +230,13 @@ class SocketRequests:
         threading.Thread(target=self.run_vc, args=(comId, chatId, joinType)).start()
 
     def end_vc(self, comId: int, chatId: str, joinType: int = 2):
-        self.leave_from_live_chat(chatId)
-        self.join_video_chat(
+        self.active_live_chats.discard(chatId)
+        self.join_voice_chat(
             comId=comId,
             chatId=chatId,
             joinType=joinType
         )
+        
 
     def start_video_chat(self, comId: str, chatId: str, joinType: int = 1):
         self.join_voice_chat(
@@ -424,7 +470,7 @@ class Callbacks:
 
     def event_handler_decorator(func):
         def wrapper(self, data):
-            event = objects.Event(data["o"]).Event
+            event = Event(data["o"]).Event
             self.call(func.__name__, event)
             self.call("all", event)
         return wrapper
