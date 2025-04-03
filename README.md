@@ -14,13 +14,15 @@
     <a href="https://github.com/AugustLigh/AminoLightPy/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="licence" /></a>
 </p>
 
-<p align="center">
-  <a href="#features">📋 Features</a> •
-  <a href="#installation-and-usage">🚀 Usage</a> •
-  <a href="#example">📝 Example</a> •
-  <a href="#documentation">📚 Documentation</a> •
-  <a href="#notes">📌 Notes</a>
-</p>
+<div align="center">
+  
+  [📋 Features](#features) • 
+  [🚀 Usage](#installation-and-usage) • 
+  [📝 Example](#example) • 
+  [📚 Documentation](#documentation) • 
+  [📌 Notes](#notes)
+  
+</div>
 
 ---
 
