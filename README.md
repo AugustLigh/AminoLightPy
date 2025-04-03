@@ -26,7 +26,7 @@
 
 ---
 
-## 📋 Features
+## Features
 
 <div align="center">
 
@@ -352,7 +352,7 @@ If you can't find what you're looking for or need help with this library:
 
 We will be glad to help!
 
-## 📌 Notes
+## Notes
 
 > *This is not my original project. Amino libraries already existed before me. I just wanted to create a simple and effective way to support bots.*
 
