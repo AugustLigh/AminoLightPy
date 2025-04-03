@@ -79,13 +79,13 @@ def on_message(data):
             sub_client.send_message(chatId=data.message.chatId, message=help_message)
 ```
 
-## 📝 Example
+## Example
 
 Simply copy the code above and type `/help` in the chat to see your bot in action.
 
 Also, take a look at interactive examples in our documentation!
 
-## 📚 Documentation
+## Documentation
 
 <div align="center">
   <p><b>Complete API reference for building amazing Amino bots</b></p>
@@ -344,7 +344,7 @@ with sub_client.recording(chatId="chat-id-here"):
   <p><i>For complete API reference, see the <a href="https://aminopy.readthedocs.io/en/latest/index.html">official documentation</a>.</i></p>
 </div>
 
-## 📱 Contact and Support
+## Contact and Support
 
 If you can't find what you're looking for or need help with this library:
 - Telegram: [augustlight](https://t.me/augustlight)
