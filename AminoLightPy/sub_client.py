@@ -679,19 +679,17 @@ class SubClient(AbstractClient):
             "adminOpValue": {"featuredType": 0}
         }
 
+        url = f"/x{self.comId}/s/"
         if userId:
-            url = f"/x{self.comId}/s/user-profile/{userId}/admin"
-
+            url += f"user-profile/{userId}/admin"
         elif blogId:
-            url = f"/x{self.comId}/s/blog/{blogId}/admin"
-
+            url += f"blog/{blogId}/admin"
         elif wikiId:
-            url = f"/x{self.comId}/s/item/{wikiId}/admin"
-
+            url += f"item/{wikiId}/admin"
         elif chatId:
-            url = f"/x{self.comId}/s/chat/thread/{chatId}/admin"
-
-        else: raise exceptions.SpecifyType
+            url += f"chat/thread/{chatId}/admin"
+        else:
+            raise exceptions.SpecifyType
 
         return self.session.post(url, json=data).json()
 

@@ -101,6 +101,9 @@ from AminoLightPy import Client
 
 # Initialize client with default settings
 client = Client()
+# OR
+client = Client(socket_enabled=False)
+#if you not need websocket (faster)
 
 # With custom settings
 client = Client(deviceId="your_device_id", proxies={"http": "http://proxy.example.com"})
@@ -116,6 +119,11 @@ client.login(email_or_phone="example@gmail.com", password="your_password")
 client.login_email(email="example@gmail.com", password="your_password")
 client.login_phone(phoneNumber="+1234567890", password="your_password")
 client.login_sid(SID="your_sid_here")  # SIDs are cached automatically when using client.login()
+
+# OR
+
+client.login(email_or_phone="example@gmail.com", password="your_password", self_device=False)
+# If you want a random DeviceId for each login
 ```
 
 #### 🔸 Event Handling
@@ -140,12 +148,13 @@ def on_image(data):
 <tr><td><code>on_join_chat</code></td><td>Triggered when someone joins a chat</td></tr>
 <tr><td><code>on_leave_chat</code></td><td>Triggered when someone leaves a chat</td></tr>
 </table>
+and more...
 
 #### 🔸 Community Operations
 
 ```python
 # Get list of joined communities
-communities = client.sub_clients()
+communities = client.sub_clients(size=100)
 
 # Search for a community
 found_communities = client.search_community("amino_id")
@@ -153,6 +162,9 @@ found_communities = client.search_community("amino_id")
 # Join/Leave community
 client.join_community(comId=123456)
 client.leave_community(comId=123456)
+
+# Send join request
+client.request_join_community(comId=123456, message="i want to join😭🙏")
 ```
 </details>
 
@@ -188,6 +200,7 @@ with open("image.jpg", "rb") as image:
         chatId="chat-id-here", 
         file=image
     )
+# Warn! You need add `fileType="audio"` for voice message
 
 # Mentions
 sub_client.send_message(
@@ -231,7 +244,8 @@ chats = sub_client.get_chat_threads(start=0, size=100)
 
 # Get chat messages
 messages = sub_client.get_chat_messages(
-    chatId="chat-id-here", 
+    chatId="chat-id-here",
+    start=0,
     size=100
 )
 
@@ -252,14 +266,14 @@ sub_client.leave_chat(chatId="chat-id-here")
 sub_client.post_blog(
     title="My Blog Post",
     content="This is content for my blog post",
-    imageList=["image_url_1", "image_url_2"]
+    imageList=[open("image_1.png", "rb"), open("image_2.png", "rb")]
 )
 
 # Create a wiki
 sub_client.post_wiki(
     title="Wiki Title",
     content="Wiki content here",
-    icon="image_url"
+    icon=open("icon.png", "rb")
 )
 
 # Upload media
@@ -294,10 +308,17 @@ sub_client.hide(blogId="blog-id", reason="Violates community guidelines")
 
 # Ban/Unban users
 sub_client.ban(userId="user-id", reason="Spamming")
-sub_client.unban(userId="user-id")
+sub_client.unban(userId="user-id", reason="Appeal accepted")
 
 # Feature content
-sub_client.feature(time=1, blogId="blog-id")  # Feature for 1 hour
+sub_client.feature(time=1, blogId="blog-id")
+sub_client.unfeature(blogId="blog-id")
+
+# Strike users
+sub_client.strike(userId="user-id", time=1, title="Spam", reason="Excessive messaging")
+
+# Warn users
+sub_client.warn(userId="user-id", reason="Minor rule violation")
 ```
 
 #### 🔸 Context Managers
@@ -313,7 +334,7 @@ with sub_client.typing(chatId="chat-id-here"):
 with sub_client.recording(chatId="chat-id-here"):
     # Prepare a voice message
     time.sleep(3)
-    sub_client.send_message(chatId="chat-id-here", file=voice_message)
+    sub_client.send_message(chatId="chat-id-here", file=open("demo.mp3", "rb"), fileType="audio")
 ```
 </details>
 
