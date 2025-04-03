@@ -1,15 +1,13 @@
 from time import time, sleep
-from json import dumps, loads
+from json import dumps
 from hashlib import sha1
-from typing import BinaryIO, Optional, Dict, Any, Union
+from typing import BinaryIO
 from collections import OrderedDict
-from requests import Session, Response
+from requests import Session
 from mimetypes import guess_type
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from functools import lru_cache
 from threading import RLock
-import logging
 
 from .lib import signature, gen_deviceId
 from .lib import CheckException
@@ -24,40 +22,9 @@ from requests.exceptions import (
 
 api = "http://service.aminoapps.com/api/v1"
 device_id = gen_deviceId()
-cache = OrderedDict()
+cache = OrderedDict()  # Кеш для изображений
 cache_len = 32
 _cache_lock = RLock()
-
-
-class TTLCache:
-    def __init__(self, max_size=100, ttl=60):
-        self._cache = OrderedDict()
-        self._max_size = max_size
-        self._ttl = ttl
-        self._lock = RLock()
-    
-    def get(self, key):
-        with self._lock:
-            if key in self._cache:
-                value, timestamp = self._cache[key]
-                if time() - timestamp <= self._ttl:
-                    # Updating the position in OrderedDict (LRU)
-                    self._cache.move_to_end(key)
-                    return value
-                else:
-                    del self._cache[key]
-        return None
-    
-    def set(self, key, value):
-        with self._lock:
-            self._cache[key] = (value, time())
-            self._cache.move_to_end(key)
-            # Clearing the cache if the size is exceeded
-            if len(self._cache) > self._max_size:
-                self._cache.popitem(last=False)
-
-
-_request_cache = TTLCache(max_size=100, ttl=30)  # 30 second TTL
 
 class AminoSession(Session):
     def __init__(self) -> None:
@@ -68,7 +35,6 @@ class AminoSession(Session):
             "Accept-Encoding": "gzip, deflate, br",
             "User-Agent": "Apple iPhone13,1 iOS v16.5 Main/3.19.0",
         }) 
-
 
         retry_strategy = Retry(
             total=3,
@@ -91,8 +57,6 @@ class AminoSession(Session):
         self._common_headers = {
             "Content-Type": "application/json",
         }
-        
-        self.use_cache = True
     
     def _prepare_data(self, data, url):
         """Streamlined data preparation for query"""
@@ -106,23 +70,10 @@ class AminoSession(Session):
         
         return data
     
-    def _get_cache_key(self, method, url, params=None):
-        """Generates a unique cache key for the request"""
-        if method.upper() != "GET" or not self.use_cache:
-            return None
-        
-        return f"{method}:{url}:{str(params) if params else ''}"
-    
     def request(self, method, url, *args, **kwargs):
         headers = {**kwargs.get("headers", {})}
         data = kwargs.get("data", None)
         json_data = kwargs.get("json", None)
-        
-        cache_key = self._get_cache_key(method, url, kwargs.get("params"))
-        if cache_key:
-            cached_response = _request_cache.get(cache_key)
-            if cached_response:
-                return cached_response
         
         if method.lower() == "post":
             if json_data is not None and data is None:
@@ -146,7 +97,6 @@ class AminoSession(Session):
         
         kwargs.setdefault("timeout", self.timeout)
         
-
         response = None
         max_retries = 2
         retry_count = 0
@@ -166,10 +116,6 @@ class AminoSession(Session):
         # Проверяем код ответа
         if not response.ok:
             CheckException(response.text)
-        
-
-        if cache_key:
-            _request_cache.set(cache_key, response)
         
         return response
     
