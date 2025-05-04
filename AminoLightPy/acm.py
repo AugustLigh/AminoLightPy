@@ -417,11 +417,20 @@ class ACM():
         return response.status_code
     
     def delete_admin(self, userId: str, type: str):
+        """
+        Delete admin from commnity in the community.
+
+        **Parameters**
+            - *userId* : The ID of the user to be removed from being an influencer.
+            - *type* : The type of admin to be removed. Can be "leader" or "curator".
+
+        **Returns**
+            - **Success** : 200 (int)
+
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
+        """
         response = self.session.delete(f"/x{self.comId}/s/user-profile/{userId}/{type}")
         return response.status_code
-    
-    def get_admin_list(self):
-        pass #TODO
 
     def get_notice_list(self, start: int = 0, size: int = 25):
         """

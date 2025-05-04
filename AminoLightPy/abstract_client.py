@@ -515,8 +515,8 @@ class AbstractClient():
                 data["mediaUploadValue"] = b64encode(file.read()).decode()
 
             else:
-                # url = upload_media(self, file) # TODO
-                data["mediaValue"] = file
+                url = upload_media(self, file)
+                data["mediaValue"] = url
 
         response = self.session.post(
             url=f"{self.path}/s/chat/thread/{chatId}/message",
@@ -749,22 +749,23 @@ class AbstractClient():
                             captionList: list = None, backgroundImage: str = None,
                             backgroundColor: str = None, titles: list = None, colors: list = None,
                             defaultBubbleId: str = None):
-        mediaList = []
+
         data = {}
-        if captionList:
-            for image, caption in zip(imageList, captionList):
-                mediaList.append([100, upload_media(self, image), caption])
-
-        else:
-            if imageList:
-                for image in imageList:
-                    mediaList.append([100, upload_media(self, image), None])
-
-        if imageList or captionList: data["mediaList"] = mediaList
+        
+        if imageList:
+            if captionList and len(imageList) != len(captionList):
+                raise exceptions.WrongType("Length of imageList and captionList must be the same")
+            
+            mediaList = []
+            if captionList:
+                mediaList = [[100, upload_media(self, image), caption] for image, caption in zip(imageList, captionList)]
+            else:
+                mediaList = [[100, upload_media(self, image), None] for image in imageList]
+            
+            data["mediaList"] = mediaList
 
         if nickname: data["nickname"] = nickname
-        # if icon: data["icon"] = upload_media(self, icon)
-        if icon: data["icon"] = icon
+        if icon: data["icon"] = upload_media(self, icon)
         if content: data["content"] = content
 
         if chatRequestPrivilege: data["extensions"] = {"privilegeOfChatInviteRequest": chatRequestPrivilege}
@@ -776,11 +777,11 @@ class AbstractClient():
         if defaultBubbleId: data["extensions"] = {"defaultBubbleId": defaultBubbleId}
 
         if titles or colors:
-            tlt = []
-            for titles, colors in zip(titles, colors):
-                tlt.append({"title": titles, "color": colors})
+            custom_titles = []
+            for title_item, color_item in zip(titles, colors):
+                custom_titles.append({"title": title_item, "color": color_item})
 
-            data["extensions"] = {"customTitles": tlt}
+            data["extensions"] = {"customTitles": custom_titles}
 
         return self.session.post(
             url=f"{self.path}/s/user-profile/{self.profile.userId}",
@@ -961,15 +962,15 @@ class AbstractClient():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        data = {"adminOpName": 102,}
+        data = {"adminOpName": 102}
 
         if asStaff and reason:
             data["adminOpNote"] = {"content": reason}
 
-        if not asStaff:
-            response = self.session.delete(f"{self.path}/s/chat/thread/{chatId}/message/{messageId}")
-        else:
+        if asStaff:
             response = self.session.post(f"{self.path}/s/chat/thread/{chatId}/message/{messageId}/admin", json=data)
+        else:
+            response = self.session.delete(f"{self.path}/s/chat/thread/{chatId}/message/{messageId}")
 
         return response.status_code
     
@@ -1026,29 +1027,12 @@ class AbstractClient():
         return self.session.post(
                 url=f"{self.path}/s/chat/thread/{chatId}/transfer-organizer/{requestId}/accept"
             ).status_code
-
-    def accept_organizer(self, chatId: str, requestId: str):
-        """
-        Accepts a host request for a chat.
-
-        **Parameters**
-            - **chatId** (str): ID of the chat.
-            - **requestId** (str): ID of the host request.
-
-        **Returns**
-            - **Success** : 200 (int)
-            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
-        """
-        return self.accept_host(chatId, requestId)
     
     def transfer_host(self, chatId: str, userIds: list):
         return self.session.post(
             url=f"{self.path}/s/chat/thread/{chatId}/transfer-organizer",
             json={"uidList": userIds}
         ).status_code
-
-    def transfer_organizer(self, chatId: str, userIds: list):
-        self.transfer_host(chatId, userIds)
 
     def delete_chat(self, chatId: str):
         """

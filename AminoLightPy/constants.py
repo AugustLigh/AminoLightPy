@@ -12,11 +12,6 @@ from threading import RLock
 from .lib import signature, gen_deviceId
 from .lib import CheckException
 
-from requests.exceptions import (
-    ReadTimeout,
-    ConnectTimeout, 
-    ConnectionError,
-)
 
 # add by August Light
 
@@ -74,8 +69,10 @@ class AminoSession(Session):
         headers = {**kwargs.get("headers", {})}
         data = kwargs.get("data", None)
         json_data = kwargs.get("json", None)
+
+        method_lower = method.lower()
         
-        if method.lower() == "post":
+        if method_lower == "post":
             if json_data is not None and data is None:
                 prepared_data = self._prepare_data(json_data, url)
                 data = dumps(prepared_data)
@@ -87,6 +84,9 @@ class AminoSession(Session):
                 
             elif data is None:
                 headers["Content-Type"] = "application/x-www-form-urlencoded"
+        # elif method_lower == "delete":
+        #     pass
+
         
         kwargs["headers"] = headers
         if data is not None:
@@ -97,23 +97,8 @@ class AminoSession(Session):
         
         kwargs.setdefault("timeout", self.timeout)
         
-        response = None
-        max_retries = 2
-        retry_count = 0
+        response = super().request(method, url, *args, **kwargs)
         
-        while retry_count <= max_retries:
-            try:
-                response = super().request(method, url, *args, **kwargs)
-                break
-            except (ReadTimeout, ConnectTimeout, ConnectionError):
-                retry_count += 1
-                if retry_count > max_retries:
-                    raise
-                
-                sleep_time = 0.3 * (2 ** retry_count)
-                sleep(sleep_time)
-        
-        # Проверяем код ответа
         if not response.ok:
             CheckException(response.text)
         

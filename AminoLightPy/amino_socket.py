@@ -371,6 +371,7 @@ class SocketRequests:
             "t": 306 if stop else 304
         }
         data = dumps(data)
+        print(data)
         self.client.send(data)
 
 class Callbacks:

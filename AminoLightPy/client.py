@@ -2,12 +2,13 @@
 # pylint: disable=too-many-lines
 from json import dumps
 from time import time
-from .managers import Typing, Recording, CacheManager
+from .managers import Typing, Recording
 
 from .constants import api, AminoSession
 from .abstract_client import AbstractClient
 from .amino_socket import Callbacks, SocketHandler, SocketRequests
-from .lib import exceptions, objects, helpers, self_deviceId
+from .lib import exceptions, objects, helpers, self_deviceId, \
+                CacheManager, deprecated
 
 #@dorthegra/IDörthe#8835 thanks for support!
 
@@ -35,20 +36,18 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
         self.profile = objects.UserProfile(None).UserProfile
         self.profile.session = self.session
 
-
-    def parse_headers(self, data: str = None) -> dict:
+    @deprecated("parse_headers is deprecated. Use self.session.headers instead.")
+    def parse_headers(self, data: str = None, type: str = None) -> dict:
         """
         **Returns**
             - Headers. For support old custom requests
         """
         base_headers: dict = self.session.headers
-        if data:
-            if not isinstance(data, str):
-                data = dumps(data)
-            base_headers["NDC-MSG-SIG"] = helpers.signature(data)
+        if not isinstance(data, str):
+            data = dumps(data)
+        base_headers["NDC-MSG-SIG"] = helpers.signature(data)
 
         return base_headers
-
 
     def login_sid(self, SID: str):
         """
@@ -75,17 +74,7 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
         self.authenticated = True
 
     def login(self, login: str, password: str, self_device: bool = True):
-        if not self.cache_manager.sid_exists(login):
-            if login[0] == "+":
-                login_data = self.login_phone(login, password, self_device)
-            else:
-                login_data = self.login_email(login, password, self_device)
-
-            self.cache_manager.save_sid(login, login_data["sid"])
-
-            return login_data
-
-        else:
+        if self.cache_manager.sid_exists(login):
             sid_file = self.cache_manager.get_sid(login)
 
             if time() - sid_file["time"] > 86400:
@@ -96,6 +85,15 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
             self.login_sid(sid_file["sid"])
 
             return sid_file["sid"]
+        else:
+            if login[0] == "+":
+                login_data = self.login_phone(login, password, self_device)
+            else:
+                login_data = self.login_email(login, password, self_device)
+
+            self.cache_manager.save_sid(login, login_data["sid"])
+
+            return login_data
 
 
     def login_email(self, email: str, password: str, self_device: bool = True):
@@ -142,6 +140,7 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
 
         return json
 
+    @deprecated("login_phone is deprecated. Use login instead.")
     def login_phone(self, phoneNumber: str, password: str, self_device: bool = True):
         """
         Login into an account.
@@ -480,7 +479,6 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
         response = self.session.post("/g/s/auth/reset-password", json=data)
         return response.status_code
 
-
     def get_account_info(self):
         """
         Information of an this account.
@@ -497,16 +495,21 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
         "Adapter between receiving messages and processing them"
         return self.resolve(data)
 
-    def get_eventlog(self):
+    def get_eventlog(self, language = "en"):
         """
         Information of an events.
+        - **language** : Language of the Blogs.
+                - ``en``, ``es``, ``pt``, ``ar``, ``ru``, ``fr``, ``de``
 
         **Returns**
             - **Success** : :meth:`dict`
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        params = {"language": "en"}
+        if language not in self.get_supported_languages():
+            raise exceptions.UnsupportedLanguage(language)
+        
+        params = {"language": language}
         response = self.session.get("/g/s/eventlog/profile", params=params)
         return response.json()
 
@@ -558,7 +561,12 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"/g/s-x{comId}/community/info?withInfluencerList=1&withTopicList=true&influencerListOrderStrategy=fansCount")
+        params = {
+            "withInfluencerList": 1,
+            "withTopicList": True,
+            "influencerListOrderStrategy": "fansCount"
+        }
+        response = self.session.get(f"/g/s-x{comId}/community/info", params=params)
         return objects.Community(response.json()["community"]).Community
 
     def search_community(self, aminoId: str):
@@ -592,10 +600,7 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        data = {}
-        if invitationId:
-            data["invitationId"] = invitationId
-
+        data = {"invitationId": invitationId} if invitationId else None
         response = self.session.post(f"/x{comId}/s/community/join", json=data)
         return response.status_code
 
@@ -613,7 +618,6 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {"message": message}
-
         response = self.session.post(f"/x{comId}/s/community/membership-request", jaon=data)
         return response.status_code
 
@@ -658,10 +662,7 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
             "message": reason,
         }
 
-        if isGuest:
-            flg = "g-flag"
-        else:
-            flg = "flag"
+        flg = "g-flag" if isGuest else "flag"
         response = self.session.post(f"/x{comId}/s/{flg}", json=data)
         return response.status_code
 
@@ -678,7 +679,6 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {"aminoId": aminoId}
-
         response = self.session.post("/g/s/account/change-amino-id", json=data)
         return response.status_code
 
@@ -835,7 +835,11 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"/g/s/wallet/coin/history?start={start}&size={size}")
+        params = {
+            "start": start,
+            "size": size
+        }
+        response = self.session.get(f"/g/s/wallet/coin/history", params=params)
         return objects.WalletHistory(response.json()["coinHistoryList"]).WalletHistory
 
     def get_from_deviceid(self, deviceId: str):
@@ -908,16 +912,15 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get("/g/s/community-collection/supported-languages")
-        return response.json()["supportedLanguages"]
+        return ["en", "es", "pt", "ar", "ru", "fr", "de"]
     
     def create_sticker_pack(self, name: str, description: str, image_list: list):
         data = {
             "description": description,
-            "collectionType":3,
-            "stickerList":image_list,
-            "name":name,
-            "iconSourceStickerIndex":0
+            "collectionType": 3,
+            "stickerList": image_list,
+            "name": name,
+            "iconSourceStickerIndex": 0
         }
 
         return self.session.post("/g/s/sticker-collection", json=data)
@@ -949,9 +952,13 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"/g/s/store/subscription?objectType={objectType}&start={start}&size={size}")
+        params = {
+            "objectType": objectType,
+            "start": start,
+            "size": size
+        }
+        response = self.session.get(f"/g/s/store/subscription", params=params)
         return response.json()["storeSubscriptionItemList"]
-
 
     # Contributed by 'https://github.com/LynxN1'
     def link_identify(self, code: str):
@@ -965,7 +972,7 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
             - **Success** : A JSON object with the community link information.
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        response = self.session.get(f"/g/s/community/link-identify?q=http%3A%2F%2Faminoapps.com%2Finvite%2F{code}")
+        response = self.session.get(f"/g/s/community/link-identify?q=http://aminoapps.com/invite/{code}")
         return response.json()
 
     def wallet_config(self, level: int):
@@ -1034,12 +1041,13 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {
-            "privacyMode": 2 if isAnonymous else 1
+            "privacyMode": int(isAnonymous) + 1
         }
-        if not getNotifications:
-            data["notificationStatus"] = 2
-        else:
+
+        if getNotifications:
             data["privacyMode"] = 1
+        else:
+            data["notificationStatus"] = 2
 
         response = self.session.post("/g/s/account/visit-settings", json=data)
         return response.json()
