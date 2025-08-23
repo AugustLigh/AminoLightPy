@@ -112,7 +112,7 @@ def on_message(data):
 
 </div>
 
-<details>
+<details open>
 <summary><b>🔌 Client - Main Connection Handler</b></summary>
 
 <br>
@@ -181,7 +181,7 @@ def handle_voice(data):
 
 </details>
 
-<details>
+<details open>
 <summary><b>🏠 SubClient - Community Operations</b></summary>
 
 <br>
@@ -275,7 +275,7 @@ with sub_client.recording(chatId="chat_id"):
 
 </details>
 
-<details>
+<details open>
 <summary><b>👑 Moderation Tools (Staff Only)</b></summary>
 
 <br>
@@ -312,7 +312,7 @@ sub_client.warn(userId="user_id", reason="Minor rule violation")
 
 </div>
 
-<details>
+<details open>
 <summary><b>🎮 Command Bot</b></summary>
 
 ```python
@@ -350,7 +350,7 @@ def handle_command(data):
 
 </details>
 
-<details>
+<details open>
 <summary><b>🎨 Welcome Bot</b></summary>
 
 ```python
@@ -374,7 +374,7 @@ def welcome_user(data):
 
 </details>
 
-<details>
+<details open>
 <summary><b>🔄 Auto-Responder</b></summary>
 
 ```python
