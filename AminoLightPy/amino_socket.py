@@ -3,14 +3,107 @@
 import ssl
 import traceback
 import threading
+
 from json import loads, dumps
 from time import time, sleep
 from websocket import WebSocketApp
+
 from .lib import Event
 from .lib import gen_deviceId, signature
+from .lib.util.objects import ChatEvent
 
-class SocketHandler:
+class Callbacks:
+    def __init__(self):
+        self.handlers = {}
+        self.methods = {
+            304: self._resolve_chat_action_start,
+            306: self._resolve_chat_action_end,
+            1000: self._resolve_chat_message
+        }
+        self.chat_methods = {
+            "0:0": ChatEvent.TEXT_MESSAGE,
+            "0:100": ChatEvent.IMAGE_MESSAGE,
+            "0:103": ChatEvent.YOUTUBE_MESSAGE,
+            "1:0": ChatEvent.STRIKE_MESSAGE,
+            "2:110": ChatEvent.VOICE_MESSAGE,
+            "3:113": ChatEvent.STICKER_MESSAGE,
+            "52:0": ChatEvent.VOICE_CHAT_MISSED,
+            "53:0": ChatEvent.VOICE_CHAT_CANCELLED,
+            "54:0": ChatEvent.VOICE_CHAT_DECLINED,
+            "55:0": ChatEvent.VIDEO_CHAT_MISSED,
+            "56:0": ChatEvent.VIDEO_CHAT_CANCELLED,
+            "57:0": ChatEvent.VIDEO_CHAT_DECLINED,
+            "100:0": ChatEvent.MESSAGE_DELETED,
+            "101:0": ChatEvent.USER_JOINED,
+            "102:0": ChatEvent.USER_LEFT,
+            "103:0": ChatEvent.CHAT_INVITE,
+            "104:0": ChatEvent.BACKGROUND_CHANGED,
+            "105:0": ChatEvent.TITLE_CHANGED,
+            "106:0": ChatEvent.ICON_CHANGED,
+            "107:0": ChatEvent.VOICE_CHAT_STARTED,
+            "108:0": ChatEvent.VIDEO_CHAT_STARTED,
+            "110:0": ChatEvent.VOICE_CHAT_ENDED,
+            "111:0": ChatEvent.VIDEO_CHAT_ENDED,
+            "113:0": ChatEvent.CHAT_CONTENT_CHANGED,
+            "114:0": ChatEvent.SCREEN_ROOM_STARTED,
+            "115:0": ChatEvent.SCREEN_ROOM_ENDED,
+            "116:0": ChatEvent.HOST_TRANSFERRED,
+            "117:0": ChatEvent.MESSAGE_FORCE_DELETED,
+            "118:0": ChatEvent.CHAT_MESSAGE_REMOVED,
+            "119:0": ChatEvent.MESSAGE_REMOVED_BY_ADMIN,
+            "120:0": ChatEvent.CHAT_TIP,
+            "121:0": ChatEvent.ANNOUNCEMENT_PINNED,
+            "122:0": ChatEvent.VOICE_CHAT_OPEN_PERMISSION,
+            "123:0": ChatEvent.VOICE_CHAT_REQUEST_PERMISSION,
+            "124:0": ChatEvent.VOICE_CHAT_INVITE_PERMISSION,
+            "125:0": ChatEvent.CHAT_VIEW_ONLY_ENABLED,
+            "126:0": ChatEvent.CHAT_VIEW_ONLY_DISABLED,
+            "127:0": ChatEvent.ANNOUNCEMENT_UNPINNED,
+            "128:0": ChatEvent.CHAT_TIPPING_ENABLED,
+            "129:0": ChatEvent.CHAT_TIPPING_DISABLED,
+            "65281:0": ChatEvent.TIMESTAMP_MESSAGE,
+            "65282:0": ChatEvent.WELCOME_MESSAGE,
+            "65283:0": ChatEvent.INVITE_MESSAGE
+        }
+        self.chat_actions_start = {"Typing": "on_user_typing_start"}
+        self.chat_actions_end = {"Typing": "on_user_typing_end"}
+
+    def _resolve_chat_message(self, data):
+        key = f"{data['o']['chatMessage']['type']}:{data['o']['chatMessage'].get('mediaType', 0)}"
+        self._trigger_event(self.chat_methods.get(key, "default"), data)
+
+    def _resolve_chat_action_start(self, data):
+        self._trigger_event(self.chat_actions_start.get(data['o'].get('actions', 0), "default"), data)
+
+    def _resolve_chat_action_end(self, data):
+        self._trigger_event(self.chat_actions_end.get(data['o'].get('actions', 0), "default"), data)
+
+    def _trigger_event(self, event_name, data):
+        event = Event(data["o"]).Event
+        self.call(event_name, event)
+        self.call("all", event)
+
+    def resolve(self, data):
+        data = loads(data)
+        method = self.methods.get(data["t"], self.default)
+        return method(data)
+
+    def call(self, type, data):
+        for handler in self.handlers.get(type, []):
+            handler(data)
+
+    def event(self, type):
+        def registerHandler(handler):
+            self.handlers.setdefault(type, []).append(handler)
+            return handler
+        return registerHandler
+
+    def default(self, data): 
+        self.call("default", data)
+
+class SocketHandler(Callbacks):
     def __init__(self, client, debug=False):
+        super().__init__()
         self.socket_url = "ws://ws1.aminoapps.com"
         self.client = client
         self.debug = debug
@@ -23,7 +116,7 @@ class SocketHandler:
         self._is_connecting = False
 
     def on_message(self, ws, data):
-        self.client.handle_socket_message(data)
+        self.resolve(data)
 
     def is_connected(self):
         return self.socket and self.socket.sock and self.socket.sock.connected
@@ -32,17 +125,17 @@ class SocketHandler:
         """Safely reconnects the socket with retry logic"""
         with self._socket_lock:
             if self._is_connecting:
-                self.debug_print("[socket][reconnect] Connection already in progress")
+                self._debug_print("[socket][reconnect] Connection already in progress")
                 return False
                 
             if self.reconnect_attempts >= self.max_reconnect_attempts:
-                self.debug_print("[socket][reconnect] Max reconnection attempts reached")
+                self._debug_print("[socket][reconnect] Max reconnection attempts reached")
                 self.reconnect_attempts = 0
                 return False
 
             try:
                 self._is_connecting = True
-                self.debug_print(f"[socket][reconnect] Attempt {self.reconnect_attempts + 1}")
+                self._debug_print(f"[socket][reconnect] Attempt {self.reconnect_attempts + 1}")
                 
                 if self.socket:
                     try:
@@ -68,7 +161,7 @@ class SocketHandler:
                 self._is_connecting = False
 
     def send(self, data):
-        self.debug_print(f"[socket][send] Sending Data : {data}")
+        self._debug_print(f"[socket][send] Sending Data : {data}")
         
         retry_count = 0
         while retry_count < 3:
@@ -81,15 +174,15 @@ class SocketHandler:
                 self.socket.send(data)
                 return True
             except Exception as e:
-                self.debug_print(f"[socket][send] Error: {str(e)}")
+                self._debug_print(f"[socket][send] Error: {str(e)}")
                 retry_count += 1
                 sleep(1)
                 
-        self.debug_print("[socket][send] Failed to send message after retries")
+        self._debug_print("[socket][send] Failed to send message after retries")
         return False
 
     def on_close(self, ws, data, status):
-        self.debug_print("[socket][reconnect_handler] Reconnecting Socket")
+        self._debug_print("[socket][reconnect_handler] Reconnecting Socket")
         self.starting_process()
 
     def on_error(self, ws, error):
@@ -97,15 +190,15 @@ class SocketHandler:
         print("On error: ", error)
 
     def on_open(self, ws):
-        self.debug_print("[socket][start] Socket Started")
+        self._debug_print("[socket][start] Socket Started")
         self.thread_event.set()
 
     def on_ping(self, ws, somesing):
-        self.debug_print("[socket][Ping] Servier send ping")
+        self._debug_print("[socket][Ping] Servier send ping")
         self.send(dumps({"t": 116, "o": {"threadChannelUserInfoList": []}}))
 
     def on_pong(self, ws, somesing):
-        self.debug_print("server send pong")
+        self._debug_print("server send pong")
 
     def starting_process(self):
         deviceId = gen_deviceId()
@@ -143,7 +236,7 @@ class SocketHandler:
         threading.Thread(target=self.starting_process).start()
         self.thread_event.wait()
 
-    def debug_print(self, message):
+    def _debug_print(self, message):
         if self.debug:
             print(message)
 
@@ -371,204 +464,5 @@ class SocketRequests:
             "t": 306 if stop else 304
         }
         data = dumps(data)
-        print(data)
         self.client.send(data)
 
-class Callbacks:
-    def __init__(self):
-        self.handlers = {}
-
-        self.methods = {
-            304: self._resolve_chat_action_start,
-            306: self._resolve_chat_action_end,
-            1000: self._resolve_chat_message
-        }
-
-        self.chat_methods = {
-            "0:0": self.on_text_message,
-            "0:100": self.on_image_message,
-            "0:103": self.on_youtube_message,
-            "1:0": self.on_strike_message,
-            "2:110": self.on_voice_message,
-            "3:113": self.on_sticker_message,
-            "52:0": self.on_voice_chat_not_answered,
-            "53:0": self.on_voice_chat_not_cancelled,
-            "54:0": self.on_voice_chat_not_declined,
-            "55:0": self.on_video_chat_not_answered,
-            "56:0": self.on_video_chat_not_cancelled,
-            "57:0": self.on_video_chat_not_declined,
-            "100:0": self.on_delete_message,
-            "101:0": self.on_group_member_join,
-            "102:0": self.on_group_member_leave,
-            "103:0": self.on_chat_invite,
-            "104:0": self.on_chat_background_changed,
-            "105:0": self.on_chat_title_changed,
-            "106:0": self.on_chat_icon_changed,
-            "107:0": self.on_voice_chat_start,
-            "108:0": self.on_video_chat_start,
-            "110:0": self.on_voice_chat_end,
-            "111:0": self.on_video_chat_end,
-            "113:0": self.on_chat_content_changed,
-            "114:0": self.on_screen_room_start,
-            "115:0": self.on_screen_room_end,
-            "116:0": self.on_chat_host_transfered,
-            "117:0": self.on_text_message_force_removed,
-            "118:0": self.on_chat_removed_message,
-            "119:0": self.on_text_message_removed_by_admin,
-            "120:0": self.on_chat_tip,
-            "121:0": self.on_chat_pin_announcement,
-            "122:0": self.on_voice_chat_permission_open_to_everyone,
-            "123:0": self.on_voice_chat_permission_invited_and_requested,
-            "124:0": self.on_voice_chat_permission_invite_only,
-            "125:0": self.on_chat_view_only_enabled,
-            "126:0": self.on_chat_view_only_disabled,
-            "127:0": self.on_chat_unpin_announcement,
-            "128:0": self.on_chat_tipping_enabled,
-            "129:0": self.on_chat_tipping_disabled,
-            "65281:0": self.on_timestamp_message,
-            "65282:0": self.on_welcome_message,
-            "65283:0": self.on_invite_message
-        }
-
-        self.chat_actions_start = {
-            "Typing": self.on_user_typing_start,
-        }
-
-        self.chat_actions_end = {
-            "Typing": self.on_user_typing_end,
-        }
-
-    def _resolve_chat_message(self, data):
-        key = f"{data['o']['chatMessage']['type']}:{data['o']['chatMessage'].get('mediaType', 0)}"
-        return self.chat_methods.get(key, self.default)(data)
-
-    def _resolve_chat_action_start(self, data):
-        key = data['o'].get('actions', 0)
-        return self.chat_actions_start.get(key, self.default)(data)
-
-    def _resolve_chat_action_end(self, data):
-        key = data['o'].get('actions', 0)
-        return self.chat_actions_end.get(key, self.default)(data)
-
-    def resolve(self, data):
-        data = loads(data)
-        return self.methods.get(data["t"], self.default)(data)
-
-    def call(self, type, data):
-        if type in self.handlers:
-            for handler in self.handlers[type]:
-                handler(data)
-
-    def event(self, type):
-        def registerHandler(handler):
-            if type in self.handlers:
-                self.handlers[type].append(handler)
-            else:
-                self.handlers[type] = [handler]
-            return handler
-
-        return registerHandler
-
-    def event_handler_decorator(func):
-        def wrapper(self, data):
-            event = Event(data["o"]).Event
-            self.call(func.__name__, event)
-            self.call("all", event)
-        return wrapper
-
-    @event_handler_decorator
-    def on_text_message(self, data): pass
-    @event_handler_decorator
-    def on_image_message(self, data): pass
-    @event_handler_decorator
-    def on_youtube_message(self, data): pass
-    @event_handler_decorator
-    def on_strike_message(self, data): pass
-    @event_handler_decorator
-    def on_voice_message(self, data): pass
-    @event_handler_decorator
-    def on_sticker_message(self, data): pass
-    @event_handler_decorator
-    def on_voice_chat_not_answered(self, data): pass
-    @event_handler_decorator
-    def on_voice_chat_not_cancelled(self, data): pass
-    @event_handler_decorator
-    def on_voice_chat_not_declined(self, data): pass
-    @event_handler_decorator
-    def on_video_chat_not_answered(self, data): pass
-    @event_handler_decorator
-    def on_video_chat_not_cancelled(self, data): pass
-    @event_handler_decorator
-    def on_video_chat_not_declined(self, data): pass
-    @event_handler_decorator
-    def on_delete_message(self, data): pass
-    @event_handler_decorator
-    def on_group_member_join(self, data): pass
-    @event_handler_decorator
-    def on_group_member_leave(self, data): pass
-    @event_handler_decorator
-    def on_chat_invite(self, data): pass
-    @event_handler_decorator
-    def on_chat_background_changed(self, data): pass
-    @event_handler_decorator
-    def on_chat_title_changed(self, data): pass
-    @event_handler_decorator
-    def on_chat_icon_changed(self, data): pass
-    @event_handler_decorator
-    def on_voice_chat_start(self, data): pass
-    @event_handler_decorator
-    def on_video_chat_start(self, data): pass
-    @event_handler_decorator
-    def on_voice_chat_end(self, data): pass
-    @event_handler_decorator
-    def on_video_chat_end(self, data): pass
-    @event_handler_decorator
-    def on_chat_content_changed(self, data): pass
-    @event_handler_decorator
-    def on_screen_room_start(self, data): pass
-    @event_handler_decorator
-    def on_screen_room_end(self, data): pass
-    @event_handler_decorator
-    def on_chat_host_transfered(self, data): pass
-    @event_handler_decorator
-    def on_text_message_force_removed(self, data): pass
-    @event_handler_decorator
-    def on_chat_removed_message(self, data): pass
-    @event_handler_decorator
-    def on_text_message_removed_by_admin(self, data): pass
-    @event_handler_decorator
-    def on_chat_tip(self, data): pass
-    @event_handler_decorator
-    def on_chat_pin_announcement(self, data): pass
-    @event_handler_decorator
-    def on_voice_chat_permission_open_to_everyone(self, data): pass
-    @event_handler_decorator
-    def on_voice_chat_permission_invited_and_requested(self, data): pass
-    @event_handler_decorator
-    def on_voice_chat_permission_invite_only(self, data): pass
-    @event_handler_decorator
-    def on_chat_view_only_enabled(self, data): pass
-    @event_handler_decorator
-    def on_chat_view_only_disabled(self, data): pass
-    @event_handler_decorator
-    def on_chat_unpin_announcement(self, data): pass
-    @event_handler_decorator
-    def on_chat_tipping_enabled(self, data): pass
-    @event_handler_decorator
-    def on_chat_tipping_disabled(self, data): pass
-    @event_handler_decorator
-    def on_timestamp_message(self, data): pass
-    @event_handler_decorator
-    def on_welcome_message(self, data): pass
-    @event_handler_decorator
-    def on_invite_message(self, data): pass
-    
-    @event_handler_decorator
-    def on_user_typing_start(self, data): pass
-    @event_handler_decorator
-    def on_user_typing_end(self, data): pass
-
-    def default(self, data): self.call("default", data)
-
-    @event_handler_decorator
-    def all(self, data): pass

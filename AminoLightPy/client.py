@@ -6,13 +6,13 @@ from .managers import Typing, Recording
 
 from .constants import api, AminoSession
 from .abstract_client import AbstractClient
-from .amino_socket import Callbacks, SocketHandler, SocketRequests
+from .amino_socket import SocketHandler, SocketRequests
 from .lib import exceptions, objects, helpers, self_deviceId, \
                 CacheManager, deprecated
 
 #@dorthegra/IDörthe#8835 thanks for support!
 
-class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
+class Client(SocketHandler, SocketRequests, AbstractClient):
     "Module for work with global"
     def __init__(self, proxies: dict = None, socketDebugging = False, socket_enabled = True):
         self.api = api
@@ -26,15 +26,14 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
         if socket_enabled:
             SocketHandler.__init__(self, self, socketDebugging)
             SocketRequests.__init__(self, self)
-            Callbacks.__init__(self)
 
         self.session.proxies = proxies
 
-        self.cache_manager = CacheManager()
+        self.__cache_manager = CacheManager()
 
         self.sid = None
         self.profile = objects.UserProfile(None).UserProfile
-        self.profile.session = self.session
+        self.profile.client = self
 
     @deprecated("parse_headers is deprecated. Use self.session.headers instead.")
     def parse_headers(self, data: str = None, type: str = None) -> dict:
@@ -66,19 +65,17 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
             "AUID": userId
             })
 
-        self.profile.session = self.session
-
         if self.socket_enabled and not self.authenticated:
             self.run_amino_socket()
 
         self.authenticated = True
 
     def login(self, login: str, password: str, self_device: bool = True):
-        if self.cache_manager.sid_exists(login):
-            sid_file = self.cache_manager.get_sid(login)
+        if self.__cache_manager.sid_exists(login):
+            sid_file = self.__cache_manager.get_sid(login)
 
             if time() - sid_file["time"] > 86400:
-                self.cache_manager.remove_sid(login)
+                self.__cache_manager.remove_sid(login)
                 return self.login(login, password, self_device)
             
             self.session.headers["NDCDEVICEID"] = self_deviceId(login)
@@ -91,7 +88,7 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
             else:
                 login_data = self.login_email(login, password, self_device)
 
-            self.cache_manager.save_sid(login, login_data["sid"])
+            self.__cache_manager.save_sid(login, login_data["sid"])
 
             return login_data
 
@@ -131,9 +128,7 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
             "AUID": self.profile.userId
         })
 
-        self.profile.session = self.session
-
-        if self.socket_enabled and not self.authenticated:
+        if self.socket_enabled:
             self.run_amino_socket()
 
         self.authenticated = True
@@ -159,15 +154,14 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
 
         data = {
             "phoneNumber": phoneNumber,
-            "v": 2,
             "secret": f"0 {password}",
             "deviceID": self.session.headers["NDCDEVICEID"],
             "clientType": 100,
-            "action": "normal",
+            "v": 2,
         }
 
         response = self.session.post("/g/s/auth/login", json=data)
-        self.authenticated = True
+
         json = response.json()
         self.sid = json["sid"]
 
@@ -178,9 +172,7 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
             "AUID": self.profile.userId
         })
 
-        self.profile.session = self.session
-
-        if self.socket_enabled and not self.authenticated:
+        if self.socket_enabled:
             self.run_amino_socket()
 
         self.authenticated = True
@@ -203,11 +195,10 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
             self.session.headers["NDCDEVICEID"] = self_deviceId(secret)
 
         data = {
-            "v": 2,
             "secret": secret,
             "deviceID": self.session.headers["NDCDEVICEID"],
             "clientType": 100,
-            "action": "normal",
+            "v": 2,
         }
 
         response = self.session.post("/g/s/auth/login", json=data)
@@ -221,7 +212,6 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
             "AUID": self.profile.userId
         })
 
-        self.profile.session = self.session
 
         if self.socket_enabled and not self.authenticated:
             self.run_amino_socket()
@@ -491,10 +481,6 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
         response = self.session.get("/g/s/account")
         return objects.UserProfile(response.json()["account"]).UserProfile
 
-    def handle_socket_message(self, data):
-        "Adapter between receiving messages and processing them"
-        return self.resolve(data)
-
     def get_eventlog(self, language = "en"):
         """
         Information of an events.
@@ -725,7 +711,7 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
         data = {"ndcIds": comIds}
-        userId = self.session.headers["AUID"]
+        userId = self.profile.userId
         return self.session.post(
             url=f"/g/s/user-profile/{userId}/linked-community/reorder",
             json=data
@@ -743,7 +729,7 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        userId = self.session.headers["AUID"]
+        userId = self.profile.userId
         return self.session.post(
             url=f"/g/s/user-profile/{userId}/linked-community/{comId}"
         ).status_code
@@ -761,7 +747,7 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        userId = self.session.headers["AUID"]
+        userId = self.profile.userId
         return self.session.delete(
             url=f"/g/s/user-profile/{userId}/linked-community/{comId}"
         ).status_code
@@ -902,17 +888,17 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
 
     def get_supported_languages(self):
         """
-        Get the List of Supported Languages by Amino.
+        Get the Tuple of Supported Languages by Amino.
 
         **Parameters**
             - No parameters required.
 
         **Returns**
-            - **Success** : :meth:`List of Supported Languages <List>`
+            - **Success** : :meth:`Tuple of Supported Languages <Tuple>`
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        return ["en", "es", "pt", "ar", "ru", "fr", "de"]
+        return ("en", "es", "pt", "ar", "ru", "fr", "de")
     
     def create_sticker_pack(self, name: str, description: str, image_list: list):
         data = {
@@ -1044,9 +1030,7 @@ class Client(Callbacks, SocketHandler, SocketRequests, AbstractClient):
             "privacyMode": int(isAnonymous) + 1
         }
 
-        if getNotifications:
-            data["privacyMode"] = 1
-        else:
+        if not getNotifications:
             data["notificationStatus"] = 2
 
         response = self.session.post("/g/s/account/visit-settings", json=data)

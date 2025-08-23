@@ -3,17 +3,19 @@
 
 from uuid import uuid4
 from typing import BinaryIO
-from requests import Session
 
 from .constants import upload_media
+from .managers import Typing, Recording
 from .abstract_client import AbstractClient
 from .lib.util import exceptions, objects
+from .client import Client
 
 class SubClient(AbstractClient):
     "Module for work with community"
     def __init__(self, comId: int = None, *, profile: objects.UserProfile):
         self.profile = profile
-        self.session: Session = self.profile.session
+        self.client: Client = self.profile.client
+        self.session = self.client.session
     
         super().__init__(self.session, f"/x{comId}")
 
@@ -117,32 +119,31 @@ class SubClient(AbstractClient):
             "content": content,
             "title": title,
             "mediaList": mediaList,
-            "extensions": extensions,
+            "extensions": extensions or {},
             "latitude": 0,
             "longitude": 0,
             "eventSource": "GlobalComposeMenu",
         }
 
         if fansOnly:
-            data["extensions"] = {"fansOnly": fansOnly}
+            data["extensions"]["fansOnly"] = fansOnly
         if backgroundColor:
-            data["extensions"] = {"style": {"backgroundColor": backgroundColor}}
+            data["extensions"].setdefault("style", {})["backgroundColor"] = backgroundColor
         if categoriesList:
             data["taggedBlogCategoryIdList"] = categoriesList
-        response = self.session.post(f"/x{self.comId}/s/blog", json=data)
 
+        response = self.session.post(f"/x{self.comId}/s/blog", json=data)
         return response.status_code
 
     def post_wiki(self, title: str, content: str, icon: str = None, imageList: list = None,
                         keywords: str = None, backgroundColor: str = None, props: list = None,
                         backgroundMediaList: list = None):
 
-        if imageList is None:
-            imageList = []
-        if props is None:
-            props = []
-        if backgroundMediaList is None:
-            backgroundMediaList = []
+
+        imageList = imageList or []
+        props = props or []
+        backgroundMediaList = backgroundMediaList or []
+
         data = {
             "label": title,
             "content": content,
@@ -200,11 +201,10 @@ class SubClient(AbstractClient):
         return self.session.delete(f"/x{self.comId}/s/item/{wikiId}").status_code
 
     def repost_blog(self, content: str = None, blogId: str = None, wikiId: str = None):
-        if blogId:
-            refObjectId, refObjectType = blogId, 1
-        elif wikiId:
-            refObjectId, refObjectType = wikiId, 2
-        else: raise exceptions.SpecifyType
+        if not (blogId or wikiId):
+            raise exceptions.SpecifyType
+
+        refObjectId, refObjectType = (blogId, 1) if blogId else (wikiId, 2)
 
         data = {
             "content": content,
@@ -517,11 +517,9 @@ class SubClient(AbstractClient):
         for key, value in object_types.items():
             if value['id']:
                 response = self.session.get(f"{value['url']}?start={start}&size={size}")
-                break
-        else:
-            raise exceptions.SpecifyType
+                return objects.TippedUsersSummary(response.json()).TippedUsersSummary
 
-        return objects.TippedUsersSummary(response.json()).TippedUsersSummary
+        raise exceptions.SpecifyType
 
     def get_public_chat_threads(self, type: str = "recommended", start: int = 0, size: int = 25):
         """
@@ -645,141 +643,86 @@ class SubClient(AbstractClient):
         else:
             url = f"/x{self.comId}/s/admin/operation?pagingType=t&size={size}"
         return objects.AdminLogList(self.session.get(url).json()["adminLogList"]).AdminLogList
-
-    def feature(self, time: int, userId: str = None, chatId: str = None, blogId: str = None, wikiId: str = None):
-        time_map = {1: 3600, 2: 7200, 3: 10800} if chatId else {1: 86400, 2: 172800, 3: 259200}
-        if time not in time_map:
-            raise exceptions.WrongType(time)
-
-        data = {
-            "adminOpName": 114,
-            "adminOpValue": {
-                "featuredDuration": time_map[time],
-                "featuredType": 5 if chatId else 4 if userId else 1
-            }
-        }
-
-        url = f"/x{self.comId}/s/"
-        if userId:
-            url += f"user-profile/{userId}/admin"
-        elif blogId:
-            url += f"blog/{blogId}/admin"
-        elif wikiId:
-            url += f"item/{wikiId}/admin"
-        elif chatId:
-            url += f"chat/thread/{chatId}/admin"
-        else:
+    
+    def _toggle_feature(self, time: int = None, userId: str = None, chatId: str = None, blogId: str = None, wikiId: str = None, feature: bool = True):
+        if feature and time is None:
             raise exceptions.SpecifyType
 
-        return self.session.post(url, json=data).json()
+        url_map = {
+            userId: f"/x{self.comId}/s/user-profile/{userId}/admin",
+            blogId: f"/x{self.comId}/s/blog/{blogId}/admin",
+            wikiId: f"/x{self.comId}/s/item/{wikiId}/admin",
+            chatId: f"/x{self.comId}/s/chat/thread/{chatId}/admin"
+        }
+        
+        target_id = next((k for k in [userId, blogId, wikiId, chatId] if k), None)
+        if not target_id:
+            raise exceptions.SpecifyType
+        
+        url = url_map[target_id]
 
-    def unfeature(self, userId: str = None, chatId: str = None, blogId: str = None, wikiId: str = None):
         data = {
             "adminOpName": 114,
             "adminOpValue": {"featuredType": 0}
         }
+        
+        if feature:
+            time_map = {1: 3600, 2: 7200, 3: 10800} if chatId else {1: 86400, 2: 172800, 3: 259200}
+            if time not in time_map:
+                raise exceptions.SpecifyTime
+            
+            data["adminOpValue"] = {
+                    "featuredDuration": time_map[time],
+                    "featuredType": 5 if chatId else 4 if userId else 1
+                }
+        
+        return self.session.post(url, json=data).json()
 
-        url = f"/x{self.comId}/s/"
+    def feature(self, time: int, userId: str = None, chatId: str = None, blogId: str = None, wikiId: str = None):
+        self._toggle_feature(time, userId, chatId, blogId, wikiId, feature=True)
+
+    def unfeature(self, userId: str = None, chatId: str = None, blogId: str = None, wikiId: str = None):
+        self._toggle_feature(None, userId, chatId, blogId, wikiId, feature=False)
+    
+    def _toggle_visibility(self, userId: str = None, chatId: str = None, blogId: str = None, wikiId: str = None, quizId: str = None, fileId: str = None, reason: str = None, hide: bool = True):
+        """
+        method to hide/unhide an object in the community
+        """
+        data = {
+            "adminOpNote": {
+                "content": reason
+            }
+        }
+
         if userId:
-            url += f"user-profile/{userId}/admin"
-        elif blogId:
-            url += f"blog/{blogId}/admin"
+            data["adminOpName"] = 18 if hide else 19
+            url = f"/x{self.comId}/s/user-profile/{userId}/admin"
+        elif blogId or quizId:
+            data["adminOpName"] = 110
+            data["adminOpValue"] = 9 if hide else 0
+            url = f"/x{self.comId}/s/blog/{blogId or quizId}/admin"
         elif wikiId:
-            url += f"item/{wikiId}/admin"
+            data["adminOpName"] = 110
+            data["adminOpValue"] = 9 if hide else 0
+            url = f"/x{self.comId}/s/item/{wikiId}/admin"
         elif chatId:
-            url += f"chat/thread/{chatId}/admin"
+            data["adminOpName"] = 110
+            data["adminOpValue"] = 9 if hide else 0
+            url = f"/x{self.comId}/s/chat/thread/{chatId}/admin"
+        elif fileId:
+            data["adminOpName"] = 110
+            data["adminOpValue"] = 9 if hide else 0
+            url = f"/x{self.comId}/s/shared-folder/files/{fileId}/admin"
         else:
             raise exceptions.SpecifyType
 
         return self.session.post(url, json=data).json()
 
     def hide(self, userId: str = None, chatId: str = None, blogId: str = None, wikiId: str = None, quizId: str = None, fileId: str = None, reason: str = None):
-        data = {
-            "adminOpNote": {
-                "content": reason
-            }
-        }
-
-        if userId:
-            data["adminOpName"] = 18
-
-            url = f"/x{self.comId}/s/user-profile/{userId}/admin"
-
-        elif blogId:
-            data["adminOpName"] = 110
-            data["adminOpValue"] = 9
-            url = f"/x{self.comId}/s/blog/{blogId}/admin"
-
-        elif quizId:
-            data["adminOpName"] = 110
-            data["adminOpValue"] = 9
-
-            url = f"/x{self.comId}/s/blog/{quizId}/admin"
-
-        elif wikiId:
-            data["adminOpName"] = 110
-            data["adminOpValue"] = 9
-            url = f"/x{self.comId}/s/item/{wikiId}/admin"
-
-        elif chatId:
-            data["adminOpName"] = 110
-            data["adminOpValue"] = 9
-            url = f"/x{self.comId}/s/chat/thread/{chatId}/admin"
-
-        elif fileId:
-            data["adminOpName"] = 110
-            data["adminOpValue"] = 9
-
-            url = f"/x{self.comId}/s/shared-folder/files/{fileId}/admin"
-
-        else: raise exceptions.SpecifyType
-
-        return self.session.post(url, json=data).json()
+        return self._toggle_visibility(userId, chatId, blogId, wikiId, quizId, fileId, reason, hide=True)
 
     def unhide(self, userId: str = None, chatId: str = None, blogId: str = None, wikiId: str = None, quizId: str = None, fileId: str = None, reason: str = None):
-        data = {
-            "adminOpNote": {
-                "content": reason
-            }
-        }
-
-        if userId:
-            data["adminOpName"] = 19
-            url = f"/x{self.comId}/s/user-profile/{userId}/admin"
-
-        elif blogId:
-            data["adminOpName"] = 110
-            data["adminOpValue"] = 0
-
-            url = f"/x{self.comId}/s/blog/{blogId}/admin"
-
-        elif quizId:
-            data["adminOpName"] = 110
-            data["adminOpValue"] = 0
-
-            url = f"/x{self.comId}/s/blog/{quizId}/admin"
-
-        elif wikiId:
-            data["adminOpName"] = 110
-            data["adminOpValue"] = 0
-
-            url = f"/x{self.comId}/s/item/{wikiId}/admin"
-
-        elif chatId:
-            data["adminOpName"] = 110
-            data["adminOpValue"] = 0
-
-            url = f"/x{self.comId}/s/chat/thread/{chatId}/admin"
-
-        elif fileId:
-            data["adminOpName"] = 110
-            data["adminOpValue"] = 0
-
-            url = f"/x{self.comId}/s/shared-folder/files/{fileId}/admin"
-
-        else: raise exceptions.SpecifyType
-
-        return self.session.post(url, json=data).json()
+         return self._toggle_visibility(userId, chatId, blogId, wikiId, quizId, fileId, reason, hide=False)
 
     def edit_titles(self, userId: str, tlt: list):
 
@@ -965,3 +908,29 @@ class SubClient(AbstractClient):
 
         response = self.session.post(f"/x{self.comId}/s/chat/thread/apply-bubble", json=data)
         return response.status_code
+    
+    #WS overrides
+    
+    def typing(self, chatId: str) -> Typing:
+        return self.client.typing(chatId=chatId, comId=self.comId)
+
+    def recording(self, chatId: str) -> Recording:
+        return self.client.recording(chatId=chatId, comId=self.comId)
+    
+    def join_voice_chat(self, chatId: str, joinType: int = 1):
+        return self.client.join_voice_chat(comId=self.comId, chatId=chatId, joinType=joinType)
+    
+    def join_video_chat(self, chatId: str, joinType: int = 1):
+        return self.client.join_video_chat(comId=self.comId, chatId=chatId, joinType=joinType)
+    
+    def run_vc(self, chatId: str, joinType: str):
+        return self.client.run_vc(comId=self.comId, chatId=chatId, joinType=joinType)
+
+    def start_vc(self, chatId: str, joinType: int = 1):
+        return self.client.start_vc(comId=self.comId, chatId=chatId, joinType=joinType)
+
+    def end_vc(self, chatId: str, joinType: int = 2):
+        return self.client.end_vc(comId=self.comId, chatId=chatId, joinType=joinType)
+        
+    def start_video_chat(self, chatId: str, joinType: int = 1):
+        return self.client.start_video_chat(comId=self.comId, chatId=chatId, joinType=joinType)

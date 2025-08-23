@@ -3,7 +3,7 @@
 # You don"t even know how long this shit took...
 # F*ck you Sand for making me do this.
 
-from typing import List, Optional, Dict, TypeVar
+from typing import TypeVar
 
 class UserProfile:
     __slots__ = (
@@ -23,106 +23,102 @@ class UserProfile:
         "privilegeOfChatInviteRequest", "privilegeOfCommentOnUserProfile", "influencerInfo",
         "fansCount", "influencerCreatedTime", "influencerMonthlyFee", "influencerPinned",
         "staffInfo", "globalStrikeCount", "lastStrikeTime", "lastWarningTime", "strikeCount",
-        "warningCount", "session"
+        "warningCount", "client"
     )
 
-    def __init__(self, data: Dict):
+    def __init__(self, data: dict):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
+            data = {}
 
-            return
-
-        self.json: Optional[Dict] = data
+        self.json: dict | None = data
 
         self.fanClub = FanClubList(data.get("fanClubList", [])).FanClubList
 
-        self.accountMembershipStatus: Optional[int] = data.get("accountMembershipStatus")
-        self.activation: Optional[int] = data.get("activation")
-        self.activePublicLiveThreadId: Optional[str] = data.get("activePublicLiveThreadId")
-        self.age: Optional[int] = data.get("age")
-        self.aminoId: Optional[str] = data.get("aminoId")
-        self.aminoIdEditable: Optional[bool] = data.get("aminoIdEditable")
-        self.avatarFrame: Optional[str] = data.get("avatarFrame")
-        self.avatarFrameId: Optional[str] = data.get("avatarFrameId")
-        self.blogsCount: Optional[int] = data.get("blogsCount")
-        self.commentsCount: Optional[int] = data.get("commentsCount")
-        self.content: Optional[str] = data.get("content")
-        self.createdTime: Optional[int] = data.get("createdTime")
-        self.followersCount: Optional[int] = data.get("followersCount")
-        self.followingCount: Optional[int] = data.get("followingCount")
-        self.followingStatus: Optional[int] = data.get("followingStatus")
-        self.gender: Optional[str] = data.get("gender")
-        self.icon: Optional[str] = data.get("icon")
-        self.isGlobal: Optional[bool] = data.get("isGlobal")
-        self.isNicknameVerified: Optional[bool] = data.get("isNicknameVerified")
-        self.itemsCount: Optional[int] = data.get("itemsCount")
-        self.level: Optional[int] = data.get("level")
-        self.mediaList: Optional[MediaObject] = data.get("mediaList")
-        self.membershipStatus: Optional[int] = data.get("membershipStatus")
-        self.modifiedTime: Optional[int] = data.get("modifiedTime")
-        self.mood: Optional[str] = data.get("mood")
-        self.moodSticker: Optional[str] = data.get("moodSticker")
-        self.nickname: Optional[str] = data.get("nickname")
-        self.notificationSubscriptionStatus: Optional[int] = data.get("notificationSubscriptionStatus")
-        self.onlineStatus: Optional[int] = data.get("onlineStatus")
-        self.onlineStatus2: Optional[int] = data.get("onlineStatus2")
-        self.postsCount: Optional[int] = data.get("postsCount")
-        self.pushEnabled: Optional[bool] = data.get("pushEnabled")
-        self.race: Optional[str] = data.get("race")
-        self.reputation: Optional[int] = data.get("reputation")
-        self.role: Optional[str] = data.get("role")
-        self.securityLevel: Optional[int] = data.get("securityLevel")
-        self.status: Optional[str] = data.get("status")
-        self.storiesCount: Optional[int] = data.get("storiesCount")
-        self.tagList: Optional[List[str]] = data.get("tagList")
-        self.userId: Optional[str] = data.get("uid")
-        self.verified: Optional[bool] = data.get("verified")
-        self.totalQuizHighestScore: Optional[int] = data.get("totalQuizHighestScore")
-        self.totalQuizPlayedTimes: Optional[int] = data.get("totalQuizPlayedTimes")
-        self.requestId: Optional[str] = data.get("requestId")
-        self.message: Optional[str] = data.get("message")
-        self.applicant: Optional[str] = data.get("applicant")
-        self.avgDailySpendTimeIn7Days: Optional[int] = data.get("avgDailySpendTimeIn7Days")
-        self.adminLogCountIn7Days: Optional[int] = data.get("adminLogCountIn7Days")
+        self.accountMembershipStatus: int | None = data.get("accountMembershipStatus")
+        self.activation: int | None = data.get("activation")
+        self.activePublicLiveThreadId: str | None = data.get("activePublicLiveThreadId")
+        self.age: int | None = data.get("age")
+        self.aminoId: str | None = data.get("aminoId")
+        self.aminoIdEditable: bool | None = data.get("aminoIdEditable")
+        self.avatarFrame: str | None = data.get("avatarFrame")
+        self.avatarFrameId: str | None = data.get("avatarFrameId")
+        self.blogsCount: int | None = data.get("blogsCount")
+        self.commentsCount: int | None = data.get("commentsCount")
+        self.content: str | None = data.get("content")
+        self.createdTime: int | None = data.get("createdTime")
+        self.followersCount: int | None = data.get("followersCount")
+        self.followingCount: int | None = data.get("followingCount")
+        self.followingStatus: int | None = data.get("followingStatus")
+        self.gender: str | None = data.get("gender")
+        self.icon: str | None = data.get("icon")
+        self.isGlobal: bool | None = data.get("isGlobal")
+        self.isNicknameVerified: bool | None = data.get("isNicknameVerified")
+        self.itemsCount: int | None = data.get("itemsCount")
+        self.level: int | None = data.get("level")
+        self.mediaList: MediaObject | None = data.get("mediaList")
+        self.membershipStatus: int | None = data.get("membershipStatus")
+        self.modifiedTime: int | None = data.get("modifiedTime")
+        self.mood: str | None = data.get("mood")
+        self.moodSticker: str | None = data.get("moodSticker")
+        self.nickname: str | None = data.get("nickname")
+        self.notificationSubscriptionStatus: int | None = data.get("notificationSubscriptionStatus")
+        self.onlineStatus: int | None = data.get("onlineStatus")
+        self.onlineStatus2: int | None = data.get("onlineStatus2")
+        self.postsCount: int | None = data.get("postsCount")
+        self.pushEnabled: bool | None = data.get("pushEnabled")
+        self.race: str | None = data.get("race")
+        self.reputation: int | None = data.get("reputation")
+        self.role: str | None = data.get("role")
+        self.securityLevel: int | None = data.get("securityLevel")
+        self.status: str | None = data.get("status")
+        self.storiesCount: int | None = data.get("storiesCount")
+        self.tagList: list[str] | None = data.get("tagList")
+        self.userId: str | None = data.get("uid")
+        self.verified: bool | None = data.get("verified")
+        self.totalQuizHighestScore: int | None = data.get("totalQuizHighestScore")
+        self.totalQuizPlayedTimes: int | None = data.get("totalQuizPlayedTimes")
+        self.requestId: str | None = data.get("requestId")
+        self.message: str | None = data.get("message")
+        self.applicant: str | None = data.get("applicant")
+        self.avgDailySpendTimeIn7Days: int | None = data.get("avgDailySpendTimeIn7Days")
+        self.adminLogCountIn7Days: int | None = data.get("adminLogCountIn7Days")
 
         # extensions
-        self.extensions: Optional[Dict] = data.get("extensions") or {}
+        self.extensions: dict | None = data.get("extensions") or {}
         # style
-        self.style: Optional[Dict] = self.extensions.get("style") or {}
-        self.backgroundImage: Optional[str] = self.style.get("backgroundImage")
-        self.backgroundColor: Optional[str] = self.style.get("backgroundColor")
+        self.style: dict | None = self.extensions.get("style") or {}
+        self.backgroundImage: str | None = self.style.get("backgroundMediaList")
+        self.backgroundColor: str | None = self.style.get("backgroundColor")
 
-        self.coverAnimation: Optional[str] = self.extensions.get("coverAnimation")
-        self.customTitles: Optional[List[str]] = self.extensions.get("customTitles")
-        self.defaultBubbleId: Optional[str] = self.extensions.get("defaultBubbleId")
-        self.disabledLevel: Optional[int] = self.extensions.get("__disabledLevel__")
-        self.disabledStatus: Optional[str] = self.extensions.get("__disabledStatus__")
-        self.disabledTime: Optional[int] = self.extensions.get("__disabledTime__")
-        self.isMemberOfTeamAmino: Optional[bool] = self.extensions.get("isMemberOfTeamAmino")
-        self.privilegeOfChatInviteRequest: Optional[bool] = self.extensions.get("privilegeOfChatInviteRequest")
-        self.privilegeOfCommentOnUserProfile: Optional[bool] = self.extensions.get("privilegeOfCommentOnUserProfile")
+        self.coverAnimation: str | None = self.extensions.get("coverAnimation")
+        self.customTitles: list[str] | None = self.extensions.get("customTitles")
+        self.defaultBubbleId: str | None = self.extensions.get("defaultBubbleId")
+        self.disabledLevel: int | None = self.extensions.get("__disabledLevel__")
+        self.disabledStatus: str | None = self.extensions.get("__disabledStatus__")
+        self.disabledTime: int | None = self.extensions.get("__disabledTime__")
+        self.isMemberOfTeamAmino: bool | None = self.extensions.get("isMemberOfTeamAmino")
+        self.privilegeOfChatInviteRequest: bool | None = self.extensions.get("privilegeOfChatInviteRequest")
+        self.privilegeOfCommentOnUserProfile: bool | None = self.extensions.get("privilegeOfCommentOnUserProfile")
 
         # influencerInfo
-        self.influencerInfo: Optional[Dict] = data.get("influencerInfo") or {}
-        self.fansCount: Optional[int] = self.influencerInfo.get("fansCount")
-        self.influencerCreatedTime: Optional[int] = self.influencerInfo.get("createdTime")
-        self.influencerMonthlyFee: Optional[int] = data.get("monthlyFee")
-        self.influencerPinned: Optional[bool] = data.get("pinned")
+        self.influencerInfo: dict | None = data.get("influencerInfo") or {}
+        self.fansCount: int | None = self.influencerInfo.get("fansCount")
+        self.influencerCreatedTime: int | None = self.influencerInfo.get("createdTime")
+        self.influencerMonthlyFee: int | None = data.get("monthlyFee")
+        self.influencerPinned: bool | None = data.get("pinned")
 
         # adminInfo
-        self.staffInfo: Optional[Dict] = data.get("adminInfo") or {}
-        self.globalStrikeCount: Optional[int] = self.staffInfo.get("globalStrikeCount")
-        self.lastStrikeTime: Optional[int] = self.staffInfo.get("lastStrikeTime")
-        self.lastWarningTime: Optional[int] = self.staffInfo.get("lastWarningTime")
-        self.strikeCount: Optional[int] = self.staffInfo.get("strikeCount")
-        self.warningCount: Optional[int] = self.staffInfo.get("warningCount")
+        self.staffInfo: dict | None = data.get("adminInfo") or {}
+        self.globalStrikeCount: int | None = self.staffInfo.get("globalStrikeCount")
+        self.lastStrikeTime: int | None = self.staffInfo.get("lastStrikeTime")
+        self.lastWarningTime: int | None = self.staffInfo.get("lastWarningTime")
+        self.strikeCount: int | None = self.staffInfo.get("strikeCount")
+        self.warningCount: int | None = self.staffInfo.get("warningCount")
 
-        self.session = None
+        self.client = None
 
     @property
     def UserProfile(self):
-
         return self
 
 class UserProfileList:
@@ -149,10 +145,7 @@ class UserProfileList:
     def __init__(self, data):
         self.json = data
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-
-            return
+            data = {}
 
         _userObjects = [UserProfile(x).UserProfile for x in data]
 
@@ -173,7 +166,7 @@ class BlogList:
         "fansOnly", "votesCount", "endTime", "refObjectId", "refObject",
         "votedValue", "extensions", "commentsCount", "content", "featuredType",
         "shareUrl", "disabledTime", "quizPlayedTimes", "quizTotalQuestionCount",
-        "quizTrendingTimes", "quizLastAddQuestionTime", "isIntroPost"
+        "quizTrendingTimes", "quizLastAddQuestionTime", "isIntroPost", "backgroundColor"
     )
 
     def __init__(self, data, nextPageToken = None, prevPageToken = None):
@@ -198,10 +191,7 @@ class RecentBlogs:
     def __init__(self, data):
         self.json = data
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-
-            return
+            data = {}
 
         self.nextPageToken = None
         self.prevPageToken = None
@@ -261,26 +251,25 @@ class Blog:
         "fansOnly", "votesCount", "endTime", "refObjectId", "refObject",
         "votedValue", "extensions", "commentsCount", "content", "featuredType",
         "shareUrl", "disabledTime", "quizPlayedTimes", "quizTotalQuestionCount",
-        "quizTrendingTimes", "quizLastAddQuestionTime", "isIntroPost"
+        "quizTrendingTimes", "quizLastAddQuestionTime", "isIntroPost", "backgroundColor"
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
+            data = {}
 
-            return
         self.json = data
 
         self.author = UserProfile(data.get("author")).UserProfile
         self.quizQuestionList = QuizQuestionList(data.get("quizQuestionList", [])).QuizQuestionList
 
         extensions = data.get("extensions") or {}
+        style = extensions.get("style") or {}
         tipInfo = data.get("tipInfo") or {}
 
         self.globalVotesCount = data.get("globalVotesCount")
         self.globalVotedValue = data.get("globalVotedValue")
         self.keywords = data.get("keywords")
-        self.mediaList: Optional[MediaObject] = data.get("mediaList")
+        self.mediaList: MediaObject | None = data.get("mediaList")
         self.style = data.get("style")
         self.totalQuizPlayCount = data.get("totalQuizPlayCount")
         self.title = data.get("title")
@@ -309,6 +298,7 @@ class Blog:
         self.content = data.get("content")
         self.createdTime = data.get("createdTime")
         self.extensions = extensions
+        self.backgroundColor = style.get("backgroundColor")
         self.commentsCount = data.get("commentsCount")
         self.featuredType = extensions.get("featuredType")
         self.disabledTime = extensions.get("__disabledTime__")
@@ -333,10 +323,8 @@ class Wiki:
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
+            data = {}
 
-            return
         self.json = data
 
         self.author = UserProfile(data.get("author")).UserProfile
@@ -364,7 +352,7 @@ class Wiki:
         self.votesCount = data.get("votesCount")
         self.comId = data.get("ndcId")
         self.createdTime = data.get("createdTime")
-        self.mediaList: Optional[MediaObject] = data.get("mediaList")
+        self.mediaList: MediaObject | None = data.get("mediaList")
         self.commentsCount = data.get("commentsCount")
         self.backgroundColor = style.get("backgroundColor")
         self.fansOnly = extensions.get("fansOnly")
@@ -387,7 +375,7 @@ class WikiList:
         "knowledgeBase", "version", "originalWikiId", "contributors"
     )
 
-    def __init__(self, data: Dict):
+    def __init__(self, data: dict):
         self.json = data
         self.author = UserProfileList([y.get("author") for y in data]).UserProfileList
         self.labels = self._get_labels(data)
@@ -460,31 +448,28 @@ class Community:
         "themeLeftSidePanelColor", "customList", "communityHeadList"
     )
 
-    def __init__(self, data: Dict):
+    def __init__(self, data: dict):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-
-            return
+            data = {}
 
         self.json = data
 
         self.agent = UserProfile(data.get("agent")).UserProfile
         self.communityHeadList = UserProfileList(data.get("communityHeadList", [])).UserProfileList
 
-        themePack: Dict = data.get("themePack") or {}
-        configuration: Dict = data.get("configuration") or {}
-        appearance: Dict = configuration.get("appearance") or {}
-        leftSidePanel: Dict = appearance.get("leftSidePanel") or {}
-        style: Dict = leftSidePanel.get("style") or {}
-        page: Dict = configuration.get("page") or {}
-        advancedSettings: Dict = data.get("advancedSettings") or {}
+        themePack: dict = data.get("themePack") or {}
+        configuration: dict = data.get("configuration") or {}
+        appearance: dict = configuration.get("appearance") or {}
+        leftSidePanel: dict = appearance.get("leftSidePanel") or {}
+        style: dict = leftSidePanel.get("style") or {}
+        page: dict = configuration.get("page") or {}
+        advancedSettings: dict = data.get("advancedSettings") or {}
         self.rankingTable = RankingTableList(advancedSettings.get("rankingTable", [])).RankingTableList
-        extensions: Dict = data.get("extensions") or {}
+        extensions: dict = data.get("extensions") or {}
 
-        self.name: Optional[str] = data.get("name")
-        self.usersCount: Optional[int] = data.get("membersCount")
-        self.createdTime: Optional[str] = data.get("createdTime")
+        self.name: str | None = data.get("name")
+        self.usersCount: int | None = data.get("membersCount")
+        self.createdTime: str | None = data.get("createdTime")
         self.aminoId = data.get("endpoint")
         self.icon = data.get("icon")
         self.link = data.get("link")
@@ -512,7 +497,7 @@ class Community:
         self.isStandaloneAppDeprecated = data.get("isStandaloneAppDeprecated")
         self.influencerList = data.get("influencerList")
         self.keywords = data.get("keywords")
-        self.mediaList: Optional[MediaObject] = data.get("mediaList")
+        self.mediaList: MediaObject | None = data.get("mediaList")
         self.description = data.get("content")
         self.isStandaloneAppMonetizationEnabled = data.get("isStandaloneAppMonetizationEnabled")
         self.advancedSettings = advancedSettings
@@ -532,7 +517,7 @@ class Community:
         self.extensions = extensions
         self.nameAliases = extensions.get("communityNameAliases")
         self.templateId = data.get("templateId")
-        self.promotionalMediaList: Optional[MediaObject] = data.get("promotionalMediaList")
+        self.promotionalMediaList: MediaObject | None = data.get("promotionalMediaList")
 
 
     @property
@@ -600,9 +585,7 @@ class Membership:
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
+            data = {}
 
         self.json = data
 
@@ -631,9 +614,7 @@ class FromCode:
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
+            data = {}
 
         self.json = data
 
@@ -664,10 +645,7 @@ class UserProfileCountList:
 
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-
-            return
+            data = {}
 
         self.json = data
 
@@ -687,9 +665,7 @@ class WalletInfo:
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
+            data = {}
 
         self.json = data
         self.totalCoinsFloat = data.get("totalCoinsFloat")
@@ -715,9 +691,7 @@ class WalletHistory:
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
+            data = {}
         self.json = data
 
         self.taxCoins = []
@@ -773,9 +747,7 @@ class UserAchievements:
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
+            data = {}
         self.json = data
         self.secondsSpentOfLast24Hours = data.get("secondsSpentOfLast24Hours")
         self.secondsSpentOfLast7Days = data.get("secondsSpentOfLast7Days")
@@ -827,9 +799,7 @@ class GetWikiInfo:
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
+            data = {}
 
         self.json = data
 
@@ -848,9 +818,7 @@ class GetBlogInfo:
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
+            data = {}
 
         self.json = data
 
@@ -918,9 +886,7 @@ class WikiCategory:
     def __init__(self, data):
         self.json = data
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
+            data = {}
 
         itemCategory = data.get("itemCategory") or {}
         childrenWrapper = data.get("childrenWrapper") or {}
@@ -934,7 +900,7 @@ class WikiCategory:
         self.extensions = itemCategory.get("extensions")
         self.createdTime = itemCategory.get("createdTime")
         self.title = itemCategory.get("label")
-        self.mediaList: Optional[MediaObject] = itemCategory.get("mediaList")
+        self.mediaList: MediaObject | None = itemCategory.get("mediaList")
         self.icon = itemCategory.get("icon")
         self.parentType = childrenWrapper.get("type")
 
@@ -985,10 +951,7 @@ class Thread:
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-
-            return
+            data = {}
 
         self.json = data
 
@@ -1081,28 +1044,25 @@ class Sticker:
 
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-
-            return
+            data = {}
 
         self.json = data
 
         self.collection = StickerCollection(data.get("stickerCollectionSummary")).StickerCollection
 
-        self.status: Optional[str] = data.get("status")
-        self.icon: Optional[str] = data.get("icon")
-        self.iconV2: Optional[str] = data.get("iconV2")
-        self.name: Optional[str] = data.get("name")
-        self.stickerId: Optional[str] = data.get("stickerId")
-        self.smallIcon: Optional[str] = data.get("smallIcon")
-        self.smallIconV2: Optional[str] = data.get("smallIconV2")
-        self.stickerCollectionId: Optional[str] = data.get("stickerCollectionId")
-        self.mediumIcon: Optional[str] = data.get("mediumIcon")
-        self.mediumIconV2: Optional[str] = data.get("mediumIconV2")
-        self.extensions: Optional[str] = data.get("extensions")
-        self.usedCount: Optional[str] = data.get("usedCount")
-        self.createdTime: Optional[str] = data.get("createdTime")
+        self.status: str | None = data.get("status")
+        self.icon: str | None = data.get("icon")
+        self.iconV2: str | None = data.get("iconV2")
+        self.name: str | None = data.get("name")
+        self.stickerId: str | None = data.get("stickerId")
+        self.smallIcon: str | None = data.get("smallIcon")
+        self.smallIconV2: str | None = data.get("smallIconV2")
+        self.stickerCollectionId: str | None = data.get("stickerCollectionId")
+        self.mediumIcon: str | None = data.get("mediumIcon")
+        self.mediumIconV2: str | None = data.get("mediumIconV2")
+        self.extensions: str | None = data.get("extensions")
+        self.usedCount: str | None = data.get("usedCount")
+        self.createdTime: str | None = data.get("createdTime")
 
     @property
     def Sticker(self):
@@ -1136,9 +1096,7 @@ class StickerCollection:
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
+            data = {}
 
         self.json = data
 
@@ -1270,9 +1228,7 @@ class Message:
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
+            data = {}
 
         self.json = data
 
@@ -1283,7 +1239,7 @@ class Message:
         
         self.sticker = Sticker(extensions.get("sticker")).Sticker
 
-        self.content = data.get("content")
+        self.content: str | None = data.get("content")
         self.includedInSummary = data.get("includedInSummary")
         self.isHidden = data.get("isHidden")
         self.messageId = data.get("messageId")
@@ -1409,50 +1365,82 @@ class NotificationList:
 
         return self
 
-class AdminLogList:
+class GetAdminLog:
     def __init__(self, data):
-        _author = [x.get("author") for x in data]
-
         self.json = data
 
-        self.author = UserProfileList(_author).UserProfileList
-        self.createdTime = []
-        self.objectType = []
-        self.operationName = []
-        self.comId = []
-        self.referTicketId = []
-        self.extData = []
-        self.operationDetail = []
-        self.operationLevel = []
-        self.moderationLevel = []
-        self.operation = []
-        self.objectId = []
-        self.logId = []
-        self.objectUrl = []
-        self.content = []
-        self.value = []
+        self.adminLogList = []
+        self.nextPageToken = None
+        self.prevPageToken = None
 
     @property
+    def GetAdminLog(self):
+        paging = self.json.get("paging") or {}
+
+        self.nextPageToken = paging.get("nextPageToken")
+        self.prevPageToken = paging.get("prevPageToken")
+        self.adminLogList = self.json.get("adminLogList")
+
+        return AdminLogList(self.adminLogList, self.nextPageToken, self.prevPageToken).AdminLogList
+
+class AdminLog:
+    __slots__ = (
+        "json", "author", "createdTime", "objectType", "operationName", "comId",
+        "referTicketId", "extData", "operationDetail", "operationLevel", 
+        "moderationLevel", "operation", "objectId", "logId", "objectUrl",
+        "content", "value", "refObject"
+    )
+    def __init__(self, data):
+        if not data:
+            data = {}
+
+        self.json = data
+        self.author = UserProfile(data.get("author")).UserProfile
+        
+        extData = data.get("extData") or {}
+        
+        self.createdTime = data.get("createdTime")
+        self.objectType = data.get("objectType")
+        self.operationName = data.get("operationName")
+        self.comId = data.get("ndcId")
+        self.referTicketId = data.get("referTicketId")
+        self.extData = extData
+        self.content = extData.get("note")
+        self.value = extData.get("value")
+        self.operationDetail = data.get("operationDetail")
+        self.operationLevel = data.get("operationLevel")
+        self.moderationLevel = data.get("moderationLevel")
+        self.operation = data.get("operation")
+        self.objectId = data.get("objectId")
+        self.logId = data.get("logId")
+        self.objectUrl = data.get("objectUrl")
+        self.refObject = data.get("refObject")
+
+    @property
+    def AdminLog(self):
+        return self
+
+class AdminLogList:
+    __slots__ = (
+        "json", "nextPageToken", "prevPageToken", "author", "createdTime", 
+        "objectType", "operationName", "comId", "referTicketId", "extData", 
+        "operationDetail", "operationLevel", "moderationLevel", "operation", 
+        "objectId", "logId", "objectUrl", "content", "value", "refObject"
+    )
+    
+    def __init__(self, data, nextPageToken = None, prevPageToken = None):
+        self.json = data
+        self.nextPageToken = nextPageToken
+        self.prevPageToken = prevPageToken
+        
+        _adminLogObjects = [AdminLog(x).AdminLog for x in data]
+        
+        self.author = UserProfileList([x.author.json for x in _adminLogObjects]).UserProfileList
+        
+        set_attributes(self, _adminLogObjects)
+    
+    @property
     def AdminLogList(self):
-        for x in self.json:
-            extData = x.get("extData") or {}
-
-            self.createdTime.append(x.get("createdTime"))
-            self.objectType.append(x.get("objectType"))
-            self.operationName.append(x.get("operationName"))
-            self.comId.append(x.get("ndcId"))
-            self.referTicketId.append(x.get("referTicketId"))
-            self.extData.append(extData)
-            self.content.append(extData.get("note"))
-            self.value.append(extData.get("value"))
-            self.operationDetail.append(x.get("operationDetail"))
-            self.operationLevel.append(x.get("operationLevel"))
-            self.moderationLevel.append(x.get("moderationLevel"))
-            self.operation.append(x.get("operation"))
-            self.objectId.append(x.get("objectId"))
-            self.logId.append(x.get("logId"))
-            self.objectUrl.append(x.get("objectUrl"))
-
         return self
 
 class LotteryLog:
@@ -1570,7 +1558,7 @@ class QuizQuestionList:
         self.createdTime = []
         self.questionId = []
         self.parentId = []
-        self.mediaList: Optional[List[MediaObject]] = []
+        self.mediaList: list[MediaObject] | None = []
         self.extensions = []
         self.style = []
         self.backgroundImage = []
@@ -1583,7 +1571,7 @@ class QuizQuestionList:
         for x in self.json:
             extensions = x.get("extensions") or {}
             style = extensions.get("style") or {}
-            backgroundMediaList: Optional[MediaObject] = style.get("backgroundMediaList", [None, None])
+            backgroundMediaList: MediaObject | None = style.get("backgroundMediaList", [None, None])
 
             self.status.append(x.get("status"))
             self.parentType.append(x.get("parentType"))
@@ -1605,7 +1593,7 @@ class QuizAnswers:
         self.json = data
         self.answerId = []
         self.isCorrect = []
-        self.mediaList: List[Optional[MediaObject]] = []
+        self.mediaList: list[MediaObject | None] = []
         self.title = []
         self.qhash = []
 
@@ -1709,7 +1697,7 @@ class SharedFolderFile:
         self.width = data.get("width_hq")
         self.height = data.get("height_hq")
         self.title = data.get("title")
-        self.media: Optional[MediaObject] = data.get("media", [None, None])
+        self.media: MediaObject | None = data.get("media", [None, None])
         self.mediaType = self.media[0]
         self.fileUrl = self.media[1]
         self.commentsCount = data.get("commentsCount")
@@ -1735,7 +1723,7 @@ class SharedFolderFileList:
         self.modifiedTime = []
         self.extensions = []
         self.title = []
-        self.media: Optional[MediaObject] = []
+        self.media: MediaObject | None = []
         self.width = []
         self.height = []
         self.commentsCount = []
@@ -1930,9 +1918,7 @@ class NoticeList:
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
+            data = {}
 
         _author, _targetUser = [], []
 
@@ -2030,9 +2016,7 @@ class AvatarFrameList:
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
+            data = {}
 
         _author = [x.get("operator") for x in data]
         _targetUser = [x.get("targetUser") for x in data]
@@ -2133,9 +2117,7 @@ class BubbleConfig:
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
+            data = {}
 
         self.json = data
 
@@ -2170,9 +2152,7 @@ class Bubble:
     )
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-            return
+            data = {}
 
         self.config = BubbleConfig(data.get("config")).BubbleConfig
 
@@ -2369,8 +2349,53 @@ class StoreChatBubble:
     @property
     def StoreChatBubble(self):
         return self
+    
+class ChatEvent():
+    TEXT_MESSAGE = "on_text_message"
+    IMAGE_MESSAGE = "on_image_message"
+    YOUTUBE_MESSAGE = "on_youtube_message"
+    STRIKE_MESSAGE = "on_strike_message"
+    VOICE_MESSAGE = "on_voice_message"
+    STICKER_MESSAGE = "on_sticker_message"
+    VOICE_CHAT_MISSED = "on_voice_chat_not_answered"
+    VOICE_CHAT_CANCELLED = "on_voice_chat_not_cancelled"
+    VOICE_CHAT_DECLINED = "on_voice_chat_not_declined"
+    VIDEO_CHAT_MISSED = "on_video_chat_not_answered"
+    VIDEO_CHAT_CANCELLED = "on_video_chat_not_cancelled"
+    VIDEO_CHAT_DECLINED = "on_video_chat_not_declined"
+    MESSAGE_DELETED = "on_delete_message"
+    USER_JOINED = "on_group_member_join"
+    USER_LEFT = "on_group_member_leave"
+    CHAT_INVITE = "on_chat_invite"
+    BACKGROUND_CHANGED = "on_chat_background_changed"
+    TITLE_CHANGED = "on_chat_title_changed"
+    ICON_CHANGED = "on_chat_icon_changed"
+    VOICE_CHAT_STARTED = "on_voice_chat_start"
+    VIDEO_CHAT_STARTED = "on_video_chat_start"
+    VOICE_CHAT_ENDED = "on_voice_chat_end"
+    VIDEO_CHAT_ENDED = "on_video_chat_end"
+    CHAT_CONTENT_CHANGED = "on_chat_content_changed"
+    SCREEN_ROOM_STARTED = "on_screen_room_start"
+    SCREEN_ROOM_ENDED = "on_screen_room_end"
+    HOST_TRANSFERRED = "on_chat_host_transfered"
+    MESSAGE_FORCE_DELETED = "on_text_message_force_removed"
+    CHAT_MESSAGE_REMOVED = "on_chat_removed_message"
+    MESSAGE_REMOVED_BY_ADMIN = "on_text_message_removed_by_admin"
+    CHAT_TIP = "on_chat_tip"
+    ANNOUNCEMENT_PINNED = "on_chat_pin_announcement"
+    VOICE_CHAT_OPEN_PERMISSION = "on_voice_chat_permission_open_to_everyone"
+    VOICE_CHAT_REQUEST_PERMISSION = "on_voice_chat_permission_invited_and_requested"
+    VOICE_CHAT_INVITE_PERMISSION = "on_voice_chat_permission_invite_only"
+    CHAT_VIEW_ONLY_ENABLED = "on_chat_view_only_enabled"
+    CHAT_VIEW_ONLY_DISABLED = "on_chat_view_only_disabled"
+    ANNOUNCEMENT_UNPINNED = "on_chat_unpin_announcement"
+    CHAT_TIPPING_ENABLED = "on_chat_tipping_enabled"
+    CHAT_TIPPING_DISABLED = "on_chat_tipping_disabled"
+    TIMESTAMP_MESSAGE = "on_timestamp_message"
+    WELCOME_MESSAGE = "on_welcome_message"
+    INVITE_MESSAGE = "on_invite_message"
 
-class MediaObject(List[List[TypeVar("T")]]):
+class MediaObject(list[list[TypeVar("T")]]):
     pass
 
 def set_attributes(instance, _ListObjects):

@@ -1,359 +1,469 @@
-<h1 align="center">✨ AminoLightPy ✨</h1>
-
-<p align="center">
-  <img src="https://github.com/AugustLigh/AminoLightPy/assets/125802350/ba1ae102-dee9-45ab-95c4-f5c5e0249d26" alt="AminoLightPy Banner" width="80%">
-</p>
-
-<p align="center">
-  <b>Elegant and powerful Python framework for creating AminoApps bots and scripts</b>
-</p>
-
-<p align="center">
-    <a href="https://github.com/AugustLigh/AminoLightPy/releases"><img src="https://img.shields.io/github/release/AugustLigh/AminoLightPy.svg?style=flat-square&color=informational" alt="GitHub release" /></a>
-    <a href="https://aminopy.readthedocs.io/en/latest/index.html"><img src="https://img.shields.io/website?down_message=failing&label=docs&up_color=success&up_message=available&url=https://aminopy.readthedocs.io/en/latest/index.html&style=flat-square" alt="Docs" /></a>
-    <a href="https://github.com/AugustLigh/AminoLightPy/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="licence" /></a>
-</p>
-
 <div align="center">
-  
-  [📋 Features](#features) • 
-  [🚀 Usage](#installation-and-usage) • 
-  [📝 Example](#example) • 
-  [📚 Documentation](#documentation) • 
-  [📌 Notes](#notes)
-  
+
+# ✨ AminoLightPy ✨
+
+<img src="https://github.com/AugustLigh/AminoLightPy/assets/125802350/ba1ae102-dee9-45ab-95c4-f5c5e0249d26" alt="AminoLightPy Banner" width="85%">
+
+### 🚀 Elegant and powerful Python framework for creating AminoApps bots and scripts
+
+[![GitHub release](https://img.shields.io/github/release/AugustLigh/AminoLightPy.svg?style=for-the-badge&color=informational&logo=github)](https://github.com/AugustLigh/AminoLightPy/releases)
+[![Documentation](https://img.shields.io/website?down_message=failing&label=docs&up_color=success&up_message=available&url=https://aminopy.readthedocs.io/en/latest/index.html&style=for-the-badge&logo=gitbook)](https://aminopy.readthedocs.io/en/latest/index.html)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge&logo=opensourceinitiative)](https://github.com/AugustLigh/AminoLightPy/blob/main/LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge&logo=python)](https://python.org)
+
+---
+
+### 📍 Quick Navigation
+**[🔥 Features](#-features)** • **[⚡ Quick Start](#-quick-start)** • **[📖 Documentation](#-documentation)** • **[🎯 Examples](#-examples)** • **[💬 Support](#-support)**
+
 </div>
 
 ---
 
-## Features
+## 🌟 Features
 
 <div align="center">
 
-| 🔥 Feature | 📄 Description |
-|:---:|:---|
-| ⚡ **Optimization** | Most of the code has been rewritten for maximum performance |
-| ⚙️ **Backward compatibility** | Write code with correct syntax without compatibility issues |
-| 🎮 **Commands support** | Go even further with new requests and capabilities |
-| 🍎 **Supported on iPhones** | Works for free, without jailbreak and restrictions |
+<table>
+<tr>
+<td align="center" width="33%">
+
+### ⚡ **Performance**
+Optimized code with maximum efficiency and minimal resource usage
+
+</td>
+<td align="center" width="33%">
+
+### 🔄 **Compatibility** 
+Seamless backward compatibility with existing Amino bot projects
+
+</td>
+<td align="center" width="33%">
+
+### 🎮 **Rich Commands**
+Advanced command system with extensive API coverage
+
+</td>
+</tr>
+<tr>
+<td align="center">
+
+### 📱 **iOS Support**
+Works on iPhones without jailbreak or restrictions
+
+</td>
+<td align="center">
+
+### 🛡️ **Reliable**
+Built-in error handling and connection management
+
+</td>
+<td align="center">
+
+### 🎨 **Flexible**
+Easy customization for any bot requirements
+
+</td>
+</tr>
+</table>
 
 </div>
 
-## 🚀 Installation and Usage
+---
 
-### Install the package
+## ⚡ Quick Start
+
+### 💿 Installation
 
 ```bash
 pip install amino.light.py
 ```
 
-### Basic usage
-
-Import the `Client` and `SubClient` objects into your bot's code:
+### 🎯 Your First Bot
 
 ```python
 from AminoLightPy import Client, SubClient
 
-# Your help message
-help_message = """
-👋 Welcome!
-📚 This is help page.
-"""
-
-# Create Client object
+# Initialize and login
 client = Client()
+client.login("your_email@gmail.com", "your_password")
 
-# Login into account
-client.login("example_mail@gmail.com", "example_password")
-
-# And display the help!
-@client.event("on_text_message")
+@client.event(ChatEvent.TEXT_MESSAGE)
 def on_message(data):
-    # Do not answer to myself
-    if data.message.author.userId != client.profile.userId:
-        # Create SubClient object
+    if data.message.content.startswith('/hello'):
         sub_client = SubClient(comId=data.comId, profile=client.profile)
-        
-        # Process help command
-        if data.message.content.startswith('/help'):
-            sub_client.send_message(chatId=data.message.chatId, message=help_message)
+        sub_client.send_message(
+            chatId=data.message.chatId, 
+            message="👋 Hello! I'm your new Amino bot!"
+        )
 ```
 
-## Example
-
-Simply copy the code above and type `/help` in the chat to see your bot in action.
-
-Also, take a look at interactive examples in our documentation!
-
-## Documentation
-
 <div align="center">
-  <p><b>Complete API reference for building amazing Amino bots</b></p>
+<i>🎉 That's it! Your bot is now running and ready to respond to messages.</i>
 </div>
 
-### 🔹 Client
+---
 
-<details open>
-<summary><b>Main API connection class</b></summary>
+## 📖 Documentation
 
-#### 🔸 Initialization
+<div align="center">
+
+### 🏗️ **Core Components**
+
+</div>
+
+<details>
+<summary><b>🔌 Client - Main Connection Handler</b></summary>
+
+<br>
+
+The `Client` class manages your connection to Amino services and handles global operations.
+
+#### 🚀 **Initialization**
 
 ```python
 from AminoLightPy import Client
 
-# Initialize client with default settings
+# Basic setup
 client = Client()
-# OR
-client = Client(socket_enabled=False)
-#if you not need websocket (faster)
 
-# With custom settings
-client = Client(deviceId="your_device_id", proxies={"http": "http://proxy.example.com"})
+# Advanced configuration
+client = Client(
+    deviceId="your_device_id",
+    socket_enabled=True,  # Enable real-time events
+    proxies={"http": "http://proxy.example.com"}
+)
 ```
 
-#### 🔸 Authentication
+#### 🔐 **Authentication Options**
 
 ```python
 # Universal login (recommended)
-client.login(email_or_phone="example@gmail.com", password="your_password")
+client.login("email@example.com", "password123")
 
-# Alternative authentication methods
-client.login_email(email="example@gmail.com", password="your_password")
-client.login_phone(phoneNumber="+1234567890", password="your_password")
-client.login_sid(SID="your_sid_here")  # SIDs are cached automatically when using client.login()
-
-# OR
-
-client.login(email_or_phone="example@gmail.com", password="your_password", self_device=False)
-# If you want a random DeviceId for each login
+# Specific methods
+client.login_email("email@example.com", "password123")
+client.login_phone("+1234567890", "password123")
+client.login_sid("your_session_id")  # Use cached session
 ```
 
-#### 🔸 Event Handling
+#### ⚡ **Event System**
 
 ```python
-@client.event("on_text_message")
-def on_message(data):
-    print(f"Received message: {data.message.content}")
+@client.event(ChatEvent.TEXT_MESSAGE)
+def handle_text(data):
+    print(f"📝 Message: {data.message.content}")
 
-@client.event("on_image_message")
-def on_image(data):
-    print(f"Received image from: {data.message.author.nickname}")
+@client.event(ChatEvent.IMAGE_MESSAGE)
+def handle_image(data):
+    print(f"🖼️ Image from: {data.message.author.nickname}")
+
+@client.event(ChatEvent.VOICE_MESSAGE)
+def handle_voice(data):
+    print(f"🎵 Voice message received!")
 ```
 
-<table>
-<tr><th>Available Events</th><th>Description</th></tr>
-<tr><td><code>on_text_message</code></td><td>Triggered when a text message is received</td></tr>
-<tr><td><code>on_image_message</code></td><td>Triggered when an image message is received</td></tr>
-<tr><td><code>on_youtube_message</code></td><td>Triggered when a YouTube link is shared</td></tr>
-<tr><td><code>on_voice_message</code></td><td>Triggered when a voice message is received</td></tr>
-<tr><td><code>on_sticker_message</code></td><td>Triggered when a sticker is received</td></tr>
-<tr><td><code>on_join_chat</code></td><td>Triggered when someone joins a chat</td></tr>
-<tr><td><code>on_leave_chat</code></td><td>Triggered when someone leaves a chat</td></tr>
-</table>
-and more...
+<div align="center">
 
-#### 🔸 Community Operations
+**🎯 Available Events**
 
-```python
-# Get list of joined communities
-communities = client.sub_clients(size=100)
+| Event | Trigger |
+|-------|---------|
+| `on_text_message` | Text messages |
+| `on_image_message` | Image uploads |
+| `on_voice_message` | Voice messages |
+| `on_youtube_message` | YouTube links |
+| `on_sticker_message` | Stickers |
+| `on_join_chat` | User joins chat |
+| `on_leave_chat` | User leaves chat |
 
-# Search for a community
-found_communities = client.search_community("amino_id")
+</div>
 
-# Join/Leave community
-client.join_community(comId=123456)
-client.leave_community(comId=123456)
-
-# Send join request
-client.request_join_community(comId=123456, message="i want to join😭🙏")
-```
 </details>
 
-### 🔹 SubClient
+<details>
+<summary><b>🏠 SubClient - Community Operations</b></summary>
 
-<details open>
-<summary><b>Community-specific operations</b></summary>
+<br>
 
-#### 🔸 Initialization
+The `SubClient` handles all community-specific actions and messaging.
+
+#### 🎯 **Setup**
+
+```python
+sub_client = SubClient(comId=123456, profile=client.profile)
+```
+
+#### 💬 **Messaging**
+
+```python
+# Send text message
+sub_client.send_message(chatId="chat_id", message="Hello World! 🌍")
+
+# Send image with caption
+with open("image.jpg", "rb") as img:
+    sub_client.send_message(
+        chatId="chat_id", 
+        message="Check this out! 📸",
+        file=img
+    )
+
+# Mention users
+sub_client.send_message(
+    chatId="chat_id",
+    message="Hey @user, look at this! 👋",
+    mentionUserIds=["user_id_here"]
+)
+```
+
+#### 💾 **Rich Content**
+
+```python
+# Embed links with preview
+from base64 import b64encode
+
+with open("preview.jpg", "rb") as preview:
+    sub_client.send_message(
+        chatId="chat_id",
+        message="Amazing content! ✨",
+        linkSnippet=[{
+            "link": "https://example.com",
+            "mediaType": 100,
+            "mediaUploadValue": b64encode(preview.read()).decode(),
+            "mediaUploadValueContentType": "image/jpeg"
+        }]
+    )
+```
+
+#### 🎨 **Content Creation**
+
+```python
+# Create blog post
+sub_client.post_blog(
+    title="🌟 My Amazing Blog Post",
+    content="This is where I share my thoughts...",
+    imageList=[open("img1.png", "rb"), open("img2.png", "rb")]
+)
+
+# Create wiki entry
+sub_client.post_wiki(
+    title="📚 Helpful Wiki",
+    content="Everything you need to know about...",
+    icon=open("wiki_icon.png", "rb")
+)
+```
+
+#### 🎭 **Interactive Features**
+
+```python
+# Show typing indicator
+with sub_client.typing(chatId="chat_id"):
+    # Simulate thinking time
+    time.sleep(2)
+    sub_client.send_message(chatId="chat_id", message="Done thinking! 💭")
+
+# Show recording indicator
+with sub_client.recording(chatId="chat_id"):
+    time.sleep(3)  # Prepare voice message
+    with open("voice.mp3", "rb") as voice:
+        sub_client.send_message(
+            chatId="chat_id", 
+            file=voice, 
+            fileType="audio"
+        )
+```
+
+</details>
+
+<details>
+<summary><b>👑 Moderation Tools (Staff Only)</b></summary>
+
+<br>
+
+Advanced moderation features for community leaders and staff.
+
+```python
+# Content moderation
+sub_client.hide(blogId="blog_id", reason="Inappropriate content")
+sub_client.feature(time=3, blogId="blog_id")  # Feature for 3 hours
+sub_client.unfeature(blogId="blog_id")
+
+# User management
+sub_client.ban(userId="user_id", reason="Spam violation")
+sub_client.unban(userId="user_id", reason="Appeal approved")
+sub_client.strike(
+    userId="user_id", 
+    time=24, 
+    title="Community Guidelines", 
+    reason="Inappropriate behavior"
+)
+sub_client.warn(userId="user_id", reason="Minor rule violation")
+```
+
+</details>
+
+---
+
+## 🎯 Examples
+
+<div align="center">
+
+### 🤖 **Bot Examples**
+
+</div>
+
+<details>
+<summary><b>🎮 Command Bot</b></summary>
 
 ```python
 from AminoLightPy import Client, SubClient
+import random
 
 client = Client()
 client.login("email", "password")
 
-# Create a SubClient for a specific community
-sub_client = SubClient(comId=123456, profile=client.profile)
+commands = {
+    '/help': '📋 Available commands:\n/dice - Roll a dice\n/joke - Get a random joke',
+    '/dice': lambda: f'🎲 You rolled: {random.randint(1, 6)}!',
+    '/joke': lambda: random.choice([
+        "Why do programmers prefer dark mode? Because light attracts bugs! 🐛",
+        "How many programmers does it take to change a light bulb? None, that's a hardware problem! 💡"
+    ])
+}
+
+@client.event(ChatEvent.TEXT_MESSAGE)
+def handle_command(data):
+    message = data.message.content.lower()
+    
+    if message in commands:
+        sub_client = SubClient(comId=data.comId, profile=client.profile)
+        
+        response = commands[message]
+        if callable(response):
+            response = response()
+            
+        sub_client.send_message(
+            chatId=data.message.chatId,
+            message=response
+        )
 ```
 
-#### 🔸 Messaging
-
-```python
-# Text message
-sub_client.send_message(
-    chatId="chat-id-here", 
-    message="Hello world!"
-)
-
-# Image message
-with open("image.jpg", "rb") as image:
-    sub_client.send_message(
-        chatId="chat-id-here", 
-        file=image
-    )
-# Warn! You need add `fileType="audio"` for voice message
-
-# Mentions
-sub_client.send_message(
-    chatId="chat-id-here",
-    message="Hello @user!",
-    mentionUserIds=["user-id-here"]
-)
-
-# Rich content (embedded links)
-sub_client.send_message(
-    chatId="chat-id-here",
-    message="Check this out!",
-    linkSnippet={
-        "link": "https://example.com",
-        "title": "Example Website",
-        "mediaType": 100,
-        "mediaSourceWidth": 500,
-        "mediaSourceHeight": 300
-    }
-)
-```
-
-#### 🔸 Chat Management
-
-```python
-# Create a new chat
-sub_client.start_chat(
-    userId="user-id", 
-    message="Hi there!"
-)
-
-# Create a group chat
-sub_client.start_chat(
-    userIds=["user-id-1", "user-id-2"],
-    title="Our Group",
-    message="Welcome everyone!"
-)
-
-# Get joined chats
-chats = sub_client.get_chat_threads(start=0, size=100)
-
-# Get chat messages
-messages = sub_client.get_chat_messages(
-    chatId="chat-id-here",
-    start=0,
-    size=100
-)
-
-# Invite to chat
-sub_client.invite_to_chat(
-    chatId="chat-id-here", 
-    userIds=["user-id-1", "user-id-2"]
-)
-
-# Leave chat
-sub_client.leave_chat(chatId="chat-id-here")
-```
-
-#### 🔸 Content Creation
-
-```python
-# Create a blog post
-sub_client.post_blog(
-    title="My Blog Post",
-    content="This is content for my blog post",
-    imageList=[open("image_1.png", "rb"), open("image_2.png", "rb")]
-)
-
-# Create a wiki
-sub_client.post_wiki(
-    title="Wiki Title",
-    content="Wiki content here",
-    icon=open("icon.png", "rb")
-)
-
-# Upload media
-media = sub_client.upload_media(file=open("image.jpg", "rb"))
-```
-
-#### 🔸 Social Interactions
-
-```python
-# Comment on content
-sub_client.comment(blogId="blog-id", message="Great post!")
-sub_client.comment(wikiId="wiki-id", message="Useful information!")
-
-# Like content
-sub_client.like_blog(blogId="blog-id")
-sub_client.like_comment(commentId="comment-id")
-
-# Follow/Unfollow users
-sub_client.follow(userId="user-id")
-sub_client.unfollow(userId="user-id")
-
-# Block/Unblock users
-sub_client.block_user(userId="user-id")
-sub_client.unblock_user(userId="user-id")
-```
-
-#### 🔸 Moderation (for staff/leaders)
-
-```python
-# Hide content
-sub_client.hide(blogId="blog-id", reason="Violates community guidelines")
-
-# Ban/Unban users
-sub_client.ban(userId="user-id", reason="Spamming")
-sub_client.unban(userId="user-id", reason="Appeal accepted")
-
-# Feature content
-sub_client.feature(time=1, blogId="blog-id")
-sub_client.unfeature(blogId="blog-id")
-
-# Strike users
-sub_client.strike(userId="user-id", time=1, title="Spam", reason="Excessive messaging")
-
-# Warn users
-sub_client.warn(userId="user-id", reason="Minor rule violation")
-```
-
-#### 🔸 Context Managers
-
-```python
-# Show "typing..." indicator
-with sub_client.typing(chatId="chat-id-here"):
-    # This block will show typing indicator while executing
-    time.sleep(2)
-    sub_client.send_message(chatId="chat-id-here", message="Hello!")
-
-# Show "recording..." indicator
-with sub_client.recording(chatId="chat-id-here"):
-    # Prepare a voice message
-    time.sleep(3)
-    sub_client.send_message(chatId="chat-id-here", file=open("demo.mp3", "rb"), fileType="audio")
-```
 </details>
 
+<details>
+<summary><b>🎨 Welcome Bot</b></summary>
+
+```python
+@client.event(ChatEvent.USER_JOINED)
+def welcome_user(data):
+    sub_client = SubClient(comId=data.comId, profile=client.profile)
+    
+    welcome_message = f"""
+    🎉 Welcome to our community, {data.message.author.nickname}!
+    
+    📝 Please read our guidelines
+    💬 Feel free to introduce yourself
+    🤝 Have fun and be respectful!
+    """
+    
+    sub_client.send_message(
+        chatId=data.message.chatId,
+        message=welcome_message
+    )
+```
+
+</details>
+
+<details>
+<summary><b>🔄 Auto-Responder</b></summary>
+
+```python
+auto_responses = {
+    'hello': '👋 Hello there! How can I help you today?',
+    'bye': '👋 Goodbye! Have a great day!',
+    'thanks': '😊 You\'re welcome! Happy to help!',
+}
+
+@client.event(ChatEvent.TEXT_MESSAGE)
+def auto_respond(data):
+    message = data.message.content.lower()
+    
+    for keyword, response in auto_responses.items():
+        if keyword in message:
+            sub_client = SubClient(comId=data.comId, profile=client.profile)
+            sub_client.send_message(
+                chatId=data.message.chatId,
+                message=response
+            )
+            break
+```
+
+</details>
+
+---
+
+## 💬 Support
+
 <div align="center">
-  <p><i>For complete API reference, see the <a href="https://aminopy.readthedocs.io/en/latest/index.html">official documentation</a>.</i></p>
+
+### 🤝 **Get Help & Connect**
+
+<table>
+<tr>
+<td align="center">
+
+**💬 Telegram**
+<br>
+[@augustlight](https://t.me/augustlight)
+
+</td>
+<td align="center">
+
+**💙 Discord**
+<br>
+engineer48
+
+</td>
+<td align="center">
+
+**📚 Documentation**
+<br>
+[ReadTheDocs](https://aminopy.readthedocs.io/)
+
+</td>
+</tr>
+</table>
+
 </div>
 
-## Contact and Support
+---
 
-If you can't find what you're looking for or need help with this library:
-- Telegram: [augustlight](https://t.me/augustlight)
-- Discord: *engineer48*
+## 🎖️ Contributing
 
-We will be glad to help!
+We welcome contributions! Whether it's:
+- 🐛 Bug reports
+- ✨ Feature requests  
+- 📝 Documentation improvements
+- 🔧 Code contributions
 
-## Notes
+---
 
-> *This is not my original project. Amino libraries already existed before me. I just wanted to create a simple and effective way to support bots.*
+## 📜 License
 
-> *This framework works only with Python.*
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/AugustLigh/AminoLightPy/blob/main/LICENSE) file for details.
+
+---
+
+<div align="center">
+
+### 🌟 **Show Your Support**
+
+If this project helps you, please consider giving it a ⭐ on GitHub!
+
+---
+
+<sub>💡 <i>This framework builds upon the foundation of existing Amino libraries, enhanced for simplicity and effectiveness.</i></sub>
+
+<sub>🐍 <i>Compatible with Python 3.10+ • Works on all platforms</i></sub>
+
+</div>

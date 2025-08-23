@@ -65,10 +65,8 @@ class CacheManager:
                     return user_cache / self.app_name
         
         except (TypeError, ValueError, OSError):
-            # Fall through to the default case
             pass
             
-        # Fallback to temporary directory if standard locations aren't available
         return Path(tempfile.gettempdir()) / self.app_name
     
     def _ensure_dirs_exist(self):
@@ -88,7 +86,6 @@ class CacheManager:
         Returns:
             str: A sanitized filename
         """
-        # Replace potentially problematic characters
         invalid_chars = '<>:"/\\|?*'
         for char in invalid_chars:
             filename = filename.replace(char, '_')

@@ -5,7 +5,6 @@ from uuid import uuid4
 
 from base64 import b64encode
 from typing import BinaryIO
-from typing import Union
 from requests import Session
 from .constants import upload_media
 
@@ -116,7 +115,7 @@ class AbstractClient():
         response = self.session.delete(f"{self.path}/s/chat/thread/{chatId}/member/{self.session.headers['AUID']}")
         return response.status_code
     
-    def start_chat(self, userId: Union[str, list], message: str,
+    def start_chat(self, userId: str | list, message: str = None,
             title: str = None, content: str = None,
             isGlobal: bool = False, publishToGlobal: bool = False):
         """
@@ -149,13 +148,12 @@ class AbstractClient():
             "publishToGlobal": int(publishToGlobal)
         }
 
-        if isGlobal:
-            data["eventSource"] = "GlobalComposeMenu"
-
+        if isGlobal: data["eventSource"] = "GlobalComposeMenu"
+        
         response = self.session.post(f"{self.path}/s/chat/thread", json=data)
         return objects.Thread(response.json()["thread"]).Thread
     
-    def invite_to_chat(self, userId: Union[str, list], chatId: str):
+    def invite_to_chat(self, userId: str | list, chatId: str):
         """
         Invite a User or List of Users to a Chat.
 
@@ -434,14 +432,14 @@ class AbstractClient():
 
         return self.session.post(f"{self.path}/s/{flg}", json=data).status_code
     
-    def check_values(self, *args):
+    def _check_values(self, *args):
         return any(arg is None for arg in args)
 
     def send_message(self, chatId: str, message: str = None, messageType: int = 0,
                         file: BinaryIO = None, fileType: str = None, replyTo: str = None,
                         mentionUserIds: list = None, stickerId: str = None, embedId: str = None,
                         embedType: int = None, embedLink: str = None, embedTitle: str = None,
-                        embedContent: str = None, embedImage: BinaryIO = None):
+                        embedContent: str = None, embedImage: BinaryIO = None, linkSnippet: list[dict] = None):
         """
         Send a Message to a Chat.
 
@@ -472,7 +470,7 @@ class AbstractClient():
             "content": message,
         }
 
-        if not self.check_values(embedId, embedType, embedLink, embedTitle, embedContent, embedImage):
+        if not self._check_values(embedId, embedType, embedLink, embedTitle, embedContent, embedImage):
             attachedObject = {}
 
             if embedId:
@@ -495,9 +493,23 @@ class AbstractClient():
 
             data["attachedObject"] = attachedObject
 
+            extensions = {}
+
         if mentionUserIds:
             mentions = [{"uid": mention_uid} for mention_uid in mentionUserIds]
-            data["extensions"] = {"mentionedArray": mentions}
+            extensions = {"mentionedArray": mentions}
+
+        if linkSnippet:
+            # [{
+            #     "link": embedLink,
+            #     "mediaType": 100,
+            #     "mediaUploadValue": b64encode(readEmbed).decode(),
+            #     "mediaUploadValueContentType": embedImageType
+            # }]
+            extensions = {"linkSnippetList": linkSnippet}
+
+        if extensions:
+            data["extensions"] = extensions
 
         if replyTo: data["replyMessageId"] = replyTo
 
@@ -515,8 +527,7 @@ class AbstractClient():
                 data["mediaUploadValue"] = b64encode(file.read()).decode()
 
             else:
-                url = upload_media(self, file)
-                data["mediaValue"] = url
+                data["mediaValue"] = upload_media(self, file)
 
         response = self.session.post(
             url=f"{self.path}/s/chat/thread/{chatId}/message",
@@ -576,7 +587,7 @@ class AbstractClient():
         data = {}
         if title: data["title"] = title
         if content: data["content"] = content
-        if icon: data["icon"] = icon
+        if icon: data["icon"] = upload_media(self, icon)
         if keywords: data["keywords"] = keywords
         extensions = {}
         if announcement: extensions["announcement"] = announcement
@@ -611,7 +622,7 @@ class AbstractClient():
     def _set_background_image(self, chatId, backgroundImage):
         if not backgroundImage:
             return []
-        data = {"media": [100, backgroundImage, None]}
+        data = {"media": [100, upload_media(self, backgroundImage), None]}
         response = self.session.post(
             url=f"{self.path}/s/chat/thread/{chatId}/member/{self.session.headers['AUID']}/background",
             json=data
@@ -676,7 +687,7 @@ class AbstractClient():
 
         return self.session.post(url, json=data).status_code
     
-    def follow(self, userId: Union[str, list]):
+    def follow(self, userId: str | list):
         """
         Follow an User or Multiple Users.
 
@@ -749,20 +760,18 @@ class AbstractClient():
                             captionList: list = None, backgroundImage: str = None,
                             backgroundColor: str = None, titles: list = None, colors: list = None,
                             defaultBubbleId: str = None):
-
+        mediaList = []
         data = {}
-        
-        if imageList:
-            if captionList and len(imageList) != len(captionList):
-                raise exceptions.WrongType("Length of imageList and captionList must be the same")
-            
-            mediaList = []
-            if captionList:
-                mediaList = [[100, upload_media(self, image), caption] for image, caption in zip(imageList, captionList)]
-            else:
-                mediaList = [[100, upload_media(self, image), None] for image in imageList]
-            
-            data["mediaList"] = mediaList
+        if captionList:
+            for image, caption in zip(imageList, captionList):
+                mediaList.append([100, upload_media(self, image), caption])
+
+        else:
+            if imageList:
+                for image in imageList:
+                    mediaList.append([100, upload_media(self, image), None])
+
+        if imageList or captionList: data["mediaList"] = mediaList
 
         if nickname: data["nickname"] = nickname
         if icon: data["icon"] = upload_media(self, icon)
@@ -777,11 +786,11 @@ class AbstractClient():
         if defaultBubbleId: data["extensions"] = {"defaultBubbleId": defaultBubbleId}
 
         if titles or colors:
-            custom_titles = []
-            for title_item, color_item in zip(titles, colors):
-                custom_titles.append({"title": title_item, "color": color_item})
+            tlt = []
+            for titles, colors in zip(titles, colors):
+                tlt.append({"title": titles, "color": colors})
 
-            data["extensions"] = {"customTitles": custom_titles}
+            data["extensions"] = {"customTitles": tlt}
 
         return self.session.post(
             url=f"{self.path}/s/user-profile/{self.profile.userId}",
@@ -789,12 +798,14 @@ class AbstractClient():
         ).status_code
     
     def comment(self, message: str, userId: str = None, blogId: str = None, wikiId: str = None,
-                replyTo: str = None, isGuest: bool = False):
+                replyTo: str = None, isGuest: bool = False, image: BinaryIO = None):
         data = {
             "content": message,
             "stickerId": None,
             "type": 0
         }
+        if image:
+            data["mediaList"] = [[100, upload_media(self, image), None]]
 
         if replyTo: data["respondTo"] = replyTo
 
@@ -829,7 +840,7 @@ class AbstractClient():
 
         return self.session.delete(url).status_code
     
-    def like_blog(self, blogId: Union[str, list] = None, wikiId: str = None):
+    def like_blog(self, blogId: str | list = None, wikiId: str = None):
         """
         Like a Blog, Multiple Blogs or a Wiki.
 
@@ -1027,12 +1038,29 @@ class AbstractClient():
         return self.session.post(
                 url=f"{self.path}/s/chat/thread/{chatId}/transfer-organizer/{requestId}/accept"
             ).status_code
+
+    def accept_organizer(self, chatId: str, requestId: str):
+        """
+        Accepts a host request for a chat.
+
+        **Parameters**
+            - **chatId** (str): ID of the chat.
+            - **requestId** (str): ID of the host request.
+
+        **Returns**
+            - **Success** : 200 (int)
+            - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
+        """
+        return self.accept_host(chatId, requestId)
     
     def transfer_host(self, chatId: str, userIds: list):
         return self.session.post(
             url=f"{self.path}/s/chat/thread/{chatId}/transfer-organizer",
             json={"uidList": userIds}
         ).status_code
+
+    def transfer_organizer(self, chatId: str, userIds: list):
+        self.transfer_host(chatId, userIds)
 
     def delete_chat(self, chatId: str):
         """
