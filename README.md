@@ -82,7 +82,7 @@ pip install amino.light.py
 ### 🎯 Your First Bot
 
 ```python
-from AminoLightPy import Client, SubClient
+from AminoLightPy import Client, SubClient, ChatEvent
 
 # Initialize and login
 client = Client()
