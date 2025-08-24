@@ -139,7 +139,7 @@ class UserProfileList:
         "privilegeOfChatInviteRequest", "privilegeOfCommentOnUserProfile", "influencerInfo",
         "fansCount", "influencerCreatedTime", "influencerMonthlyFee", "influencerPinned",
         "staffInfo", "globalStrikeCount", "lastStrikeTime", "lastWarningTime", "strikeCount",
-        "warningCount", "session"
+        "warningCount", "client"
     )
 
     def __init__(self, data):
