@@ -41,7 +41,7 @@ class Client(SocketHandler, SocketRequests, AbstractClient):
         **Returns**
             - Headers. For support old custom requests
         """
-        base_headers: dict = self.session.headers
+        base_headers: dict = self.session.headers.copy()
         if not isinstance(data, str):
             data = dumps(data)
         base_headers["NDC-MSG-SIG"] = helpers.signature(data)
@@ -70,27 +70,46 @@ class Client(SocketHandler, SocketRequests, AbstractClient):
 
         self.authenticated = True
 
+    
+    def _perform_login(self, data: dict) -> dict:
+        response = self.session.post("/g/s/auth/login", json=data)
+        json = response.json()
+        self.sid = json["sid"]
+        self.profile = objects.UserProfile(json["userProfile"]).UserProfile
+
+        self.session.headers.update({
+            "NDCAUTH": f"sid={self.sid}",
+            "AUID": self.profile.userId
+        })
+
+        if self.socket_enabled and not self.authenticated:
+            self.run_amino_socket()
+
+        self.authenticated = True
+        return json
+    
+    def _get_cached_sid(self, login: str) -> str | None:
+        if not self.__cache_manager.sid_exists(login):
+            return None
+        
+        sid_file = self.__cache_manager.get_sid(login)
+        if time() - sid_file["time"] > 86400:
+            self.__cache_manager.remove_sid(login)
+            return None
+        
+        self.session.headers["NDCDEVICEID"] = self_deviceId(login)
+        self.login_sid(sid_file["sid"])
+        return sid_file["sid"]
+
     def login(self, login: str, password: str, self_device: bool = True):
-        if self.__cache_manager.sid_exists(login):
-            sid_file = self.__cache_manager.get_sid(login)
-
-            if time() - sid_file["time"] > 86400:
-                self.__cache_manager.remove_sid(login)
-                return self.login(login, password, self_device)
-            
-            self.session.headers["NDCDEVICEID"] = self_deviceId(login)
-            self.login_sid(sid_file["sid"])
-
-            return sid_file["sid"]
-        else:
-            if login[0] == "+":
-                login_data = self.login_phone(login, password, self_device)
-            else:
-                login_data = self.login_email(login, password, self_device)
-
-            self.__cache_manager.save_sid(login, login_data["sid"])
-
-            return login_data
+        if cached_sid := self._get_cached_sid(login):
+            return cached_sid
+        
+        login_method = self.login_phone if login.startswith("+") else self.login_email
+        login_data = login_method(login, password, self_device)
+        
+        self.__cache_manager.save_sid(login, login_data["sid"])
+        return login_data
 
 
     def login_email(self, email: str, password: str, self_device: bool = True):
@@ -118,22 +137,7 @@ class Client(SocketHandler, SocketRequests, AbstractClient):
             "v": 2,
         }
 
-        response = self.session.post("/g/s/auth/login", json=data)
-        json = response.json()
-        self.sid = json["sid"]
-        self.profile = objects.UserProfile(json["userProfile"]).UserProfile
-
-        self.session.headers.update({
-            "NDCAUTH": f"sid={self.sid}",
-            "AUID": self.profile.userId
-        })
-
-        if self.socket_enabled:
-            self.run_amino_socket()
-
-        self.authenticated = True
-
-        return json
+        return self._perform_login(data)
 
     @deprecated("login_phone is deprecated. Use login instead.")
     def login_phone(self, phoneNumber: str, password: str, self_device: bool = True):
@@ -160,24 +164,7 @@ class Client(SocketHandler, SocketRequests, AbstractClient):
             "v": 2,
         }
 
-        response = self.session.post("/g/s/auth/login", json=data)
-
-        json = response.json()
-        self.sid = json["sid"]
-
-        self.profile = objects.UserProfile(json["userProfile"]).UserProfile
-
-        self.session.headers.update({
-            "NDCAUTH": f"sid={self.sid}",
-            "AUID": self.profile.userId
-        })
-
-        if self.socket_enabled:
-            self.run_amino_socket()
-
-        self.authenticated = True
-
-        return json
+        return self._perform_login(data)
 
     def login_secret(self, secret: str, self_device: bool = True):
         """
@@ -200,25 +187,7 @@ class Client(SocketHandler, SocketRequests, AbstractClient):
             "clientType": 100,
             "v": 2,
         }
-
-        response = self.session.post("/g/s/auth/login", json=data)
-        json = response.json()
-        self.sid = json["sid"]
-
-        self.profile = objects.UserProfile(json["userProfile"]).UserProfile
-
-        self.session.headers.update({
-            "NDCAUTH": f"sid={self.sid}",
-            "AUID": self.profile.userId
-        })
-
-
-        if self.socket_enabled and not self.authenticated:
-            self.run_amino_socket()
-
-        self.authenticated = True
-
-        return json
+        return self._perform_login(data)
 
     def register(self, nickname: str, email: str, password: str, verificationCode: str):
         """

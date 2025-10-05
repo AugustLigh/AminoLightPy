@@ -83,7 +83,7 @@ def upload_media(self, file: BinaryIO) -> str:
 
         - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
     """
-    if "http" in file:
+    if isinstance(file, str):
         return file
 
     data = file.read()
@@ -94,7 +94,7 @@ def upload_media(self, file: BinaryIO) -> str:
         
     fileType = guess_type(file.name)[0]
         
-    custom_headers = self.session.headers
+    custom_headers = self.session.headers.copy()
     custom_headers["Content-Type"] = fileType
 
     response = self.session.post(
@@ -111,11 +111,13 @@ def upload_media(self, file: BinaryIO) -> str:
     return cache[file_hash]
     
 def upload_stiker(self, file: BinaryIO) -> str:
+    if isinstance(file, str):
+        return file
     data = file.read()
 
     fileType = guess_type(file.name)[0]
         
-    custom_headers = self.session.headers
+    custom_headers = self.session.headers.copy()
     custom_headers["Content-Type"] = fileType
 
     response = self.session.post(
@@ -128,6 +130,8 @@ def upload_stiker(self, file: BinaryIO) -> str:
     return response.json()["mediaValue"]
 
 def upload_flag_image(self, comId: int, file: BinaryIO) -> str:
+    if isinstance(file, str):
+        return file
     """
     Upload image related to a report and return its link.
     
@@ -144,7 +148,7 @@ def upload_flag_image(self, comId: int, file: BinaryIO) -> str:
     
     fileType = guess_type(file.name)[0]
     
-    custom_headers = self.session.headers
+    custom_headers = self.session.headers.copy()
     custom_headers["Content-Type"] = fileType
     
     response = self.session.post(

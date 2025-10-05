@@ -101,6 +101,8 @@ class Callbacks:
     def default(self, data): 
         self.call("default", data)
 
+
+
 class SocketHandler(Callbacks):
     def __init__(self, client, debug=False):
         super().__init__()
@@ -114,6 +116,7 @@ class SocketHandler(Callbacks):
         self.reconnect_delay = 5
         self._socket_lock = threading.Lock()
         self._is_connecting = False
+        self._debug_print = lambda msg: print(msg) if self.debug else None
 
     def on_message(self, ws, data):
         self.resolve(data)
@@ -183,7 +186,7 @@ class SocketHandler(Callbacks):
 
     def on_close(self, ws, data, status):
         self._debug_print("[socket][reconnect_handler] Reconnecting Socket")
-        self.starting_process()
+        self.safe_reconnect()
 
     def on_error(self, ws, error):
         traceback.print_exc()
@@ -235,10 +238,6 @@ class SocketHandler(Callbacks):
 
         threading.Thread(target=self.starting_process).start()
         self.thread_event.wait()
-
-    def _debug_print(self, message):
-        if self.debug:
-            print(message)
 
 class SocketRequests:
     def __init__(self, client) -> None:

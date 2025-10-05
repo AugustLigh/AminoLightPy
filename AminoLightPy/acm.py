@@ -309,18 +309,15 @@ class ACM():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        data = {}
+        param_mapping = {
+            "name": name,
+            "content": description,
+            "endpoint": aminoId,
+            "primaryLanguage": primaryLanguage,
+            "themePackUrl": themePackUrl
+        }
 
-        if name is not None:
-            data["name"] = name
-        if description is not None:
-            data["content"] = description
-        if aminoId is not None:
-            data["endpoint"] = aminoId
-        if primaryLanguage is not None:
-            data["primaryLanguage"] = primaryLanguage
-        if themePackUrl is not None:
-            data["themePackUrl"] = themePackUrl
+        data = {key: value for key, value in param_mapping.items() if value is not None}
 
         response = self.session.post(f"/x{self.comId}/s/community/settings", json=data)
         return response.status_code
@@ -338,43 +335,31 @@ class ACM():
 
             - **Fail** : :meth:`Exceptions <AminoLightPy.lib.util.exceptions>`
         """
-        if module.lower() == "chat":
-            mod = "module.chat.enabled"
-        elif module.lower() == "livechat":
-            mod = "module.chat.avChat.videoEnabled"
-        elif module.lower() == "screeningroom":
-            mod = "module.chat.avChat.screeningRoomEnabled"
-        elif module.lower() == "publicchats":
-            mod = "module.chat.publicChat.enabled"
-        elif module.lower() == "posts":
-            mod = "module.post.enabled"
-        elif module.lower() == "ranking":
-            mod = "module.ranking.enabled"
-        elif module.lower() == "leaderboards":
-            mod = "module.ranking.leaderboardEnabled"
-        elif module.lower() == "featured":
-            mod = "module.featured.enabled"
-        elif module.lower() == "featuredposts":
-            mod = "module.featured.postEnabled"
-        elif module.lower() == "featuredusers":
-            mod = "module.featured.memberEnabled"
-        elif module.lower() == "featuredchats":
-            mod = "module.featured.publicChatRoomEnabled"
-        elif module.lower() == "sharedfolder":
-            mod = "module.sharedFolder.enabled"
-        elif module.lower() == "influencer":
-            mod = "module.influencer.enabled"
-        elif module.lower() == "catalog":
-            mod = "module.catalog.enabled"
-        elif module.lower() == "externalcontent":
-            mod = "module.externalContent.enabled"
-        elif module.lower() == "topiccategories":
-            mod = "module.topicCategories.enabled"
-        else:
+        module_paths = {
+            "chat": "module.chat.enabled",
+            "livechat": "module.chat.avChat.videoEnabled",
+            "screeningroom": "module.chat.avChat.screeningRoomEnabled",
+            "publicchats": "module.chat.publicChat.enabled",
+            "posts": "module.post.enabled",
+            "ranking": "module.ranking.enabled",
+            "leaderboards": "module.ranking.leaderboardEnabled",
+            "featured": "module.featured.enabled",
+            "featuredposts": "module.featured.postEnabled",
+            "featuredusers": "module.featured.memberEnabled",
+            "featuredchats": "module.featured.publicChatRoomEnabled",
+            "sharedfolder": "module.sharedFolder.enabled",
+            "influencer": "module.influencer.enabled",
+            "catalog": "module.catalog.enabled",
+            "externalcontent": "module.externalContent.enabled",
+            "topiccategories": "module.topicCategories.enabled"
+        }
+
+        module_lower = module.lower()
+        if module_lower not in module_paths:
             raise exceptions.SpecifyType()
 
         data = {
-            "path": mod,
+            "path": module_paths[module_lower],
             "value": isEnabled
         }
 

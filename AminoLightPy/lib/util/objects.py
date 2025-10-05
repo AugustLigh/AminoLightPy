@@ -1483,10 +1483,7 @@ class FanClubList:
 
     def __init__(self, data):
         if not data:
-            for attr in self.__slots__:
-                setattr(self, attr, None)
-
-            return
+            data = []
 
         self.json = data
 
